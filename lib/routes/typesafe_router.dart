@@ -1,0 +1,313 @@
+import 'dart:async';
+
+import 'package:animations/animations.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+import '../auth/login.dart';
+import '../database/models/subject.dart';
+import '../database/user.dart';
+import '../errors/authentication_error.dart';
+import '../views/account.dart';
+import '../views/home.dart';
+import '../views/home/create_homework.dart';
+import '../views/home/subject_selection.dart';
+import '../views/untis/load_credentials.dart';
+import '../views/untis/untis_login.dart';
+import '../views/untis/upload_credentials.dart';
+import '../views/untis_view.dart';
+import 'navigation_shell.dart';
+import 'provider_shell.dart';
+
+part 'typesafe_router.g.dart';
+
+final _refreshStream =
+    GoRouterRefreshStream(FirebaseAuth.instance.authStateChanges());
+
+String get _homeLocation => const HomeRoute().location;
+String get _untisLocation => const UntisRoute().location;
+String get _accountLocation => const AccountRoute().location;
+
+String get _authLocation => const AuthRoute().location;
+
+final appRouter = GoRouter(
+  initialLocation:
+      FirebaseAuth.instance.currentUser == null ? _authLocation : _homeLocation,
+  refreshListenable: _refreshStream,
+  redirect: (context, state) {
+    final bool isLoggedIn = FirebaseAuth.instance.currentUser != null;
+    final bool isOnAuth = state.matchedLocation == _authLocation;
+    final bool isOnRoot = state.matchedLocation == '/';
+
+    if (!isLoggedIn && !isOnAuth) {
+      return _authLocation;
+    }
+    if (isLoggedIn && (isOnAuth || isOnRoot)) {
+      return _homeLocation;
+    }
+    return null;
+  },
+  onException: (context, state, router) {
+    if (state.error is UnauthorizedException) {
+      router.go(_authLocation);
+    }
+  },
+  routes: $appRoutes,
+);
+
+@TypedGoRoute<AuthRoute>(path: '/auth')
+class AuthRoute extends GoRouteData with _$AuthRoute {
+  const AuthRoute();
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return CustomTransitionPage(
+      key: state.pageKey,
+      child: const Authentication(),
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        return SharedAxisTransition(
+          animation: animation,
+          secondaryAnimation: secondaryAnimation,
+          transitionType: SharedAxisTransitionType.horizontal,
+          fillColor: Theme.of(context).scaffoldBackgroundColor,
+          child: child,
+        );
+      },
+    );
+  }
+}
+
+@TypedShellRoute<NavigationShellRoute>(
+  routes: <TypedRoute<RouteData>>[
+    TypedGoRoute<HomeRoute>(
+      path: '/home',
+      routes: <TypedRoute<RouteData>>[
+        TypedGoRoute<CreateHomeworkRoute>(path: 'createHomework'),
+        TypedGoRoute<SubjectSelectionRoute>(path: 'subjectSelection'),
+      ],
+    ),
+    TypedGoRoute<UntisRoute>(
+      path: '/untis',
+      routes: <TypedRoute<RouteData>>[
+        TypedGoRoute<EnterCredentialsRoute>(path: 'enterCredentials'),
+        TypedGoRoute<UploadCredentialsRoute>(path: 'uploadCredentials'),
+        TypedGoRoute<DownloadCredentialsRoute>(path: 'downloadCredentials'),
+      ],
+    ),
+    TypedGoRoute<AccountRoute>(path: '/account'),
+  ],
+)
+class NavigationShellRoute extends ShellRouteData {
+  const NavigationShellRoute();
+
+  @override
+  Page pageBuilder(
+    BuildContext context,
+    GoRouterState state,
+    Widget navigator,
+  ) {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        GoRouter.of(context).go(_authLocation);
+      });
+      return NoTransitionPage(
+        key: state.pageKey,
+        child: Center(
+          child: Text(
+            'Du wirst zum Login weitergeleitet...',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+        ),
+      );
+    }
+    return CustomTransitionPage(
+      key: state.pageKey,
+      child: ProviderShell(
+        uid: user.uid,
+        child: NavigationShell(
+          state: state,
+          child: navigator,
+        ),
+      ),
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        return SharedAxisTransition(
+          animation: animation,
+          secondaryAnimation: secondaryAnimation,
+          transitionType: SharedAxisTransitionType.horizontal,
+          fillColor: Theme.of(context).scaffoldBackgroundColor,
+          child: child,
+        );
+      },
+    );
+  }
+}
+
+// Home Routes
+class HomeRoute extends GoRouteData with _$HomeRoute {
+  const HomeRoute();
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return NoTransitionPage(
+      key: state.pageKey,
+      child: const Home(),
+    );
+  }
+}
+
+class CreateHomeworkRoute extends GoRouteData with _$CreateHomeworkRoute {
+  const CreateHomeworkRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    return const CreateHomework();
+  }
+}
+
+class SubjectSelectionRoute extends GoRouteData with _$SubjectSelectionRoute {
+  /// Callback wich is called when a subject is selected.
+  ///
+  /// The callback receives the selected [Subject] or [Null]
+  /// if the selection was closed without selecting.
+  /// It has to be named [$extra] to satisfy the code generator.
+  final void Function(Subject) $extra;
+
+  const SubjectSelectionRoute({required this.$extra});
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    return SubjectSelection(
+      onSubjectSelected: $extra,
+    );
+  }
+
+  @override
+  FutureOr<String?> redirect(BuildContext context, GoRouterState state) {
+    if (state.extra == null) {
+      // If no subject is selected, redirect to the home page
+      return const HomeRoute().location;
+    }
+    return null;
+  }
+}
+
+// Untis Routes
+class UntisRoute extends GoRouteData with _$UntisRoute {
+  const UntisRoute();
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return NoTransitionPage(
+      key: state.pageKey,
+      child: const UntisView(),
+    );
+  }
+}
+
+class EnterCredentialsRoute extends GoRouteData with _$EnterCredentialsRoute {
+  const EnterCredentialsRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    return const UntisLogin();
+  }
+}
+
+class UploadCredentialsRoute extends GoRouteData with _$UploadCredentialsRoute {
+  const UploadCredentialsRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    return const UploadCredentials();
+  }
+}
+
+class DownloadCredentialsRoute extends GoRouteData
+    with _$DownloadCredentialsRoute {
+  const DownloadCredentialsRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    return const LoadCredentials();
+  }
+}
+
+// Account Route
+class AccountRoute extends GoRouteData with _$AccountRoute {
+  const AccountRoute();
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return NoTransitionPage(
+      key: state.pageKey,
+      child: const AccountView(),
+    );
+  }
+}
+
+/// A stream that listens to Firebase Auth state changes and notifies listeners
+/// when the user logs in or out.
+class GoRouterRefreshStream extends ChangeNotifier {
+  bool _wasLoggedIn = false;
+
+  GoRouterRefreshStream(Stream<User?> stream) {
+    _subscription = stream.listen((user) async {
+      if (user != null) {
+        final firestoreUser = FirestoreUser(
+          uid: user.uid,
+          firestore: FirebaseFirestore.instance,
+        );
+        await firestoreUser.ensureDocumentExists();
+        _wasLoggedIn = true;
+        notifyListeners();
+      } else if (_wasLoggedIn) {
+        _wasLoggedIn = false;
+        notifyListeners();
+      }
+    });
+  }
+
+  late final StreamSubscription<dynamic> _subscription;
+
+  @override
+  void dispose() {
+    _subscription.cancel();
+    super.dispose();
+  }
+}
+
+/// A utility class for type-safe navigation in the app.
+class DestinationsManager {
+  /// Returns the index of the bottom navigation bar based on the current route.
+  static int getNavigationIndex(GoRouterState state) {
+    final location = state.matchedLocation;
+    if (location.startsWith(_untisLocation)) return 1;
+    if (location.startsWith(_accountLocation)) return 2;
+    if (location.startsWith(_homeLocation)) return 0;
+    return 0;
+  }
+
+  /// Navigation destinations for bottom navigation bar
+  static List<NavigationDestination> get bottomNavigationDestinations {
+    return [
+      const NavigationDestination(
+        icon: Icon(Icons.home_outlined),
+        selectedIcon: Icon(Icons.home),
+        label: 'Home',
+      ),
+      const NavigationDestination(
+        icon: Icon(Icons.school_outlined),
+        selectedIcon: Icon(Icons.school),
+        label: 'Untis',
+      ),
+      const NavigationDestination(
+        icon: Icon(Icons.person_outline),
+        selectedIcon: Icon(Icons.person),
+        label: 'Konto',
+      ),
+    ];
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "626284965826",
+    "project_id": "homework-manager-untis",
+    "storage_bucket": "homework-manager-untis.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:626284965826:android:fb5237955242d6f1d1f05b",
+        "android_client_info": {
+          "package_name": "com.max.homeworks"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "626284965826-iovj6s0lvft551f3d6ahdr6qkoc53njg.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAW6UTg1EzKPFLB6mkn5EvsZ9HH0Ez3m5E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "626284965826-iovj6s0lvft551f3d6ahdr6qkoc53njg.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

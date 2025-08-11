@@ -1,0 +1,224 @@
+import 'dart:async';
+
+import 'package:collection/collection.dart';
+import 'package:dart_untis_mobile/dart_untis_mobile.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../database/models/credentials.dart';
+import '../utilities/enums.dart';
+import '../database/models/subject.dart';
+
+/// Provider for managing Untis data
+///
+/// This class handles the loading and updating of Untis subjects and timetable.
+
+class UntisProvider extends ChangeNotifier {
+  UntisSession? _session;
+
+  List<UntisPeriod> todayPeriods = [];
+  List<Subject> _untisSubjects = [];
+  UntisSubjectStatus _untisSubjectStatus = UntisSubjectStatus.untisUnavailable;
+
+  final Duration _range;
+
+  UntisProvider({required Duration range}) : _range = range;
+
+  /// The List of Subjects from Untis in the next 30 days.
+  List<Subject> get untisSubjects => _untisSubjects;
+
+  /// The date until the timetable is loaded.
+  DateTime get endDate => DateTime.now().add(_range);
+
+  /// Only the next Lesson Dates
+  Map<String, DateTime> getNextLessonDates() => Map.fromEntries(
+        _untisSubjects.where((subject) => subject.nextLesson != null).map(
+            (subject) => MapEntry(subject.documentId, subject.nextLesson!)),
+      );
+
+  /// The current status of the Untis subjects.
+  ///
+  /// This can be:
+  /// - [UntisSubjectStatus.untisUnavailable]: [UntisCredentials] is not available.
+  /// - [UntisSubjectStatus.loading]: Untis subjects are currently being loaded.
+  /// - [UntisSubjectStatus.loaded]: Untis subjects are loaded and available.
+  /// - [UntisSubjectStatus.error]: An error occurred while loading Untis subjects.
+  UntisSubjectStatus get untisSubjectStatus => _untisSubjectStatus;
+
+  /// Whether the Untis subjects are loaded and available.
+  bool get untisSubjectsLoaded =>
+      _untisSubjectStatus == UntisSubjectStatus.loaded;
+
+  /// The current Untis credentials.
+  ///
+  /// Checks the [_timetable] and returns the current subject based on the current time.
+  /// The current subject is the last period wich is started before now and end after now + 30 minutes.
+  Subject? get currentSubject {
+    final now = DateTime.now();
+    final currentPeriod = todayPeriods.firstWhereOrNull(
+      (period) =>
+          !period.isCancelled &&
+          period.teacher != null &&
+          period.subject != null &&
+          period.startDateTime.isBefore(now) &&
+          period.endDateTime.isAfter(now.add(const Duration(minutes: 30))),
+    );
+    if (currentPeriod == null) {
+      return null;
+    }
+    Subject currentSubject = Subject.fromUntisSubject(currentPeriod.subject!);
+    final nextLessonDates = getNextLessonDates();
+    if (nextLessonDates.containsKey(currentSubject.documentId)) {
+      currentSubject.nextLesson = nextLessonDates[currentSubject.documentId];
+    }
+    return currentSubject;
+  }
+
+  /// Updates the Untis credentials and loads the timetable if the credentials has changed.
+  ///
+  /// This method should be called from the update Method of [ProxyProvider].
+  Future<void> updateCredentials(UntisSession? session) async {
+    if (session == _session) {
+      return;
+    }
+    if (session == null) {
+      _untisSubjects = [];
+      _untisSubjectStatus = UntisSubjectStatus.untisUnavailable;
+      notifyListeners();
+      return;
+    }
+    _session = session;
+    _getTimetable();
+  }
+
+  Future<void> _getTimetable() async {
+    if (_session == null) return;
+
+    _untisSubjectStatus = UntisSubjectStatus.loading;
+    notifyListeners();
+
+    try {
+      // You have to edit the Package, the check if the difference is
+      // negative is vice versa (start and end date are swapped)
+      DateTime startDate = DateTime.now();
+      DateTime endDate = startDate.add(_range);
+      DateTime todayNight =
+          DateTime(startDate.year, startDate.month, startDate.day + 1);
+
+      // the periods today are loaded extra to find the current subject simpler
+      todayPeriods = await _session!
+          .getTimetable(
+            startDate: startDate,
+            endDate: startDate,
+          )
+          .then((timetable) => timetable.periods);
+
+      // because of an logic error in the dart_untis_mobile package it is
+      // only possible to load a 7 day range at once, so a loop is needed
+      for (startDate;
+          startDate.isBefore(endDate);
+          startDate = startDate.add(const Duration(days: 7))) {
+        final timetable = await _session!.getTimetable(
+          startDate: startDate,
+        );
+        for (var period in timetable.periods) {
+          if (period.subject == null) {
+            continue;
+          }
+          // sometimes only teacher is removed but the period is not cancelled
+          final isCancelled = period.isCancelled || period.teacher == null;
+
+          // this is the subject from the list, if the subject is already in the list
+          final listedSubject = _untisSubjects
+              .firstWhereOrNull((s) => s.id == period.subject!.id.id);
+
+          // if not, it is added with a next lesson date (if it is not cancelled and after today)
+          if (listedSubject == null) {
+            final subject = Subject.fromUntisSubject(period.subject!);
+
+            if (!isCancelled && period.startDateTime.isAfter(todayNight)) {
+              subject.nextLesson = period.startDateTime;
+            }
+            _untisSubjects.add(subject);
+
+            // if a not cancelled period is before the next lesson (wich shouldn't be the case because
+            // the periods should be ordered) or there is't a next lesson (wich could be because the
+            // first lesson in wich the subject was found was cancelled) then the next lesson is updated
+          } else if (!isCancelled &&
+              (listedSubject.nextLesson == null ||
+                  period.startDateTime.isBefore(listedSubject.nextLesson!)) &&
+              period.startDateTime.isAfter(todayNight)) {
+            // NOTE: you can make the change  on the variable because it is only a reference to
+            // the subject in the list, so this changes the subject in the list
+            listedSubject.nextLesson = period.startDateTime;
+          }
+        }
+      }
+
+      _untisSubjectStatus = UntisSubjectStatus.loaded;
+    } catch (e) {
+      _untisSubjectStatus = UntisSubjectStatus.error;
+      print('Error loading timetable: $e');
+    } finally {
+      notifyListeners();
+    }
+  }
+
+  Future<DateTime?> deepNextLessonSearch(Subject subject,
+      StreamController<DateTime> stream, Completer<void> abort) async {
+    if (_session == null) {
+      return null;
+    }
+
+    DateTime startDate = DateTime.now();
+    final maxDepth = startDate.add(const Duration(days: 356));
+
+    bool isAborted = false;
+    abort.future.then((_) {
+      isAborted = true;
+      stream.close();
+    });
+
+    while (!isAborted) {
+      stream.add(startDate);
+      final timetable = await _session!.getTimetable(
+        startDate: startDate,
+      );
+      final nextLesson = timetable.periods.firstWhereOrNull(
+        (period) =>
+            period.subject?.id.id == subject.id &&
+            !period.isCancelled &&
+            period.teacher != null &&
+            period.startDateTime.isAfter(DateTime.now()),
+      );
+      if (nextLesson != null) {
+        return nextLesson.startDateTime;
+      }
+      startDate = startDate.add(const Duration(days: 7));
+      if (startDate.isAfter(maxDepth)) {
+        return null;
+      }
+    }
+    return null;
+  }
+
+  /// This method is not implemented yet.
+  void loadUntisHomeworks() {
+    // Could contain test, homework information
+    // also used at events, subject is needed
+    // print(timetable!.periods[3].text);
+
+    // is used to declare exams
+    // print(await _session!.getExams(
+    //   startDate: DateTime.now(),
+    //   endDate: DateTime.now().add(const Duration(days: 30)),
+    // ));
+
+    // is used to declare homeworks, but some also annouce exams
+    // print(await _session!.getHomework(
+    //   startDate: DateTime.now(),
+    //   endDate: DateTime.now().add(const Duration(days: 30)),
+    // ));
+  }
+}
