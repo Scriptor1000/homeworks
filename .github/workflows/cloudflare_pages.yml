@@ -42,7 +42,7 @@ jobs:
         run: flutter pub get
       
       - name: Build web
-        run: flutter build web --no-wasm-dry-run
+        run: flutter build web
       
       - name: Deploy to Cloudflare Pages
         id: deploy
@@ -57,18 +57,11 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const deployOutput = '${{ steps.deploy.outputs.result }}';
-            const urlMatch = deployOutput.match(/https:\/\/[^\s]*\.${{ vars.CLOUDFLARE_PROJECT_NAME }}\.pages\.dev);
-            
-            if (urlMatch) {
-              const deployUrl = urlMatch[0];
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.issue.number,
-                body: `🚀 Preview successfully deployed!\n\nView it [here](${deployUrl}).`
-              });
-              console.log('Comment with preview URL added to PR');
-            } else {
-              console.log('Could not find preview URL in Wrangler output');
-            }
+            const deployUrl = '${{ steps.deploy.outputs.deployment-url }}';
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `🚀 Preview successfully deployed!\n\nView it [here](${deployUrl}).`
+            });
+            console.log('Comment with preview URL added to PR');
