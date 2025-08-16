@@ -42,7 +42,7 @@ jobs:
         run: flutter pub get
       
       - name: Build web
-        run: flutter build web
+        run: flutter build web --no-wasm-dry-run
       
       - name: Deploy to Cloudflare Pages
         id: deploy
@@ -50,7 +50,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy build/web --project-name=${{ vars.CLOUDFLARE_PROJECT_NAME }}
+          command: pages deploy build/web --project-name=${{ vars.CLOUDFLARE_PROJECT_NAME }} --commit-dirty=true
 
       - name: Comment deployment URL on PR
         if: github.event_name == 'pull_request'
@@ -58,7 +58,7 @@ jobs:
         with:
           script: |
             const deployOutput = '${{ steps.deploy.outputs.result }}';
-            const urlMatch = deployOutput.match(/https:\/\/[^\s]*\.${{ vars.CLOUDFLARE_PROJECT_NAME }}\.pages\.dev/);
+            const urlMatch = deployOutput.match(/https:\/\/[^\s]*\.${{ vars.CLOUDFLARE_PROJECT_NAME }}\.pages\.dev);
             
             if (urlMatch) {
               const deployUrl = urlMatch[0];
@@ -66,9 +66,9 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: context.issue.number,
-                body: `🚀 Preview erfolgreich eingerichtet!\n\nSchaue sie dir [hier](${deployUrl}) an.`
+                body: `🚀 Preview successfully deployed!\n\nView it [here](${deployUrl}).`
               });
-              console.log('Kommentar mit Deployment-URL wurde zum PR hinzugefügt');
+              console.log('Comment with preview URL added to PR');
             } else {
-              console.log('Konnte keine Deployment-URL im Wrangler-Output finden');
+              console.log('Could not find preview URL in Wrangler output');
             }
