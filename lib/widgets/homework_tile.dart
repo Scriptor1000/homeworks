@@ -9,6 +9,7 @@ import '../provider/homeworks_provider.dart';
 import '../provider/subject_provider.dart';
 import '../utilities/constants.dart';
 import '../utilities/global_snackbar.dart';
+import 'subject_avatar.dart';
 
 /// A [ListTile] widget that displays homework information and allows marking it as completed.
 ///
@@ -63,28 +64,14 @@ class HomeworkTile extends StatelessWidget {
     final backColor = subject?.backColor.harmonizeWith(
       Theme.of(context).primaryColor,
     );
-    final foreColor = subject?.foreColor.harmonizeWith(backColor!);
     final colorScheme = Theme.of(context).colorScheme;
 
     final dateText = dueDateText(homework.dueDate);
 
     return ListTile(
-      leading: subject == null
-          ? CircleAvatar(
-              backgroundColor: colorScheme.tertiaryContainer,
-              child: Icon(
-                Icons.question_mark,
-                color: colorScheme.onTertiaryContainer,
-              ),
-            )
-          : CircleAvatar(
-              backgroundColor: backColor,
-              child: Text(subject.shortName.substring(0, 2),
-                  style: TextStyle(
-                    color: foreColor,
-                    fontWeight: FontWeight.bold,
-                  )),
-            ),
+      leading: SubjectAvatar(
+        subject: subject,
+      ),
       title: Text('${homework.isExam ? 'LK: ' : ''}${homework.title}'),
       subtitle: dateText != null ? Text(dateText) : null,
       tileColor: homework.isExam ? backColor?.withAlpha(50) : null,
