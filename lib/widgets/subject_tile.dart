@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../utilities/constants.dart';
 import '../database/models/subject.dart';
+import 'subject_avatar.dart';
 
 /// A [ListTile] to displays the subject with functionallity to provide an trailing Widget.
 class SubjectTile extends StatelessWidget {
@@ -17,14 +18,7 @@ class SubjectTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final backColor =
         subject.backColor.harmonizeWith(Theme.of(context).primaryColor);
-    final avatar = CircleAvatar(
-      backgroundColor: backColor,
-      child: Text(subject.shortName.substring(0, 2),
-          style: TextStyle(
-            color: subject.foreColor.harmonizeWith(backColor),
-            fontWeight: FontWeight.bold,
-          )),
-    );
+    final avatar = SubjectAvatar(subject: subject);
     final title = subject.name;
     return SubjectTileTemplate(
       title: title,
@@ -33,24 +27,6 @@ class SubjectTile extends StatelessWidget {
       backColor: backColor,
       onTap: onTap,
     );
-    // return Container(
-    //   decoration: BoxDecoration(
-    //     borderRadius: BorderRadius.circular(BorderRadiusConstants.subjects),
-    //     border: Border.all(color: backColor, width: 3),
-    //   ),
-    //   child: ListTile(
-    //     title: Text(subject.name),
-    //     leading: CircleAvatar(
-    //       backgroundColor: backColor,
-    //       child: Text(subject.shortName.substring(0, 2),
-    //           style: TextStyle(
-    //             color: subject.foreColor.harmonizeWith(backColor),
-    //             fontWeight: FontWeight.bold,
-    //           )),
-    //     ),
-    //     trailing: trailing,
-    //   ),
-    // );
   }
 }
 

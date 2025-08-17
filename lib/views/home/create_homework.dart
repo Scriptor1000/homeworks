@@ -39,13 +39,13 @@ class _CreateHomeworkState extends State<CreateHomework> {
   void dispose() {
     _titleController.dispose();
     _descriptionController.dispose();
-    ;
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    Subject? currentSubject = context.watch<UntisProvider>().currentSubject;
+    Subject? currentSubject =
+        context.watch<UntisProvider>().getCurrentSubject();
     if (currentSubject != null &&
         (selectedSubject == null || selectedSubject == lastCurrentSubject)) {
       _updateSubject(currentSubject);
