@@ -239,7 +239,7 @@ class _HomeState extends State<Home> {
 
   Future<void> fastCreate() async {
     final untisProvider = context.read<UntisProvider>();
-    var currentSubject = untisProvider.currentSubject;
+    var currentSubject = untisProvider.getCurrentSubject();
 
     if (currentSubject == null) {
       // This is pushed because it should not be showed in the URL
