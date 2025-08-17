@@ -1,0 +1,42 @@
+{
+    "name": "Flutter Dev Container",
+    "build": {
+        "dockerfile": "Dockerfile"
+    },
+    "features": {
+        "ghcr.io/devcontainers/features/git:1": {}
+    },
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "antoinegtr.flutter-icons",
+                "azemoh.one-monokai",
+                "dart-code.dart-code",
+                "dart-code.flutter",
+                "dominicvonk.parameter-hints",
+                "gruntfuggly.todo-tree",
+                "ms-ceintl.vscode-language-pack-de",
+                "pkief.material-icon-theme",
+                "seyyedkhandon.firacode",
+                "unleasheddesign.unleashed-design-theme",
+                "zhuangtongfa.material-theme",
+                "github.copilot",
+                "github.copilot-chat"
+            ],
+            "settings": {
+                "dart.flutterRunAdditionalArgs": [
+                    "--web-hostname",
+                    "0.0.0.0",
+                    "--web-port",
+                    "5000",
+                    "--release"
+                ]
+            }
+        }
+    },
+    "forwardPorts": [
+        5000
+    ],
+    "postCreateCommand": "flutter doctor && cd ${containerWorkspaceFolder} && flutter pub get",
+    "remoteUser": "vscode"
+}
