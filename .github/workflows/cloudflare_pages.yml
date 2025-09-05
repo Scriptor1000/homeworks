@@ -49,7 +49,24 @@ jobs:
     permissions:
       pull-requests: write
       contents: read
-    
+
+    env:
+      ASSETLINKS_JSON: |
+        [
+          {
+            "relation": [
+              "delegate_permission/common.handle_all_urls"
+            ],
+            "target": {
+              "namespace": "android_app",
+              "package_name": "com.max.homeworks",
+              "sha256_cert_fingerprints": [
+                "???"
+              ]
+            }
+          }
+        ]
+
     steps:
       - uses: actions/checkout@v5
       
@@ -76,6 +93,11 @@ jobs:
       
       - name: Build web
         run: flutter build web
+
+      - name: Create assetlinks.json
+        run: |
+          mkdir -p build/web/.well-known
+          echo "$ASSETLINKS_JSON" > build/web/.well-known/assetlinks.json
       
       - name: Deploy to Cloudflare Pages
         id: deploy
