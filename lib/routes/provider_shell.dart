@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
 
 import '../database/credentials.dart';
@@ -32,6 +33,7 @@ class ProviderShell extends StatelessWidget {
 
     final cryptography = CredentialCryptography(uid: uid);
     final itemFactory = ItemFactory();
+    final storage = FlutterSecureStorage();
 
     // Create service instances
     final firestoreUser = FirestoreUser(firestore: firestore, uid: uid);
@@ -55,6 +57,7 @@ class ProviderShell extends StatelessWidget {
           create: (_) => CredentialProvider(
             firestoreCredentials: firestoreCredentials,
             itemFactory: itemFactory,
+            storage: storage,
           )..initialize(),
           lazy: false,
         ),

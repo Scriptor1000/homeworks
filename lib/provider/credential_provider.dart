@@ -13,9 +13,9 @@ import '../utilities/enums.dart';
 /// This class handles the loading, saving, and online status of Untis credentials.
 /// It uses [FlutterSecureStorage] for local storage and [FirestoreCredentials] for online storage.
 class CredentialProvider extends ChangeNotifier {
-  static const _credentialsKey = 'UntisCredentials';
-  static const FlutterSecureStorage _storage = FlutterSecureStorage();
+  static const credentialsKey = 'UntisCredentials';
 
+  final FlutterSecureStorage _storage;
   final FirestoreCredentials _firestoreCredentials;
   final ItemFactory _itemFactory;
 
@@ -29,9 +29,11 @@ class CredentialProvider extends ChangeNotifier {
 
   CredentialProvider(
       {required FirestoreCredentials firestoreCredentials,
-      required ItemFactory itemFactory})
+      required ItemFactory itemFactory,
+      required FlutterSecureStorage storage})
       : _firestoreCredentials = firestoreCredentials,
-        _itemFactory = itemFactory;
+        _itemFactory = itemFactory,
+        _storage = storage;
 
   /// Wheter the credentials are currently being loaded or the loading process is finished.
   bool get isLoading => _isLoadingCredentials;
@@ -78,7 +80,7 @@ class CredentialProvider extends ChangeNotifier {
   }
 
   Future<void> _loadCredentialsLocal() async {
-    final storedCredentials = await _storage.read(key: _credentialsKey);
+    final storedCredentials = await _storage.read(key: credentialsKey);
     if (storedCredentials != null) {
       _credentials = _itemFactory.untisCredentialsFromJSON(storedCredentials);
       notifyListeners();
@@ -103,7 +105,7 @@ class CredentialProvider extends ChangeNotifier {
   Future<void> _saveCredentialsLocal() async {
     if (_credentials != null) {
       await _storage.write(
-          key: _credentialsKey, value: _credentials!.toJsonString());
+          key: credentialsKey, value: _credentials!.toJsonString());
     }
   }
 
@@ -112,7 +114,7 @@ class CredentialProvider extends ChangeNotifier {
     _credentials = null;
     _session = null;
     _sessionState = UntisSessionState.noCredentials;
-    await _storage.delete(key: _credentialsKey);
+    await _storage.delete(key: credentialsKey);
     notifyListeners();
   }
 
