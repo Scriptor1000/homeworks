@@ -59,14 +59,6 @@ void main() {
           .thenAnswer((_) async => session);
     });
 
-    tearDownAll(() {
-      credentialProvider.clearCredentialsLocal();
-
-      clearInteractions(storage);
-      clearInteractions(itemFactory);
-      clearInteractions(firestoreCredentials);
-    });
-
     test('should initializing by loading local and checking online', () async {
       // test
       await credentialProvider.initialize();
