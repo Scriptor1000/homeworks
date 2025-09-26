@@ -1,5 +1,6 @@
 import 'package:collection/collection.dart';
 import 'package:dynamic_color/dynamic_color.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -102,6 +103,10 @@ class HomeworkTile extends StatelessWidget {
                   context
                       .read<HomeworksProvider>()
                       .newDueDate(homework, subject.nextLesson!);
+
+                  FirebaseAnalytics.instance.logEvent(
+                    name: 'revive_homework',
+                  );
                 },
                 icon: Icon(Icons.replay_rounded)),
           homework.isCompleted

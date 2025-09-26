@@ -1,3 +1,4 @@
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/material.dart';
 
 import '../database/homeworks.dart';
@@ -57,6 +58,7 @@ class HomeworksProvider extends ChangeNotifier {
   Future<void> updateDueDates(
       Map<String, DateTime> nextLessonDates, DateTime scanRange) async {
     final now = DateTime.now();
+    int count = 0;
     for (var homework in _homeworks) {
       // Check if homework is addressed
       if (!homework.toNextLesson ||
@@ -72,15 +74,20 @@ class HomeworksProvider extends ChangeNotifier {
           homework.dueDate!.isBefore(scanRange)) {
         homework.dueDate = null;
         _firestoreHomeworks.saveHomework(homework);
+        count++;
       } else
       // If there is a next lesson date wich differs from the due date
       if (nextLessonDates.containsKey(homework.subjectDocId) &&
           nextLessonDates[homework.subjectDocId] != homework.dueDate) {
         homework.dueDate = nextLessonDates[homework.subjectDocId];
         _firestoreHomeworks.saveHomework(homework);
+        count++;
       }
     }
     notifyListeners();
+
+    FirebaseAnalytics.instance
+        .logEvent(name: 'update_due_dates', parameters: {'count': count});
   }
 
   /// Creates a new homework and stores it in Firestore and updates the local list.
@@ -111,12 +118,24 @@ class HomeworksProvider extends ChangeNotifier {
     _homeworks.add(homework);
     await _firestoreHomeworks.saveHomework(homework);
     notifyListeners();
+
+    FirebaseAnalytics.instance.logEvent(name: 'create_homework', parameters: {
+      'method': 'fast create',
+      'isExam': isExam,
+      'toNextLesson': true
+    });
   }
 
   Future<void> createHomework(Homework homework) async {
     _homeworks.add(homework);
     await _firestoreHomeworks.saveHomework(homework);
     notifyListeners();
+
+    FirebaseAnalytics.instance.logEvent(name: 'create_homework', parameters: {
+      'method': 'normal',
+      'isExam': homework.isExam,
+      'toNextLesson': homework.toNextLesson
+    });
   }
 
   /// Deletes a homework from Firestore and [_homeworks].
@@ -129,6 +148,11 @@ class HomeworksProvider extends ChangeNotifier {
       await _firestoreHomeworks.deleteHomework(homework.documentId);
       _homeworks.removeAt(index);
       notifyListeners();
+
+      FirebaseAnalytics.instance.logEvent(name: 'delete_homework', parameters: {
+        'isCompleted': homework.isCompleted,
+        'isExam': homework.isExam,
+      });
     } else {
       print('Homework with id ${homework.id} not found.');
       print('Current homeworks: ${_homeworks.map((hw) => hw.id).join(', ')}');
@@ -157,6 +181,16 @@ class HomeworksProvider extends ChangeNotifier {
       _homeworks[index].isCompleted = true;
       await _firestoreHomeworks.saveHomework(_homeworks[index]);
       notifyListeners();
+
+      FirebaseAnalytics.instance
+          .logEvent(name: 'complete_homework', parameters: {
+        'isExam': homework.isExam,
+        'isPastDue': homework.dueDate != null &&
+            homework.dueDate!.isBefore(DateTime.now()),
+        if (homework.dueDate != null)
+          'isPastDueBy':
+              '${DateTime.now().difference(homework.dueDate!).inHours}h'
+      });
     } else {
       print('Homework with id ${homework.id} not found.');
       print('Current homeworks: ${_homeworks.map((hw) => hw.id).join(', ')}');
