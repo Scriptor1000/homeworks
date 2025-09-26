@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../provider/credential_provider.dart';
 import '../../database/models/credentials.dart';
+import '../../utilities/enums.dart';
 import '../../widgets/credential_form.dart';
 import '../../widgets/fab.dart';
 import '../../widgets/info_box.dart';
@@ -65,17 +66,18 @@ class _UntisLoginState extends State<UntisLogin> {
     setState(() {
       _loginState = LoginState.loading;
     });
-    try {
-      await context.read<CredentialProvider>().setCredentials(_credentials!);
+    CredentialProvider provider = context.read<CredentialProvider>();
+    await provider.setCredentials(_credentials!);
 
-      // TODO maybe straight to upload or import?
-      if (mounted) {
+    // TODO maybe straight to upload or import?
+    if (mounted) {
+      if (provider.sessionState == UntisSessionState.accomplished) {
         context.pop();
+      } else {
+        setState(() {
+          _loginState = LoginState.none;
+        });
       }
-    } on Exception {
-      setState(() {
-        _loginState = LoginState.none;
-      });
     }
   }
 
