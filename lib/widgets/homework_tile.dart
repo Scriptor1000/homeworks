@@ -103,10 +103,6 @@ class HomeworkTile extends StatelessWidget {
                   context
                       .read<HomeworksProvider>()
                       .newDueDate(homework, subject.nextLesson!);
-
-                  FirebaseAnalytics.instance.logEvent(
-                    name: 'revive_homework',
-                  );
                 },
                 icon: Icon(Icons.replay_rounded)),
           homework.isCompleted

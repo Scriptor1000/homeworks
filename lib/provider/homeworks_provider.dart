@@ -104,7 +104,7 @@ class HomeworksProvider extends ChangeNotifier {
     for (final prefix in examPrefixes) {
       if (title.startsWith(prefix)) {
         isExam = true;
-        title = title.replaceAll(prefix, '').trim();
+        title = title.replaceFirst(prefix, '').trim();
         break;
       }
     }

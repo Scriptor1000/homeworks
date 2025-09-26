@@ -39,7 +39,7 @@ class AnalyticsService {
     required bool isCompleted,
     Duration? isPastDueBy,
   }) async {
-    await _analytics.logEvent(name: 'complete_homework', parameters: {
+    await _analytics.logEvent(name: 'delete_homework', parameters: {
       'isExam': isExam,
       'isPastDue': isPastDue,
       'isCompleted': isCompleted,

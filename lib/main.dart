@@ -36,7 +36,7 @@ void main() async {
     return true;
   };
 
-  FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(!kDebugMode);
+  FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(kReleaseMode);
 
   runApp(const MainApp());
 }
