@@ -65,7 +65,7 @@ class HomeworksProvider extends ChangeNotifier {
     for (var homework in _homeworks) {
       // Check if homework is addressed
       if (!homework.toNextLesson ||
-          !homework.fromUntis ||
+          homework.fromUntis ||
           (homework.dueDate != null && homework.dueDate!.isBefore(now))) {
         continue;
       }
