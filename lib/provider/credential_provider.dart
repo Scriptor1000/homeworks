@@ -1,4 +1,5 @@
 import 'package:dart_untis_mobile/dart_untis_mobile.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -146,14 +147,10 @@ class CredentialProvider extends ChangeNotifier {
   /// after encrypting them with the provided [password].
   Future<void> uploadCredentialsOnline(String password) async {
     if (_credentials == null) return;
-    try {
-      await _firestoreCredentials.saveCredentials(_credentials!, password);
-      _credentialsOnlineStatus = CredentailsOnlineStatus.online;
-    } catch (e) {
-      print('Error uploading credentials online: $e');
-    } finally {
-      notifyListeners();
-    }
+    await _firestoreCredentials.saveCredentials(_credentials!, password);
+    _credentialsOnlineStatus = CredentailsOnlineStatus.online;
+
+    notifyListeners();
   }
 
   Future<void> _loadOnlineStatus() async {
@@ -176,9 +173,11 @@ class CredentialProvider extends ChangeNotifier {
           }
         }
       }
-    } catch (e) {
+    } catch (error, stackTrace) {
       _credentialsOnlineStatus = CredentailsOnlineStatus.error;
-      print('Error checking credentials online status: $e');
+      print('Error checking credentials online status: $error');
+      FirebaseCrashlytics.instance.recordError(error, stackTrace,
+          reason: 'Checking credentials online');
     } finally {
       notifyListeners();
     }

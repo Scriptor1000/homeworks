@@ -29,12 +29,7 @@ class HomeworksProvider extends ChangeNotifier {
   /// This method should be called at the start of the application to ensure data is loaded or
   /// to refresh the data.
   Future<void> initialize() async {
-    try {
-      await _loadHomeworks();
-    } catch (e) {
-      print('Error loading Firestore data: $e');
-      rethrow;
-    }
+    await _loadHomeworks();
     notifyListeners();
   }
 

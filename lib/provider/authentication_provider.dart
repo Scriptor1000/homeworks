@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 
 import 'package:google_sign_in/google_sign_in.dart';
@@ -53,8 +54,11 @@ class AuthenticationProvider extends ChangeNotifier {
       } else {
         googleSignInState = GoogleSignInState.notSupported;
       }
-    } catch (error) {
-      print('Google Sign-In Initialisierungsfehler: $error');
+    } catch (error, stackTrace) {
+      if (kDebugMode) {
+        print('Google Sign-In Initialisierungsfehler: $error');
+      }
+      FirebaseCrashlytics.instance.recordError(error, stackTrace, fatal: false);
       googleSignInState = GoogleSignInState.error;
     }
     notifyListeners();
@@ -115,9 +119,10 @@ class AuthenticationProvider extends ChangeNotifier {
         await _allowedEmails.removeTemporaryEntries(googleUser.email, user.uid);
       }
       notifyListeners();
-    } catch (error) {
+    } catch (error, stackTrace) {
       print('Google Sign-In Fehler: $error');
       // TODO Future.error
+      FirebaseCrashlytics.instance.recordError(error, stackTrace, fatal: false);
 
       await _googleSignIn.disconnect();
       await _firebaseAuth.signOut();
@@ -153,7 +158,8 @@ class AuthenticationProvider extends ChangeNotifier {
       await _allowedEmails.authorizeEmail(googleUser.email, user.uid);
 
       notifyListeners();
-    } catch (error) {
+    } catch (error, stackTrace) {
+      FirebaseCrashlytics.instance.recordError(error, stackTrace, fatal: false);
       print('Google Verknüpfungsfehler: $error');
       showSnackBar('Fehler bei der Verknüpfung: $error');
     }
@@ -171,14 +177,9 @@ class AuthenticationProvider extends ChangeNotifier {
       return;
     }
 
-    try {
-      await user.unlink('google.com');
-      await _googleSignIn.disconnect();
-      await _allowedEmails.revokeEmail(user.uid);
-    } catch (error) {
-      print('Google Trennung fehlgeschlagen: $error');
-      showSnackBar('Fehler bei der Trennung: $error');
-    }
+    await user.unlink('google.com');
+    await _googleSignIn.disconnect();
+    await _allowedEmails.revokeEmail(user.uid);
   }
 
   /// Signs out the currently signed-in user from their Google account.
@@ -186,12 +187,8 @@ class AuthenticationProvider extends ChangeNotifier {
   /// In future sign ins, the user will have to select their Google account again.
   /// This method does not unlink the Firebase user from their Google account.
   Future<void> signOut() async {
-    try {
-      await _googleSignIn.disconnect();
-      await _firebaseAuth.signOut();
-    } catch (error) {
-      print('Google Abmeldung fehlgeschlagen: $error');
-    }
+    await _googleSignIn.disconnect();
+    await _firebaseAuth.signOut();
   }
 
   Future<void> loginWithEmail(String email, String password) async {
