@@ -3,18 +3,19 @@ import 'package:homeworks/database/homeworks.dart';
 import 'package:homeworks/database/models/homework.dart';
 import 'package:homeworks/database/models/subject.dart';
 import 'package:homeworks/provider/homeworks_provider.dart';
+import 'package:homeworks/utilities/analytics_service.dart';
 import 'package:homeworks/utilities/constants.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
 import 'homeworks_provider_test.mocks.dart';
 
-@GenerateNiceMocks([
-  MockSpec<FirestoreHomeworks>(),
-])
+@GenerateNiceMocks(
+    [MockSpec<FirestoreHomeworks>(), MockSpec<AnalyticsService>()])
 void main() {
   group('Homeworks Provider:', () {
     late FirestoreHomeworks mockFirestoreHomeworks;
+    late AnalyticsService mockAnalyticsService;
     late HomeworksProvider homeworksProvider;
 
     final now = DateTime.now();
@@ -28,8 +29,10 @@ void main() {
 
     setUp(() {
       mockFirestoreHomeworks = MockFirestoreHomeworks();
-      homeworksProvider =
-          HomeworksProvider(firestoreHomeworks: mockFirestoreHomeworks);
+      mockAnalyticsService = MockAnalyticsService();
+      homeworksProvider = HomeworksProvider(
+          firestoreHomeworks: mockFirestoreHomeworks,
+          analyticsService: mockAnalyticsService);
     });
 
     final toDeleteHomeworks = [
@@ -192,6 +195,7 @@ void main() {
       verify(mockFirestoreHomeworks.saveHomework(homeworks[4])).called(1);
       verify(mockFirestoreHomeworks.saveHomework(homeworks[5])).called(1);
       verify(mockFirestoreHomeworks.saveHomework(homeworks[6])).called(1);
+      verify(mockAnalyticsService.updateDueDates(3)).called(1);
       verifyNoMoreInteractions(mockFirestoreHomeworks);
     });
 
@@ -218,12 +222,15 @@ void main() {
       await homeworksProvider.newDueDate(homework, dueDate);
       // verify
       expect(homeworksProvider.homeworks[0].dueDate, equals(dueDate));
-      // the original homework was given as refernece and is updated too
+      // the original homework was given as reference and is updated too
       expect(homework.dueDate, equals(dueDate));
       verify(mockFirestoreHomeworks.saveHomework(homework)).called(1);
+      verify(mockAnalyticsService.reviveHomework(isExam: homework.isExam))
+          .called(1);
     });
 
-    test('should not throw an if no homework to updadate due date was found',
+    test(
+        'should not throw an error if no homework to update due date was found',
         () {
       // setup
       final homework = Homework(
@@ -240,6 +247,7 @@ void main() {
       expect(homeworksProvider.newDueDate(homework, dueDate), completes);
       // verify
       verifyNever(mockFirestoreHomeworks.saveHomework(homework));
+      verifyNever(mockAnalyticsService.reviveHomework(isExam: homework.isExam));
     });
 
     test('should create Homework just with current Subject', () async {
@@ -260,6 +268,9 @@ void main() {
       expect(homework.subjectDocId, equals('untis_42'));
       expect(homework.title, equals('LB.S.pi/e'));
       verify(mockFirestoreHomeworks.saveHomework(homework)).called(1);
+      verify(mockAnalyticsService.createHomework(
+              isExam: false, isToNextLesson: true, isCreatedFast: true))
+          .called(1);
     });
 
     test('should recognize a test by prefixes', () async {
@@ -275,19 +286,20 @@ void main() {
       final prefixes = examPrefixes;
       // test
       for (final prefix in prefixes) {
-        homeworksProvider =
-            HomeworksProvider(firestoreHomeworks: mockFirestoreHomeworks);
         await homeworksProvider.fastCreateHomework(
             '$prefix irgendwas', testSubject);
-        // verify
-        expect(homeworksProvider.homeworks.length, equals(prefixes.length));
-        for (final homework in homeworksProvider.homeworks) {
-          expect(homework.subjectDocId, equals('untis_42'));
-          expect(homework.title, equals('irgendwas'));
-          expect(homework.isExam, isTrue);
-          verify(mockFirestoreHomeworks.saveHomework(homework)).called(1);
-        }
       }
+      // verify
+      expect(homeworksProvider.homeworks.length, equals(prefixes.length));
+      for (final homework in homeworksProvider.homeworks) {
+        expect(homework.subjectDocId, equals('untis_42'));
+        expect(homework.title, equals('irgendwas'));
+        expect(homework.isExam, isTrue);
+        verify(mockFirestoreHomeworks.saveHomework(homework)).called(1);
+      }
+      verify(mockAnalyticsService.createHomework(
+              isExam: true, isToNextLesson: true, isCreatedFast: true))
+          .called(prefixes.length);
     });
 
     test('should save homework in memory and in database', () async {
@@ -333,6 +345,12 @@ void main() {
       expect(homeworksProvider.homeworks.length, equals(1));
       expect(homeworksProvider.homeworks[0].isCompleted, isTrue);
       verify(mockFirestoreHomeworks.saveHomework(homework)).called(1);
+      verify(mockAnalyticsService.completeHomework(
+              isExam: homework.isExam,
+              isPastDue: homework.dueDate != null &&
+                  homework.dueDate!.isBefore(DateTime.now()),
+              isPastDueBy: anyNamed('isPastDueBy')))
+          .called(1);
     });
 
     test('should not throw an error if no homework was found to complete',
@@ -351,6 +369,7 @@ void main() {
       expect(homeworksProvider.completeHomework(homework), completes);
       // verify
       verifyNever(mockFirestoreHomeworks.saveHomework(homework));
+      verifyZeroInteractions(mockAnalyticsService);
     });
 
     test('should delete a homework from memory and database', () async {
@@ -377,6 +396,12 @@ void main() {
       expect(homeworksProvider.homeworks.length, equals(0));
       verify(mockFirestoreHomeworks.deleteHomework(homework.documentId))
           .called(1);
+      verify(mockAnalyticsService.deleteHomework(
+          isExam: homework.isExam,
+          isPastDue: homework.dueDate != null &&
+              homework.dueDate!.isBefore(DateTime.now()),
+          isPastDueBy: anyNamed('isPastDueBy'),
+          isCompleted: homework.isCompleted));
     });
 
     test('should not throw an error if no homework was found to delete', () {
@@ -394,6 +419,7 @@ void main() {
       expect(homeworksProvider.deleteHomework(homework), completes);
       // verify
       verifyNever(mockFirestoreHomeworks.deleteHomework(homework.documentId));
+      verifyZeroInteractions(mockAnalyticsService);
     });
   });
 }

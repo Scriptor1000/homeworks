@@ -1,9 +1,9 @@
-import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/material.dart';
 
 import '../database/homeworks.dart';
 import '../database/models/homework.dart';
 import '../database/models/subject.dart';
+import '../utilities/analytics_service.dart';
 import '../utilities/homeworks_list.dart';
 import '../utilities/constants.dart';
 
@@ -12,9 +12,13 @@ class HomeworksProvider extends ChangeNotifier {
   bool _homeworksLoaded = false;
 
   final FirestoreHomeworks _firestoreHomeworks;
+  final AnalyticsService _analyticsService;
 
-  HomeworksProvider({required FirestoreHomeworks firestoreHomeworks})
-      : _firestoreHomeworks = firestoreHomeworks;
+  HomeworksProvider(
+      {required FirestoreHomeworks firestoreHomeworks,
+      required AnalyticsService analyticsService})
+      : _firestoreHomeworks = firestoreHomeworks,
+        _analyticsService = analyticsService;
 
   /// The list of homeworks wich have a due date.
   ///
@@ -86,8 +90,7 @@ class HomeworksProvider extends ChangeNotifier {
     }
     notifyListeners();
 
-    FirebaseAnalytics.instance
-        .logEvent(name: 'update_due_dates', parameters: {'count': count});
+    _analyticsService.updateDueDates(count);
   }
 
   /// Creates a new homework and stores it in Firestore and updates the local list.
@@ -101,7 +104,7 @@ class HomeworksProvider extends ChangeNotifier {
     for (final prefix in examPrefixes) {
       if (title.startsWith(prefix)) {
         isExam = true;
-        title = title.replaceAll(prefix, '');
+        title = title.replaceAll(prefix, '').trim();
         break;
       }
     }
@@ -119,11 +122,8 @@ class HomeworksProvider extends ChangeNotifier {
     await _firestoreHomeworks.saveHomework(homework);
     notifyListeners();
 
-    FirebaseAnalytics.instance.logEvent(name: 'create_homework', parameters: {
-      'method': 'fast create',
-      'isExam': isExam,
-      'toNextLesson': true
-    });
+    _analyticsService.createHomework(
+        isExam: isExam, isToNextLesson: true, isCreatedFast: true);
   }
 
   Future<void> createHomework(Homework homework) async {
@@ -131,11 +131,10 @@ class HomeworksProvider extends ChangeNotifier {
     await _firestoreHomeworks.saveHomework(homework);
     notifyListeners();
 
-    FirebaseAnalytics.instance.logEvent(name: 'create_homework', parameters: {
-      'method': 'normal',
-      'isExam': homework.isExam,
-      'toNextLesson': homework.toNextLesson
-    });
+    _analyticsService.createHomework(
+        isExam: homework.isExam,
+        isToNextLesson: homework.toNextLesson,
+        isCreatedFast: false);
   }
 
   /// Deletes a homework from Firestore and [_homeworks].
@@ -149,10 +148,14 @@ class HomeworksProvider extends ChangeNotifier {
       _homeworks.removeAt(index);
       notifyListeners();
 
-      FirebaseAnalytics.instance.logEvent(name: 'delete_homework', parameters: {
-        'isCompleted': homework.isCompleted,
-        'isExam': homework.isExam,
-      });
+      _analyticsService.deleteHomework(
+          isExam: homework.isExam,
+          isPastDue: homework.dueDate != null &&
+              homework.dueDate!.isBefore(DateTime.now()),
+          isPastDueBy: homework.dueDate != null
+              ? DateTime.now().difference(homework.dueDate!)
+              : null,
+          isCompleted: homework.isCompleted);
     } else {
       print('Homework with id ${homework.id} not found.');
       print('Current homeworks: ${_homeworks.map((hw) => hw.id).join(', ')}');
@@ -169,6 +172,9 @@ class HomeworksProvider extends ChangeNotifier {
       _homeworks[index].dueDate = dueDate;
       await _firestoreHomeworks.saveHomework(_homeworks[index]);
       notifyListeners();
+
+      // because this functions is only called when a homework is revived
+      _analyticsService.reviveHomework(isExam: homework.isExam);
     } else {
       print('Homework with id ${homework.id} not found.');
       print('Current homeworks: ${_homeworks.map((hw) => hw.id).join(', ')}');
@@ -182,15 +188,13 @@ class HomeworksProvider extends ChangeNotifier {
       await _firestoreHomeworks.saveHomework(_homeworks[index]);
       notifyListeners();
 
-      FirebaseAnalytics.instance
-          .logEvent(name: 'complete_homework', parameters: {
-        'isExam': homework.isExam,
-        'isPastDue': homework.dueDate != null &&
-            homework.dueDate!.isBefore(DateTime.now()),
-        if (homework.dueDate != null)
-          'isPastDueBy':
-              '${DateTime.now().difference(homework.dueDate!).inHours}h'
-      });
+      _analyticsService.completeHomework(
+          isExam: homework.isExam,
+          isPastDue: homework.dueDate != null &&
+              homework.dueDate!.isBefore(DateTime.now()),
+          isPastDueBy: homework.dueDate != null
+              ? DateTime.now().difference(homework.dueDate!)
+              : null);
     } else {
       print('Homework with id ${homework.id} not found.');
       print('Current homeworks: ${_homeworks.map((hw) => hw.id).join(', ')}');
