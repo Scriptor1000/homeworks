@@ -88,14 +88,34 @@ class HomeworkTile extends StatelessWidget {
           width: 3,
         ),
       ),
-      trailing: homework.isCompleted
-          ? const Icon(Icons.check_circle, color: Colors.green)
-          : IconButton(
-              onPressed: () {
-                context.read<HomeworksProvider>().completeHomework(homework);
-                onCompleted();
-              },
-              icon: const Icon(Icons.circle_outlined, color: Colors.grey)),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (homework.dueDate != null &&
+              homework.dueDate!.isBefore(DateTime.now()) &&
+              !homework.isCompleted &&
+              homework.toNextLesson &&
+              subject != null &&
+              subject.nextLesson != null)
+            IconButton(
+                onPressed: () {
+                  context
+                      .read<HomeworksProvider>()
+                      .newDueDate(homework, subject.nextLesson!);
+                },
+                icon: Icon(Icons.replay_rounded)),
+          homework.isCompleted
+              ? const Icon(Icons.check_circle, color: Colors.green)
+              : IconButton(
+                  onPressed: () {
+                    context
+                        .read<HomeworksProvider>()
+                        .completeHomework(homework);
+                    onCompleted();
+                  },
+                  icon: const Icon(Icons.circle_outlined, color: Colors.grey)),
+        ],
+      ),
     );
   }
 }
