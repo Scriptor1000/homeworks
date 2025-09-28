@@ -4,13 +4,11 @@ import 'package:provider/provider.dart';
 
 import '../../provider/credential_provider.dart';
 import '../../database/models/credentials.dart';
-import '../../utilities/enums.dart';
+import '../../utilities/global_snackbar.dart';
 import '../../widgets/credential_form.dart';
 import '../../widgets/fab.dart';
 import '../../widgets/info_box.dart';
 import '../../widgets/own_progress_indicator.dart';
-
-enum LoginState { none, loading, success }
 
 /// A widget for logging into Untis and creating a session.
 ///
@@ -24,16 +22,13 @@ class UntisLogin extends StatefulWidget {
 }
 
 class _UntisLoginState extends State<UntisLogin> {
-  LoginState _loginState = LoginState.none;
-  UntisCredentials? _credentials;
-
   final _formKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   final _schoolController = TextEditingController();
   final _serverController = TextEditingController();
 
-  bool value = false;
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -56,7 +51,7 @@ class _UntisLoginState extends State<UntisLogin> {
     if (!_formKey.currentState!.validate()) {
       return;
     }
-    _credentials = UntisCredentials(
+    final credentials = UntisCredentials(
       username: _usernameController.text,
       school: _schoolController.text,
       password: _passwordController.text,
@@ -64,21 +59,21 @@ class _UntisLoginState extends State<UntisLogin> {
     );
 
     setState(() {
-      _loginState = LoginState.loading;
+      _isLoading = true;
     });
     CredentialProvider provider = context.read<CredentialProvider>();
-    await provider.setCredentials(_credentials!);
+    await provider.setCredentials(credentials).then((_) {
+      if (mounted) {
+        context.pop();
+      }
+    }).onError((error, _) {
+      setState(() {
+        showSnackBar('Fehler: $error');
+        _isLoading = false;
+      });
+    });
 
     // TODO maybe straight to upload or import?
-    if (mounted) {
-      if (provider.sessionState == UntisSessionState.accomplished) {
-        context.pop();
-      } else {
-        setState(() {
-          _loginState = LoginState.none;
-        });
-      }
-    }
   }
 
   @override
@@ -90,7 +85,7 @@ class _UntisLoginState extends State<UntisLogin> {
       body: Column(
         children: [
           OwnProgressIndicator(
-            active: _loginState == LoginState.loading || value,
+            active: _isLoading,
             backgroundColor: Theme.of(context).colorScheme.surface,
           ),
           Expanded(
@@ -126,24 +121,10 @@ class _UntisLoginState extends State<UntisLogin> {
       ),
       floatingActionButton: ExtendedFAB(
           onClick: submit,
-          active: _loginState == LoginState.none,
+          active: !_isLoading,
           icon: Icons.login,
           label: 'Session erstellen und lokal speichern'),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
-  }
-
-  Widget buildCheckBox() {
-    return CheckboxListTile(
-        title: const Text('Progress Indicator überschreiben'),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        value: value,
-        onChanged: (bool? newValue) {
-          setState(() {
-            value = newValue!;
-          });
-        });
   }
 }

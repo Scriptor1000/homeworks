@@ -1,3 +1,4 @@
+import 'package:cryptography/cryptography.dart';
 import 'package:dart_untis_mobile/dart_untis_mobile.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
@@ -74,9 +75,12 @@ class CredentialProvider extends ChangeNotifier {
 
   Future<void> setCredentials(UntisCredentials credentials) async {
     _credentials = credentials;
-    await _saveCredentialsLocal();
     await _createSession();
-    notifyListeners();
+    if (_sessionState == UntisSessionState.error) {
+      _credentials = null;
+      return Future.error('Anmeldung fehlgeschlagen.');
+    }
+    await _saveCredentialsLocal();
     _loadOnlineStatus();
   }
 
@@ -124,21 +128,24 @@ class CredentialProvider extends ChangeNotifier {
   /// It uses the [FirestoreCredentials] class to fetch the credentials and
   /// decrypt them using the provided [password].
   Future<void> loadCredentialsOnline(String password) async {
+    late final UntisCredentials? storedCredentials;
     try {
-      final storedCredentials =
-          await _firestoreCredentials.loadCredentials(password);
-      if (storedCredentials == null) {
-        return Future.error('Keine Anmeldedaten gefunden.');
-      }
-
-      _credentials = storedCredentials;
-      await _saveCredentialsLocal();
-      await _createSession();
-      _loadOnlineStatus();
-    } catch (e) {
-      print('Error loading credentials online: $e');
-      return Future.error(e);
+      storedCredentials = await _firestoreCredentials.loadCredentials(password);
+    } on SecretBoxAuthenticationError catch (_) {
+      return Future.error('Falsches Passwort.');
     }
+    if (storedCredentials == null) {
+      return Future.error('Keine Anmeldedaten gefunden.');
+    }
+
+    _credentials = storedCredentials;
+    await _createSession();
+    if (_sessionState == UntisSessionState.error) {
+      _credentials = null;
+      return Future.error('Anmeldung fehlgeschlagen.');
+    }
+    await _saveCredentialsLocal();
+    _loadOnlineStatus();
   }
 
   /// Uploads the current credentials to Firestore.
