@@ -1,9 +1,9 @@
 import 'package:cryptography/cryptography.dart';
 import 'package:dart_untis_mobile/dart_untis_mobile.dart';
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 
 import '../database/credentials.dart';
 import '../database/models/credentials.dart';
@@ -183,8 +183,10 @@ class CredentialProvider extends ChangeNotifier {
     } catch (error, stackTrace) {
       _credentialsOnlineStatus = CredentailsOnlineStatus.error;
       print('Error checking credentials online status: $error');
-      FirebaseCrashlytics.instance.recordError(error, stackTrace,
-          reason: 'Checking credentials online');
+      Sentry.captureException(
+        error,
+        stackTrace: stackTrace,
+      );
     } finally {
       notifyListeners();
     }

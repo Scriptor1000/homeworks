@@ -2,9 +2,11 @@ import 'dart:async';
 
 import 'package:animations/animations.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 
 import '../auth/login.dart';
 import '../database/models/subject.dart';
@@ -35,6 +37,10 @@ String get _authLocation => const AuthRoute().location;
 final appRouter = GoRouter(
   initialLocation:
       FirebaseAuth.instance.currentUser == null ? _authLocation : _homeLocation,
+  observers: [
+    SentryNavigatorObserver(),
+    FirebaseAnalyticsObserver(analytics: FirebaseAnalytics.instance),
+  ],
   refreshListenable: _refreshStream,
   redirect: (context, state) {
     final bool isLoggedIn = FirebaseAuth.instance.currentUser != null;

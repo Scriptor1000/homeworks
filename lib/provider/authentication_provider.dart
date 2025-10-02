@@ -1,10 +1,9 @@
 import 'dart:async';
 
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
-
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 
 import '../database/allowed_emails.dart';
 import '../utilities/enums.dart';
@@ -58,7 +57,10 @@ class AuthenticationProvider extends ChangeNotifier {
       if (kDebugMode) {
         print('Google Sign-In Initialisierungsfehler: $error');
       }
-      FirebaseCrashlytics.instance.recordError(error, stackTrace, fatal: false);
+      Sentry.captureException(
+        error,
+        stackTrace: stackTrace,
+      );
       googleSignInState = GoogleSignInState.error;
     }
     notifyListeners();
@@ -122,7 +124,10 @@ class AuthenticationProvider extends ChangeNotifier {
     } catch (error, stackTrace) {
       print('Google Sign-In Fehler: $error');
       // TODO Future.error
-      FirebaseCrashlytics.instance.recordError(error, stackTrace, fatal: false);
+      Sentry.captureException(
+        error,
+        stackTrace: stackTrace,
+      );
 
       await _googleSignIn.disconnect();
       await _firebaseAuth.signOut();
@@ -159,7 +164,10 @@ class AuthenticationProvider extends ChangeNotifier {
 
       notifyListeners();
     } catch (error, stackTrace) {
-      FirebaseCrashlytics.instance.recordError(error, stackTrace, fatal: false);
+      Sentry.captureException(
+        error,
+        stackTrace: stackTrace,
+      );
       print('Google Verknüpfungsfehler: $error');
       showSnackBar('Fehler bei der Verknüpfung: $error');
     }

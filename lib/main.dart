@@ -3,13 +3,13 @@ import 'package:dynamic_color/dynamic_color.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:provider/provider.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 
 import 'database/allowed_emails.dart';
 import 'firebase_options.dart';
@@ -29,16 +29,20 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
-
-  PlatformDispatcher.instance.onError = (error, stack) {
-    FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
-    return true;
-  };
-
   FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(kReleaseMode);
 
-  runApp(const MainApp());
+  await SentryFlutter.init(
+    (options) {
+      options.dsn = kDebugMode
+          ? null // Disable Sentry in debug mode
+          : 'https://2937d7b0e20d869f78933ba866a6c078@o4510119803092992.ingest.de.sentry.io/4510119812661328';
+      options.environment = kDebugMode ? 'development' : 'production';
+      options.tracesSampleRate = 0.0; // Performance-Tracking aus
+      options.enableAutoSessionTracking = true;
+      options.attachStacktrace = true;
+    },
+    appRunner: () => runApp(const MainApp()),
+  );
 }
 
 class MainApp extends StatelessWidget {

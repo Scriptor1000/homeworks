@@ -2,10 +2,10 @@ import 'dart:async';
 
 import 'package:collection/collection.dart';
 import 'package:dart_untis_mobile/dart_untis_mobile.dart';
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 
 import '../database/models/credentials.dart';
 import '../utilities/enums.dart';
@@ -155,8 +155,10 @@ class UntisProvider extends ChangeNotifier {
     } catch (error, stackTrace) {
       _untisSubjectStatus = UntisSubjectStatus.error;
       print('Error loading timetable: $error');
-      FirebaseCrashlytics.instance
-          .recordError(error, stackTrace, reason: 'Loading timetable');
+      Sentry.captureException(
+        error,
+        stackTrace: stackTrace,
+      );
     } finally {
       notifyListeners();
     }
