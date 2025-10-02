@@ -42,6 +42,7 @@ class SubjectProvider extends ChangeNotifier {
     if (!untisProvider.untisSubjectsLoaded) {
       _untisSubjects = [];
       _untisSubjectStatus = untisProvider.untisSubjectStatus;
+      notifyListeners();
       return;
     }
     _untisSubjects = untisProvider.untisSubjects;

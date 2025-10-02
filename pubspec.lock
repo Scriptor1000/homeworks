@@ -285,10 +285,10 @@ packages:
     dependency: "direct main"
     description:
       name: dart_untis_mobile
-      sha256: "535047a9498aa7cd1358d61ceaf01d04d445399ad6be6f5ef4c4f69ed0e9c92e"
+      sha256: "8ec93971ddc1fc2ec0ef0078bf588667352bde768ed19ebf870e3e9a66ec8d5b"
       url: "https://pub.dev"
     source: hosted
-    version: "1.0.1"
+    version: "1.1.0"
   dynamic_color:
     dependency: "direct main"
     description:
