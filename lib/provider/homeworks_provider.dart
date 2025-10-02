@@ -6,6 +6,7 @@ import '../database/models/subject.dart';
 import '../utilities/analytics_service.dart';
 import '../utilities/homeworks_list.dart';
 import '../utilities/constants.dart';
+import 'untis_provider.dart';
 
 class HomeworksProvider extends ChangeNotifier {
   List<Homework> _homeworks = [];
@@ -59,8 +60,11 @@ class HomeworksProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> updateDueDates(
-      Map<String, DateTime> nextLessonDates, DateTime scanRange) async {
+  Future<void> updateDueDates(UntisProvider untisProvider) async {
+    if (!untisProvider.untisSubjectsLoaded) {
+      return;
+    }
+    final nextLessonDates = untisProvider.getNextLessonDates();
     final now = DateTime.now();
     int count = 0;
     for (var homework in _homeworks) {
@@ -75,7 +79,7 @@ class HomeworksProvider extends ChangeNotifier {
       // the due date is in the scan range
       if (!nextLessonDates.containsKey(homework.subjectDocId) &&
           homework.dueDate != null &&
-          homework.dueDate!.isBefore(scanRange)) {
+          homework.dueDate!.isBefore(untisProvider.endDate)) {
         homework.dueDate = null;
         _firestoreHomeworks.saveHomework(homework);
         count++;

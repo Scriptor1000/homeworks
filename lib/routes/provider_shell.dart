@@ -78,9 +78,7 @@ class ProviderShell extends StatelessWidget {
             analyticsService: analyticsService,
           )..initialize(),
           update: (_, untisProvider, previous) =>
-              (previous
-                ?..updateDueDates(untisProvider.getNextLessonDates(),
-                    untisProvider.endDate)) ??
+              (previous?..updateDueDates(untisProvider)) ??
               HomeworksProvider(
                 firestoreHomeworks: firestoreHomeworks,
                 analyticsService: analyticsService,

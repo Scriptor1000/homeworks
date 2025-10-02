@@ -3,6 +3,7 @@ import 'package:homeworks/database/homeworks.dart';
 import 'package:homeworks/database/models/homework.dart';
 import 'package:homeworks/database/models/subject.dart';
 import 'package:homeworks/provider/homeworks_provider.dart';
+import 'package:homeworks/provider/untis_provider.dart';
 import 'package:homeworks/utilities/analytics_service.dart';
 import 'package:homeworks/utilities/constants.dart';
 import 'package:mockito/annotations.dart';
@@ -10,8 +11,11 @@ import 'package:mockito/mockito.dart';
 
 import 'homeworks_provider_test.mocks.dart';
 
-@GenerateNiceMocks(
-    [MockSpec<FirestoreHomeworks>(), MockSpec<AnalyticsService>()])
+@GenerateNiceMocks([
+  MockSpec<FirestoreHomeworks>(),
+  MockSpec<AnalyticsService>(),
+  MockSpec<UntisProvider>()
+])
 void main() {
   group('Homeworks Provider:', () {
     late FirestoreHomeworks mockFirestoreHomeworks;
@@ -153,13 +157,16 @@ void main() {
         }
         return Future.value(homeworks);
       });
-      final nextLessonDates = {
+      final mockUntisProvider = MockUntisProvider();
+      when(mockUntisProvider.untisSubjectsLoaded).thenReturn(true);
+      when(mockUntisProvider.endDate).thenReturn(now.add(scanRange));
+      when(mockUntisProvider.getNextLessonDates()).thenReturn({
         'untis_0': yesterdayNew,
         'untis_1': inRangeNew,
         'untis_2': inRangeNew,
         'untis_4': inRangeNew,
         'untis_6': inRangeNew,
-      };
+      });
 
       await homeworksProvider.initialize();
       // verify setup
@@ -167,8 +174,7 @@ void main() {
       expect(homeworksProvider.homeworksLoaded, isTrue);
       verify(mockFirestoreHomeworks.loadAllHomeworks()).called(1);
       // test
-      await homeworksProvider.updateDueDates(
-          nextLessonDates, now.add(scanRange));
+      await homeworksProvider.updateDueDates(mockUntisProvider);
       // verify
       final homeworks = homeworksProvider.homeworks;
       expect(homeworks[0].dueDate, equals(yesterday),
@@ -196,6 +202,30 @@ void main() {
       verify(mockFirestoreHomeworks.saveHomework(homeworks[5])).called(1);
       verify(mockFirestoreHomeworks.saveHomework(homeworks[6])).called(1);
       verify(mockAnalyticsService.updateDueDates(3)).called(1);
+      verify(mockUntisProvider.untisSubjectsLoaded).called(1);
+      verify(mockUntisProvider.getNextLessonDates()).called(1);
+      verifyNoMoreInteractions(mockFirestoreHomeworks);
+    });
+
+    test('should not update due dates if subject loading is not completed',
+        () async {
+      // setup
+      when(mockFirestoreHomeworks.loadAllHomeworks())
+          .thenAnswer((_) async => toDeleteHomeworks);
+      final mockUntisProvider = MockUntisProvider();
+      when(mockUntisProvider.untisSubjectsLoaded).thenReturn(false);
+
+      await homeworksProvider.initialize();
+      // verify setup
+      expect(homeworksProvider.homeworks.length, equals(3));
+      expect(homeworksProvider.homeworksLoaded, isTrue);
+      verify(mockFirestoreHomeworks.loadAllHomeworks()).called(1);
+      // test
+      await homeworksProvider.updateDueDates(mockUntisProvider);
+      // verify
+      verify(mockUntisProvider.untisSubjectsLoaded).called(1);
+      verifyNever(mockUntisProvider.getNextLessonDates());
+      verifyNoMoreInteractions(mockUntisProvider);
       verifyNoMoreInteractions(mockFirestoreHomeworks);
     });
 
