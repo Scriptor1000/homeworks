@@ -2,9 +2,11 @@ import 'dart:async';
 
 import 'package:animations/animations.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 
 import '../auth/login.dart';
 import '../database/models/subject.dart';
@@ -35,6 +37,10 @@ String get _authLocation => const AuthRoute().location;
 final appRouter = GoRouter(
   initialLocation:
       FirebaseAuth.instance.currentUser == null ? _authLocation : _homeLocation,
+  observers: [
+    SentryNavigatorObserver(),
+    FirebaseAnalyticsObserver(analytics: FirebaseAnalytics.instance),
+  ],
   refreshListenable: _refreshStream,
   redirect: (context, state) {
     final bool isLoggedIn = FirebaseAuth.instance.currentUser != null;
@@ -58,7 +64,7 @@ final appRouter = GoRouter(
 );
 
 @TypedGoRoute<AuthRoute>(path: '/auth')
-class AuthRoute extends GoRouteData with _$AuthRoute {
+class AuthRoute extends GoRouteData with $AuthRoute {
   const AuthRoute();
 
   @override
@@ -146,7 +152,7 @@ class NavigationShellRoute extends ShellRouteData {
 }
 
 // Home Routes
-class HomeRoute extends GoRouteData with _$HomeRoute {
+class HomeRoute extends GoRouteData with $HomeRoute {
   const HomeRoute();
 
   @override
@@ -158,7 +164,7 @@ class HomeRoute extends GoRouteData with _$HomeRoute {
   }
 }
 
-class CreateHomeworkRoute extends GoRouteData with _$CreateHomeworkRoute {
+class CreateHomeworkRoute extends GoRouteData with $CreateHomeworkRoute {
   const CreateHomeworkRoute();
 
   @override
@@ -167,7 +173,7 @@ class CreateHomeworkRoute extends GoRouteData with _$CreateHomeworkRoute {
   }
 }
 
-class SubjectSelectionRoute extends GoRouteData with _$SubjectSelectionRoute {
+class SubjectSelectionRoute extends GoRouteData with $SubjectSelectionRoute {
   /// Callback wich is called when a subject is selected.
   ///
   /// The callback receives the selected [Subject] or [Null]
@@ -195,7 +201,7 @@ class SubjectSelectionRoute extends GoRouteData with _$SubjectSelectionRoute {
 }
 
 // Untis Routes
-class UntisRoute extends GoRouteData with _$UntisRoute {
+class UntisRoute extends GoRouteData with $UntisRoute {
   const UntisRoute();
 
   @override
@@ -207,7 +213,7 @@ class UntisRoute extends GoRouteData with _$UntisRoute {
   }
 }
 
-class EnterCredentialsRoute extends GoRouteData with _$EnterCredentialsRoute {
+class EnterCredentialsRoute extends GoRouteData with $EnterCredentialsRoute {
   const EnterCredentialsRoute();
 
   @override
@@ -216,7 +222,7 @@ class EnterCredentialsRoute extends GoRouteData with _$EnterCredentialsRoute {
   }
 }
 
-class UploadCredentialsRoute extends GoRouteData with _$UploadCredentialsRoute {
+class UploadCredentialsRoute extends GoRouteData with $UploadCredentialsRoute {
   const UploadCredentialsRoute();
 
   @override
@@ -226,7 +232,7 @@ class UploadCredentialsRoute extends GoRouteData with _$UploadCredentialsRoute {
 }
 
 class DownloadCredentialsRoute extends GoRouteData
-    with _$DownloadCredentialsRoute {
+    with $DownloadCredentialsRoute {
   const DownloadCredentialsRoute();
 
   @override
@@ -236,7 +242,7 @@ class DownloadCredentialsRoute extends GoRouteData
 }
 
 // Account Route
-class AccountRoute extends GoRouteData with _$AccountRoute {
+class AccountRoute extends GoRouteData with $AccountRoute {
   const AccountRoute();
 
   @override

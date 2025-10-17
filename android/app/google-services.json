@@ -1,6 +1,7 @@
 {
   "project_info": {
     "project_number": "626284965826",
+    "firebase_url": "https://homework-manager-untis-default-rtdb.europe-west1.firebasedatabase.app",
     "project_id": "homework-manager-untis",
     "storage_bucket": "homework-manager-untis.firebasestorage.app"
   },
@@ -13,6 +14,14 @@
         }
       },
       "oauth_client": [
+        {
+          "client_id": "626284965826-ra90km7h0l4378c3b2kfn2etb6ajvrut.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.max.homeworks",
+            "certificate_hash": "d088b4f7657a9ae2798ab151ddf470ca035e38cf"
+          }
+        },
         {
           "client_id": "626284965826-iovj6s0lvft551f3d6ahdr6qkoc53njg.apps.googleusercontent.com",
           "client_type": 3

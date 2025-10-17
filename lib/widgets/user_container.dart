@@ -433,20 +433,16 @@ class _UserContainerState extends State<UserContainer> {
     );
 
     // Wenn der Nutzer abgebrochen hat oder der Dialog anderweitig geschlossen wurde
-    if (confirm != true) return;
+    if (confirm != true || !mounted) return;
 
     setState(() {
       isGoogleLoading = true;
     });
-    try {
-      await context.read<AuthenticationProvider>().unlinkFromGoogle();
-    } catch (e) {
-      print('Fehler beim Trennen von Google: $e');
-    } finally {
-      setState(() {
-        isGoogleLoading = false;
-      });
-    }
+    await context.read<AuthenticationProvider>().unlinkFromGoogle();
+
+    setState(() {
+      isGoogleLoading = false;
+    });
   }
 
   Future<void> _setupEmailPassword() async {
@@ -468,25 +464,9 @@ class _UserContainerState extends State<UserContainer> {
   }
 
   Future<void> _signOut() async {
-    final authProvider = context.read<AuthenticationProvider>();
-    final user = authProvider.user;
-    final hasGoogle =
-        user?.providerData.any((e) => e.providerId == 'google.com') ?? false;
+    await context.read<CredentialProvider>().clearCredentialsLocal();
+    await context.read<AuthenticationProvider>().signOut();
 
-    try {
-      // Credentials löschen
-      await context.read<CredentialProvider>().clearCredentialsLocal();
-
-      // Abmelden von Google, falls verknüpft
-      if (hasGoogle) {
-        await authProvider.signOut();
-      } else {
-        // Firebase-Abmeldung über Provider (falls vorhanden)
-        await authProvider.signOut();
-      }
-      showSnackBar('Erfolgreich abgemeldet');
-    } catch (e) {
-      showSnackBar('Fehler beim Abmelden: $e');
-    }
+    showSnackBar('Erfolgreich abgemeldet');
   }
 }

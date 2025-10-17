@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../provider/credential_provider.dart';
 import '../../utilities/enums.dart';
+import '../../utilities/global_snackbar.dart';
 import '../../widgets/credential_form.dart';
 import '../../widgets/fab.dart';
 import '../../widgets/own_progress_indicator.dart';
@@ -24,7 +25,6 @@ class _LoadCredentialsState extends State<LoadCredentials> {
   final _userPasswordController = TextEditingController();
 
   bool _isLoading = false;
-  String _errorMessage = '';
 
   @override
   void initState() {
@@ -39,38 +39,32 @@ class _LoadCredentialsState extends State<LoadCredentials> {
 
   Future<void> _loadCredentials() async {
     if (_userPasswordController.text.isEmpty) {
-      setState(() {
-        _errorMessage = 'Bitte gib dein Benutzerpasswort ein';
-      });
+      showSnackBar('Bitte gib dein Benutzerpasswort ein');
       return;
     }
 
     setState(() {
       _isLoading = true;
-      _errorMessage = '';
     });
 
     context
         .read<CredentialProvider>()
         .loadCredentialsOnline(_userPasswordController.text)
-        .onError((error, stackTrace) {
+        .then((_) {
+      if (mounted) {
+        context.pop();
+      }
+    }).onError((error, stackTrace) {
       setState(() {
-        _errorMessage = error.toString();
+        showSnackBar('Fehler: $error');
         _isLoading = false;
       });
-    }).then((_) => setState(() {
-              _isLoading = false;
-            }));
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     var credentialProvider = context.watch<CredentialProvider>();
-    if (credentialProvider.sessionState == UntisSessionState.accomplished) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        context.pop();
-      });
-    }
     return Scaffold(
       appBar: AppBar(
         title: const Text('Gespeicherte Anmeldedaten laden'),
@@ -120,19 +114,6 @@ class _LoadCredentialsState extends State<LoadCredentials> {
                           initialCredentials: credentialProvider.credentials,
                           disabled: true,
                         ),
-                      ),
-
-                      standardGap(),
-
-                      Container(
-                        alignment: Alignment.topLeft,
-                        child: _errorMessage.isNotEmpty
-                            ? Text(
-                                _errorMessage,
-                                style: TextStyle(
-                                    color: Theme.of(context).colorScheme.error),
-                              )
-                            : null,
                       ),
                       buildFABGap()
                     ],
