@@ -16,20 +16,25 @@ class AnalyticsService {
       required bool isToNextLesson,
       required bool isCreatedFast}) async {
     await _analytics.logEvent(name: 'create_homework', parameters: {
-      'isExam': isExam,
-      'isToNextLesson': isToNextLesson,
+      'type': isExam ? 'exam' : 'homework',
       'method': isCreatedFast ? 'fast create' : 'normal'
     });
   }
 
   Future<void> completeHomework(
-      {required bool isExam,
-      required bool isPastDue,
-      Duration? isPastDueBy}) async {
+      {required bool isExam, Duration? isPastDueBy}) async {
     await _analytics.logEvent(name: 'complete_homework', parameters: {
-      'isExam': isExam,
-      'isPastDue': isPastDue,
+      'type': isExam ? 'exam' : 'homework',
       if (isPastDueBy != null) 'isPastDueByMin': isPastDueBy.inMinutes,
+    });
+  }
+
+  Future<void> completeAndDeleteHomework(
+      {required bool isExam, required Duration isPastDueBy}) async {
+    await _analytics
+        .logEvent(name: 'complete_and_delete_homework', parameters: {
+      'type': isExam ? 'exam' : 'homework',
+      'isPastDueByMin': isPastDueBy.inMinutes,
     });
   }
 
@@ -40,15 +45,15 @@ class AnalyticsService {
     Duration? isPastDueBy,
   }) async {
     await _analytics.logEvent(name: 'delete_homework', parameters: {
-      'isExam': isExam,
-      'isPastDue': isPastDue,
-      'isCompleted': isCompleted,
+      'type': isExam ? 'exam' : 'homework',
+      'status': isCompleted ? 'completed' : 'not completed',
       if (isPastDueBy != null) 'isPastDueByMin': isPastDueBy.inMinutes,
     });
   }
 
   Future<void> reviveHomework({required bool isExam}) async {
-    await _analytics
-        .logEvent(name: 'revive_homework', parameters: {'isExam': isExam});
+    await _analytics.logEvent(
+        name: 'revive_homework',
+        parameters: {'type': isExam ? 'exam' : 'homework'});
   }
 }

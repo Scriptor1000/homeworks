@@ -196,14 +196,22 @@ class HomeworksProvider extends ChangeNotifier {
   Future<void> completeHomework(Homework homework) async {
     final index = _homeworks.indexWhere((hw) => hw.id == homework.id);
     if (index != -1) {
+      if (_homeworks[index].dueDate != null &&
+          _homeworks[index].dueDate!.isBefore(DateTime.now())) {
+        _homeworks.removeAt(index);
+        await _firestoreHomeworks.deleteHomework(homework.documentId);
+        notifyListeners();
+
+        _analyticsService.completeAndDeleteHomework(
+            isExam: homework.isExam,
+            isPastDueBy: DateTime.now().difference(homework.dueDate!));
+      }
       _homeworks[index].isCompleted = true;
       await _firestoreHomeworks.saveHomework(_homeworks[index]);
       notifyListeners();
 
       _analyticsService.completeHomework(
           isExam: homework.isExam,
-          isPastDue: homework.dueDate != null &&
-              homework.dueDate!.isBefore(DateTime.now()),
           isPastDueBy: homework.dueDate != null
               ? DateTime.now().difference(homework.dueDate!)
               : null);
