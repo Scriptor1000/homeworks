@@ -40,7 +40,6 @@ class AnalyticsService {
 
   Future<void> deleteHomework({
     required bool isExam,
-    required bool isPastDue,
     required bool isCompleted,
     Duration? isPastDueBy,
   }) async {

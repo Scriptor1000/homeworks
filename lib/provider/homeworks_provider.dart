@@ -162,8 +162,6 @@ class HomeworksProvider extends ChangeNotifier {
 
       _analyticsService.deleteHomework(
           isExam: homework.isExam,
-          isPastDue: homework.dueDate != null &&
-              homework.dueDate!.isBefore(DateTime.now()),
           isPastDueBy: homework.dueDate != null
               ? DateTime.now().difference(homework.dueDate!)
               : null,
@@ -205,16 +203,17 @@ class HomeworksProvider extends ChangeNotifier {
         _analyticsService.completeAndDeleteHomework(
             isExam: homework.isExam,
             isPastDueBy: DateTime.now().difference(homework.dueDate!));
-      }
-      _homeworks[index].isCompleted = true;
-      await _firestoreHomeworks.saveHomework(_homeworks[index]);
-      notifyListeners();
+      } else {
+        _homeworks[index].isCompleted = true;
+        await _firestoreHomeworks.saveHomework(_homeworks[index]);
+        notifyListeners();
 
-      _analyticsService.completeHomework(
-          isExam: homework.isExam,
-          isPastDueBy: homework.dueDate != null
-              ? DateTime.now().difference(homework.dueDate!)
-              : null);
+        _analyticsService.completeHomework(
+            isExam: homework.isExam,
+            isPastDueBy: homework.dueDate != null
+                ? DateTime.now().difference(homework.dueDate!)
+                : null);
+      }
     } else {
       print('Homework with id ${homework.id} not found.');
       print('Current homeworks: ${_homeworks.map((hw) => hw.id).join(', ')}');
