@@ -18,7 +18,7 @@ import '../database/models/subject.dart';
 class UntisProvider extends ChangeNotifier {
   UntisSession? _session;
 
-  List<UntisPeriod> todayPeriods = [];
+  List<UntisPeriod> _todayPeriods = [];
   List<Subject> _untisSubjects = [];
   UntisSubjectStatus _untisSubjectStatus = UntisSubjectStatus.untisUnavailable;
 
@@ -47,18 +47,27 @@ class UntisProvider extends ChangeNotifier {
   /// - [UntisSubjectStatus.error]: An error occurred while loading Untis subjects.
   UntisSubjectStatus get untisSubjectStatus => _untisSubjectStatus;
 
+  /// All subjects witch happen today.
+  List<Subject> get todaySubjects => _todayPeriods
+      .where((period) =>
+          !period.isCancelled &&
+          period.subject != null &&
+          period.teacher != null)
+      .map((period) => Subject.fromUntisSubject(period.subject!))
+      .toList();
+
   /// Whether the Untis subjects are loaded and available.
   bool get untisSubjectsLoaded =>
       _untisSubjectStatus == UntisSubjectStatus.loaded;
 
-  /// Checks the [todayPeriods] and returns the current subject based on the current time.
+  /// Checks the [_todayPeriods] and returns the current subject based on the current time.
   ///
   /// The current subject is determined as the last period which started before now and ended in the last 30 minutes.
   /// This uses [lastWhereOrNull] to ensure that if multiple periods match, the most recent one (closest to now) is selected,
   /// which is important for single periods without a pause between.
   Subject? getCurrentSubject() {
     final now = DateTime.now();
-    final currentPeriod = todayPeriods.lastWhereOrNull(
+    final currentPeriod = _todayPeriods.lastWhereOrNull(
       (period) =>
           !period.isCancelled &&
           period.teacher != null &&
@@ -109,7 +118,7 @@ class UntisProvider extends ChangeNotifier {
           DateTime(startDate.year, startDate.month, startDate.day + 1);
 
       // the periods today are loaded extra to find the current subject simpler
-      todayPeriods = await _session!
+      _todayPeriods = await _session!
           .getTimetable(
             startDate: startDate,
             endDate: startDate,
@@ -118,6 +127,11 @@ class UntisProvider extends ChangeNotifier {
 
       final timetable =
           await _session!.getTimetable(startDate: startDate, endDate: endDate);
+      final exams = await _session!.getExams(
+        startDate: startDate,
+        endDate: endDate,
+      );
+      print(exams);
       for (var period in timetable.periods) {
         if (period.subject == null) {
           continue;

@@ -65,13 +65,21 @@ class HomeworksProvider extends ChangeNotifier {
       return;
     }
     final nextLessonDates = untisProvider.getNextLessonDates();
+    final todaySubjects = untisProvider.todaySubjects;
     final now = DateTime.now();
     int count = 0;
+
+    bool isPastDue(DateTime? dueDate) =>
+        dueDate != null && dueDate.isBefore(now);
+    bool happensToday(Homework homework) =>
+        todaySubjects.any((s) => s.documentId == homework.subjectDocId);
+
     for (var homework in _homeworks) {
       // Check if homework is addressed
       if (!homework.toNextLesson ||
           homework.fromUntis ||
-          (homework.dueDate != null && homework.dueDate!.isBefore(now))) {
+          isPastDue(homework.dueDate) ||
+          happensToday(homework)) {
         continue;
       }
 
