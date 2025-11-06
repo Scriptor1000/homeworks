@@ -24,6 +24,7 @@ void main() async {
   // GoRouter.optionURLReflectsImperativeAPIs = true;
 
   WidgetsFlutterBinding.ensureInitialized();
+  // SentryWidgetsFlutterBinding.ensureInitialized();
   usePathUrlStrategy();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
@@ -31,18 +32,22 @@ void main() async {
 
   FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(kReleaseMode);
 
-  await SentryFlutter.init(
-    (options) {
-      options.dsn = kDebugMode
-          ? null // Disable Sentry in debug mode
-          : 'https://2937d7b0e20d869f78933ba866a6c078@o4510119803092992.ingest.de.sentry.io/4510119812661328';
-      options.environment = kDebugMode ? 'development' : 'production';
-      options.tracesSampleRate = 0.0; // Performance-Tracking aus
-      options.enableAutoSessionTracking = true;
-      options.attachStacktrace = true;
-    },
-    appRunner: () => runApp(const MainApp()),
-  );
+  if (kDebugMode) {
+    runApp(const MainApp());
+  } else {
+    await SentryFlutter.init(
+      (options) {
+        options.dsn =
+            'https://2937d7b0e20d869f78933ba866a6c078@o4510119803092992.ingest.de.sentry.io/4510119812661328';
+        options.environment = kDebugMode ? 'development' : 'production';
+        options.tracesSampleRate = 0.0; // Performance-Tracking aus
+        options.enableAutoSessionTracking = true;
+        options.attachStacktrace = true;
+        options.replay.onErrorSampleRate = 0.2;
+      },
+      appRunner: () => runApp(const MainApp()),
+    );
+  }
 }
 
 class MainApp extends StatelessWidget {
