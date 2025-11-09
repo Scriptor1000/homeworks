@@ -73,7 +73,7 @@ void main() {
       verify(mockFirestoreSubjects.saveSubject(newSubject)).called(1);
     });
 
-    test('should delete a  subject from firestore and memory', () async {
+    test('should delete a subject from firestore and memory', () async {
       // setup
       final subjectToDelete = firestoreSubjects[0];
       await subjectProvider.initialize();

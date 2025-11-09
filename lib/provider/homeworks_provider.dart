@@ -21,7 +21,7 @@ class HomeworksProvider extends ChangeNotifier {
       : _firestoreHomeworks = firestoreHomeworks,
         _analyticsService = analyticsService;
 
-  /// The list of homeworks wich have a due date.
+  /// The list of homeworks which have a due date.
   ///
   /// This list is unmodifiable because any change should be done through the methods of this provider.
   Homeworks get homeworks =>
@@ -92,7 +92,7 @@ class HomeworksProvider extends ChangeNotifier {
         _firestoreHomeworks.saveHomework(homework);
         count++;
       } else
-      // If there is a next lesson date wich differs from the due date
+      // If there is a next lesson date which differs from the due date
       if (nextLessonDates.containsKey(homework.subjectDocId) &&
           nextLessonDates[homework.subjectDocId] != homework.dueDate) {
         homework.dueDate = nextLessonDates[homework.subjectDocId];

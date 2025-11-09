@@ -114,8 +114,6 @@ class UntisProvider extends ChangeNotifier {
       // negative is vice versa (start and end date are swapped)
       DateTime startDate = DateTime.now();
       DateTime endDate = startDate.add(_range);
-      DateTime todayNight =
-          DateTime(startDate.year, startDate.month, startDate.day + 1);
 
       // the periods today are loaded extra to find the current subject simpler
       _todayPeriods = await _session!
@@ -167,9 +165,9 @@ class UntisProvider extends ChangeNotifier {
       }
       _untisSubjects.add(subject);
 
-      // if a not cancelled period is before the next lesson (wich shouldn't be the case because
-      // the periods should be ordered) or there is't a next lesson (wich could be because the
-      // first lesson in wich the subject was found was cancelled) then the next lesson is updated
+      // if a not cancelled period is before the next lesson (which shouldn't be the case because
+      // the periods should be ordered) or there isn't a next lesson (which could be because the
+      // first lesson in which the subject was found was cancelled) then the next lesson is updated
     } else if (!isCancelled &&
         (listedSubject.nextLesson == null ||
             period.startDateTime.isBefore(listedSubject.nextLesson!)) &&

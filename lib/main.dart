@@ -20,7 +20,7 @@ import 'utilities/global_snackbar.dart';
 
 void main() async {
   // The following line enables that the URL shows the last route on the stack,
-  // even if it was pushed. Stanard behavior is that the URL only shows routes you [go] to.
+  // even if it was pushed. Standard behavior is that the URL only shows routes you [go] to.
   // GoRouter.optionURLReflectsImperativeAPIs = true;
 
   SentryWidgetsFlutterBinding.ensureInitialized();
@@ -38,7 +38,7 @@ void main() async {
       (options) {
         options.dsn =
             'https://2937d7b0e20d869f78933ba866a6c078@o4510119803092992.ingest.de.sentry.io/4510119812661328';
-        options.environment = kDebugMode ? 'development' : 'production';
+        options.environment = 'production';
         options.tracesSampleRate = 0.0; // Performance-Tracking aus
         options.enableAutoSessionTracking = true;
         options.attachStacktrace = true;
