@@ -43,7 +43,7 @@ MockUntisPeriod createMockUntisPeriod({
   MockSpec<UntisTeacher>(),
 ])
 void main() {
-  group('Untis Provider ', () {
+  group('Untis Provider:', () {
     late MockUntisSession mockUntisSession;
     late UntisProvider untisProvider;
     late MockUntisTimetable todayTimetable;
