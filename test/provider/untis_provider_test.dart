@@ -200,7 +200,7 @@ void main() {
     }
 
     Future<void> currentSubjectTest(
-        List<DateTime> endDates, DateTime? exptected) async {
+        List<DateTime> endDates, DateTime? expected) async {
       // setup
       final List<UntisPeriod> todayPeriods =
           endDates.map((date) => createPeriodFromDate(date)).toList();
@@ -211,11 +211,11 @@ void main() {
       await pumpEventQueue();
       final currentSubject = untisProvider.getCurrentSubject();
       // verify
-      if (exptected == null) {
+      if (expected == null) {
         expect(currentSubject, isNull);
       } else {
         expect(currentSubject, isNotNull);
-        expect(currentSubject!.name, equals(exptected.toIso8601String()));
+        expect(currentSubject!.name, equals(expected.toIso8601String()));
       }
     }
 
@@ -230,7 +230,7 @@ void main() {
     });
 
     test(
-        'should return no current subject when the last one has ended 30 midutes (or later) ago',
+        'should return no current subject when the last one has ended 30 minutes (or later) ago',
         () async {
       await currentSubjectTest([
         now.subtract(const Duration(minutes: 35)),

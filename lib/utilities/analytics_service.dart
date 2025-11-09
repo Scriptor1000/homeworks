@@ -29,7 +29,7 @@ class AnalyticsService {
     });
   }
 
-  /// Logs the event of completing an homework.
+  /// Logs the event of completing a homework.
   ///
   /// The parameter [isExam] indicates whether the homework is an exam.
   /// The Parameter [isPastDueBy] is optional and indicates by how much time the homework was past due when completed.
@@ -41,10 +41,10 @@ class AnalyticsService {
     });
   }
 
-  /// Logs the event of completing an homework which is then deleted.
+  /// Logs the event of completing a homework which is then deleted.
   ///
   /// The parameter [isExam] indicates whether the homework is an exam.
-  /// The Parameter [isPastDueBy] is here required because a homework is delete if it is
+  /// The Parameter [isPastDueBy] is here required because a homework is deleted if it is
   /// completed and past due, so this information is always available.
   Future<void> completeAndDeleteHomework(
       {required bool isExam, required Duration isPastDueBy}) async {
@@ -55,7 +55,7 @@ class AnalyticsService {
     });
   }
 
-  /// Logs the event of manually deleting an homework.
+  /// Logs the event of manually deleting a homework.
   ///
   /// The parameter [isExam] indicates whether the homework is an exam.
   /// The parameter [isCompleted] indicates whether the homework was completed before deletion.
@@ -72,7 +72,7 @@ class AnalyticsService {
     });
   }
 
-  /// Logs the event of reviving an homework.
+  /// Logs the event of reviving a homework.
   ///
   /// The parameter [isExam] indicates whether the homework is an exam.
   Future<void> reviveHomework({required bool isExam}) async {
