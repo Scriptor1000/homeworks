@@ -23,8 +23,7 @@ void main() async {
   // even if it was pushed. Stanard behavior is that the URL only shows routes you [go] to.
   // GoRouter.optionURLReflectsImperativeAPIs = true;
 
-  WidgetsFlutterBinding.ensureInitialized();
-  // SentryWidgetsFlutterBinding.ensureInitialized();
+  SentryWidgetsFlutterBinding.ensureInitialized();
   usePathUrlStrategy();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
@@ -45,7 +44,7 @@ void main() async {
         options.attachStacktrace = true;
         options.replay.onErrorSampleRate = 0.2;
       },
-      appRunner: () => runApp(const MainApp()),
+      appRunner: () => runApp(SentryWidget(child: const MainApp())),
     );
   }
 }

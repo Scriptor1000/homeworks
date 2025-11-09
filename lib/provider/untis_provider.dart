@@ -47,7 +47,7 @@ class UntisProvider extends ChangeNotifier {
   /// - [UntisSubjectStatus.error]: An error occurred while loading Untis subjects.
   UntisSubjectStatus get untisSubjectStatus => _untisSubjectStatus;
 
-  /// All subjects witch happen today.
+  /// All subjects which happen today.
   List<Subject> get todaySubjects => _todayPeriods
       .where((period) =>
           !period.isCancelled &&
@@ -131,7 +131,9 @@ class UntisProvider extends ChangeNotifier {
         startDate: startDate,
         endDate: endDate,
       );
-      print(exams);
+      if (kDebugMode) {
+        print(exams);
+      }
       for (var period in timetable.periods) {
         if (period.subject == null) {
           continue;

@@ -76,7 +76,7 @@ void main() {
       expect(untisProvider.getCurrentSubject(), isNull);
     });
 
-    test('should filter today periods wich are canceled', () async {
+    test('should filter today periods which are canceled', () async {
       // setup
       int listenerCallsCounter = 0;
       final todayPeriods = <UntisPeriod>[
@@ -95,7 +95,7 @@ void main() {
           start: now,
         ),
         createMockUntisPeriod(
-          // wihtout teacher
+          // without teacher
           subjectName: 'Science',
           isCancelled: false,
           withTeacher: false,
@@ -127,7 +127,7 @@ void main() {
       expect(untisProvider.untisSubjects.length, equals(0));
     });
 
-    test('should select the earliest next lesson wich is not cancelled',
+    test('should select the earliest next lesson which is not cancelled',
         () async {
       int listenerCallsCounter = 0;
       final earlierValidTime = now.add(const Duration(days: 2));
@@ -199,15 +199,11 @@ void main() {
       );
     }
 
-    test(
-        'should return the last subject when it enden less than 30 minutes ago',
-        () async {
+    Future<void> currentSubjectTest(
+        List<DateTime> endDates, DateTime? exptected) async {
       // setup
-      final todayPeriods = <UntisPeriod>[
-        createPeriodFromDate(now.subtract(const Duration(minutes: 10))),
-        createPeriodFromDate(now.subtract(const Duration(minutes: 50))),
-        createPeriodFromDate(now.subtract(const Duration(hours: 1))),
-      ];
+      final List<UntisPeriod> todayPeriods =
+          endDates.map((date) => createPeriodFromDate(date)).toList();
       when(todayTimetable.periods).thenReturn(todayPeriods);
       // test
       untisProvider.updateCredentials(mockUntisSession);
@@ -215,28 +211,41 @@ void main() {
       await pumpEventQueue();
       final currentSubject = untisProvider.getCurrentSubject();
       // verify
-      expect(currentSubject, isNotNull);
-      expect(currentSubject!.name,
-          equals(now.subtract(const Duration(minutes: 10)).toIso8601String()));
+      if (exptected == null) {
+        expect(currentSubject, isNull);
+      } else {
+        expect(currentSubject, isNotNull);
+        expect(currentSubject!.name, equals(exptected.toIso8601String()));
+      }
+    }
+
+    test(
+        'should return the last subject when it ended  less than 30 minutes ago',
+        () async {
+      await currentSubjectTest([
+        now.subtract(const Duration(minutes: 10)),
+        now.subtract(const Duration(minutes: 50)),
+        now.subtract(const Duration(hours: 1)),
+      ], now.subtract(const Duration(minutes: 10)));
     });
 
     test(
-        'should return no current subject when the last one has enden 30 minutes (or later) ago',
+        'should return no current subject when the last one has ended 30 midutes (or later) ago',
         () async {
-      // setup
-      final todayPeriods = <UntisPeriod>[
-        createPeriodFromDate(now.subtract(const Duration(minutes: 35))),
-        createPeriodFromDate(now.subtract(const Duration(hours: 1))),
-        createPeriodFromDate(now.subtract(const Duration(hours: 2))),
-      ];
-      when(todayTimetable.periods).thenReturn(todayPeriods);
-      // test
-      untisProvider.updateCredentials(mockUntisSession);
-      // wait for all async operations to complete
-      await pumpEventQueue();
-      final currentSubject = untisProvider.getCurrentSubject();
-      // verify
-      expect(currentSubject, isNull);
+      await currentSubjectTest([
+        now.subtract(const Duration(minutes: 35)),
+        now.subtract(const Duration(hours: 1)),
+        now.subtract(const Duration(hours: 2)),
+      ], null);
+    });
+
+    test('should return the most recent subject when there are more than one',
+        () async {
+      await currentSubjectTest([
+        now.add(const Duration(minutes: 5)),
+        now.add(const Duration(minutes: 10)),
+        now.add(const Duration(minutes: 15)),
+      ], now.add(const Duration(minutes: 15)));
     });
 
     test('should return no current subject when there is no valid period ',
@@ -268,27 +277,6 @@ void main() {
       final currentSubject = untisProvider.getCurrentSubject();
       // verify
       expect(currentSubject, isNull);
-    });
-
-    test('should return the most recent subject when there are more than one',
-        () async {
-      // setup
-      final todayPeriods = <UntisPeriod>[
-        createPeriodFromDate(now.add(const Duration(minutes: 5))),
-        createPeriodFromDate(now.add(const Duration(minutes: 10))),
-        // most recent because the end is in 15 minutes
-        createPeriodFromDate(now.add(const Duration(minutes: 15))),
-      ];
-      when(todayTimetable.periods).thenReturn(todayPeriods);
-      // test
-      untisProvider.updateCredentials(mockUntisSession);
-      // wait for all async operations to complete
-      await pumpEventQueue();
-      final currentSubject = untisProvider.getCurrentSubject();
-      // verify
-      expect(currentSubject, isNotNull);
-      expect(currentSubject!.name,
-          equals(now.add(const Duration(minutes: 15)).toIso8601String()));
     });
   });
 }

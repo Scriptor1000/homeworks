@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:homeworks/database/homeworks.dart';
 import 'package:homeworks/database/models/homework.dart';
@@ -229,18 +230,16 @@ void main() {
       verifyNoMoreInteractions(mockFirestoreHomeworks);
     });
 
-    test('should update due date in memory and in database', () async {
-      // setup
-      final homework = Homework(
+    Future<Homework> oneHomeworkTestSetup(DateTime dueDate) async {
+      final Homework homework = Homework(
           id: '1',
           title: 'title',
           description: 'des',
           subjectDocId: 'sub',
           toNextLesson: false,
           isCompleted: false,
-          dueDate: now,
+          dueDate: dueDate,
           fromUntis: false);
-      final dueDate = now.add(const Duration(days: 5));
       when(mockFirestoreHomeworks.loadAllHomeworks())
           .thenAnswer((_) async => [homework]);
       await homeworksProvider.initialize();
@@ -248,6 +247,14 @@ void main() {
       expect(homeworksProvider.homeworks.length, equals(1));
       expect(homeworksProvider.homeworksLoaded, isTrue);
       verify(mockFirestoreHomeworks.loadAllHomeworks()).called(1);
+
+      return homework;
+    }
+
+    test('should update due date in memory and in database', () async {
+      // setup
+      final homework = await oneHomeworkTestSetup(now);
+      final dueDate = now.add(const Duration(days: 5));
       // test
       await homeworksProvider.newDueDate(homework, dueDate);
       // verify
@@ -382,22 +389,8 @@ void main() {
 
     test('should delete past due homework when it is completed', () async {
       // setup
-      final Homework homework = Homework(
-          id: '1',
-          title: 'title',
-          description: 'des',
-          subjectDocId: 'sub',
-          toNextLesson: false,
-          isCompleted: false,
-          dueDate: now.subtract(const Duration(days: 1)),
-          fromUntis: false);
-      when(mockFirestoreHomeworks.loadAllHomeworks())
-          .thenAnswer((_) async => [homework]);
-      await homeworksProvider.initialize();
-      // verify setup
-      expect(homeworksProvider.homeworks.length, equals(1));
-      expect(homeworksProvider.homeworksLoaded, isTrue);
-      verify(mockFirestoreHomeworks.loadAllHomeworks()).called(1);
+      final homework =
+          await oneHomeworkTestSetup(now.subtract(const Duration(days: 1)));
       // test
       await homeworksProvider.completeHomework(homework);
       // verify
