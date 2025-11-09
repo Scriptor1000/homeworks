@@ -189,5 +189,106 @@ void main() {
       expect(nextLessons['untis_${'Math'.hashCode}'], earlierValidTime);
       expect(nextLessons['untis_${'Science'.hashCode}'], cancelledTime);
     });
+
+    MockUntisPeriod createPeriodFromDate(DateTime endDate) {
+      return createMockUntisPeriod(
+        subjectName: endDate.toIso8601String(),
+        isCancelled: false,
+        withTeacher: true,
+        start: endDate.subtract(const Duration(minutes: 45)),
+      );
+    }
+
+    test(
+        'should return the last subject when it enden less than 30 minutes ago',
+        () async {
+      // setup
+      final todayPeriods = <UntisPeriod>[
+        createPeriodFromDate(now.subtract(const Duration(minutes: 10))),
+        createPeriodFromDate(now.subtract(const Duration(minutes: 50))),
+        createPeriodFromDate(now.subtract(const Duration(hours: 1))),
+      ];
+      when(todayTimetable.periods).thenReturn(todayPeriods);
+      // test
+      untisProvider.updateCredentials(mockUntisSession);
+      // wait for all async operations to complete
+      await pumpEventQueue();
+      final currentSubject = untisProvider.getCurrentSubject();
+      // verify
+      expect(currentSubject, isNotNull);
+      expect(currentSubject!.name,
+          equals(now.subtract(const Duration(minutes: 10)).toIso8601String()));
+    });
+
+    test(
+        'should return no current subject when the last one has enden 30 minutes (or later) ago',
+        () async {
+      // setup
+      final todayPeriods = <UntisPeriod>[
+        createPeriodFromDate(now.subtract(const Duration(minutes: 35))),
+        createPeriodFromDate(now.subtract(const Duration(hours: 1))),
+        createPeriodFromDate(now.subtract(const Duration(hours: 2))),
+      ];
+      when(todayTimetable.periods).thenReturn(todayPeriods);
+      // test
+      untisProvider.updateCredentials(mockUntisSession);
+      // wait for all async operations to complete
+      await pumpEventQueue();
+      final currentSubject = untisProvider.getCurrentSubject();
+      // verify
+      expect(currentSubject, isNull);
+    });
+
+    test('should return no current subject when there is no valid period ',
+        () async {
+      // setup
+      final todayPeriods = <UntisPeriod>[
+        createMockUntisPeriod(
+          subjectName: 'Math',
+          isCancelled: true,
+          withTeacher: true,
+          start: now.subtract(const Duration(minutes: 10)),
+        ),
+        createMockUntisPeriod(
+          subjectName: 'Science',
+          isCancelled: false,
+          withTeacher: false,
+          start: now.subtract(const Duration(minutes: 20)),
+        ),
+        createMockUntisPeriod(
+            isCancelled: false,
+            withTeacher: true,
+            start: now.subtract(const Duration(minutes: 30))),
+      ];
+      when(todayTimetable.periods).thenReturn(todayPeriods);
+      // test
+      untisProvider.updateCredentials(mockUntisSession);
+      // wait for all async operations to complete
+      await pumpEventQueue();
+      final currentSubject = untisProvider.getCurrentSubject();
+      // verify
+      expect(currentSubject, isNull);
+    });
+
+    test('should return the most recent subject when there are more than one',
+        () async {
+      // setup
+      final todayPeriods = <UntisPeriod>[
+        createPeriodFromDate(now.add(const Duration(minutes: 5))),
+        createPeriodFromDate(now.add(const Duration(minutes: 10))),
+        // most recent because the end is in 15 minutes
+        createPeriodFromDate(now.add(const Duration(minutes: 15))),
+      ];
+      when(todayTimetable.periods).thenReturn(todayPeriods);
+      // test
+      untisProvider.updateCredentials(mockUntisSession);
+      // wait for all async operations to complete
+      await pumpEventQueue();
+      final currentSubject = untisProvider.getCurrentSubject();
+      // verify
+      expect(currentSubject, isNotNull);
+      expect(currentSubject!.name,
+          equals(now.add(const Duration(minutes: 15)).toIso8601String()));
+    });
   });
 }
