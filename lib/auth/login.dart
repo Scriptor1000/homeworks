@@ -15,13 +15,21 @@ class Authentication extends StatefulWidget {
 }
 
 class _AuthenticationState extends State<Authentication> {
+  /// Controller for the email input field.
   final TextEditingController _emailController = TextEditingController();
+
+  /// Controller for the password input field.
   final TextEditingController _passwordController = TextEditingController();
+
+  /// Controls whether the password is obscured (hidden) or visible.
   bool _obscurePassword = true;
+
+  /// Indicates whether a login operation is currently in progress.
   bool _isLoading = false;
 
   @override
   void dispose() {
+    // Dispose controllers to free resources.
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -58,7 +66,7 @@ class _AuthenticationState extends State<Authentication> {
     return Scaffold(
       body: Stack(
         children: [
-          // Gradient Hintergrund
+          // Gradient background for the login screen.
           Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -73,7 +81,7 @@ class _AuthenticationState extends State<Authentication> {
             ),
           ),
 
-          // Content
+          // Main content wrapped in SafeArea to avoid notches and system UI.
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
@@ -82,7 +90,7 @@ class _AuthenticationState extends State<Authentication> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // App Logo oder Icon
+                      // App logo/icon
                       Icon(
                         Icons.school_rounded,
                         size: 80,
@@ -91,7 +99,7 @@ class _AuthenticationState extends State<Authentication> {
 
                       const SizedBox(height: 24),
 
-                      // App Name
+                      // App name/title
                       Text(
                         'Homeworks',
                         style: TextStyle(
@@ -103,7 +111,7 @@ class _AuthenticationState extends State<Authentication> {
 
                       const SizedBox(height: 48),
 
-                      // Login Card
+                      // Login Card with email/password fields and buttons
                       Container(
                         padding: const EdgeInsets.all(24.0),
                         constraints: const BoxConstraints(
@@ -124,6 +132,7 @@ class _AuthenticationState extends State<Authentication> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
+                            // Login title
                             Text(
                               'Anmeldung',
                               style: TextStyle(
@@ -134,17 +143,25 @@ class _AuthenticationState extends State<Authentication> {
                               textAlign: TextAlign.center,
                             ),
                             const SizedBox(height: 24),
+
+                            // Email input field
                             buildEmailField(colorScheme),
                             const SizedBox(height: 16),
+
+                            // Password input field
                             buildPasswordField(colorScheme),
                             const SizedBox(height: 24),
+
+                            // Login button
                             buildLoginButton(colorScheme),
                             const SizedBox(height: 20),
+
+                            // Divider with "ODER"
                             buildDivider(),
                             const SizedBox(height: 20),
-                            buildGoogleSignInButton(
-                                authProvider.googleSignInState // snapshot.data,
-                                ),
+
+                            // Google Sign-in button (or web button if needed)
+                            buildGoogleSignInButton(authProvider.googleSignInState),
                           ],
                         ),
                       ),
@@ -159,6 +176,7 @@ class _AuthenticationState extends State<Authentication> {
     );
   }
 
+  /// Builds a horizontal divider with "ODER" in the middle.
   Row buildDivider() {
     return Row(
       children: [
@@ -178,6 +196,7 @@ class _AuthenticationState extends State<Authentication> {
     );
   }
 
+  /// Builds the email input field.
   TextFormField buildEmailField(ColorScheme colorScheme) {
     return TextFormField(
       controller: _emailController,
@@ -200,6 +219,7 @@ class _AuthenticationState extends State<Authentication> {
     );
   }
 
+  /// Builds the password input field with visibility toggle.
   TextFormField buildPasswordField(ColorScheme colorScheme) {
     return TextFormField(
       controller: _passwordController,
@@ -231,6 +251,7 @@ class _AuthenticationState extends State<Authentication> {
     );
   }
 
+  /// Builds the login button with loading indicator.
   ElevatedButton buildLoginButton(ColorScheme colorScheme) {
     return ElevatedButton(
       onPressed: _isLoading ? null : _emailLogin,
@@ -245,105 +266,115 @@ class _AuthenticationState extends State<Authentication> {
       ),
       child: _isLoading
           ? const SizedBox(
-              height: 20,
-              width: 20,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-              ),
-            )
+        height: 20,
+        width: 20,
+        child: CircularProgressIndicator(
+          strokeWidth: 2,
+          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+        ),
+      )
           : const Text(
-              'Anmelden',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+        'Anmelden',
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
     );
   }
 
+  /// Builds the Google sign-in button based on the platform/state.
   Widget buildGoogleSignInButton(GoogleSignInState supported) {
     return switch (supported) {
+    // Google sign-in available
       GoogleSignInState.supported => OutlinedButton.icon(
-          onPressed: _isLoading ? null : _googleLogin,
-          icon: const FaIcon(
-            FontAwesomeIcons.google,
-            size: 18,
-          ),
-          label: const Text(
-            'Mit Google anmelden',
-            style: TextStyle(
-              fontWeight: FontWeight.w500,
-              fontSize: 16,
-            ),
-          ),
-          style: OutlinedButton.styleFrom(
-            side: BorderSide(color: Colors.grey.shade300),
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+        onPressed: _isLoading ? null : _googleLogin,
+        icon: const FaIcon(
+          FontAwesomeIcons.google,
+          size: 18,
+        ),
+        label: const Text(
+          'Mit Google anmelden',
+          style: TextStyle(
+            fontWeight: FontWeight.w500,
+            fontSize: 16,
           ),
         ),
+        style: OutlinedButton.styleFrom(
+          side: BorderSide(color: Colors.grey.shade300),
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      ),
+
+    // Google sign-in not available
       GoogleSignInState.notSupported => OutlinedButton.icon(
-          onPressed: null,
-          icon: const FaIcon(
-            FontAwesomeIcons.triangleExclamation,
-            color: Colors.red,
-            size: 18,
-          ),
-          label: const Text(
-            'Google Anmeldung nicht verfügbar',
-            style: TextStyle(color: Colors.red),
-          ),
-          style: OutlinedButton.styleFrom(
-            side: BorderSide(color: Colors.grey.shade300),
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+        onPressed: null,
+        icon: const FaIcon(
+          FontAwesomeIcons.triangleExclamation,
+          color: Colors.red,
+          size: 18,
+        ),
+        label: const Text(
+          'Google Anmeldung nicht verfügbar',
+          style: TextStyle(color: Colors.red),
+        ),
+        style: OutlinedButton.styleFrom(
+          side: BorderSide(color: Colors.grey.shade300),
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
           ),
         ),
+      ),
+
+    // Web button required for Google sign-in
       GoogleSignInState.needWebButton =>
-        SizedBox(height: 40, child: web.renderButton()),
+          SizedBox(height: 40, child: web.renderButton()),
+
+    // Error state
       GoogleSignInState.error => OutlinedButton.icon(
-          onPressed: null,
-          icon: const FaIcon(
-            FontAwesomeIcons.triangleExclamation,
-            color: Colors.red,
-            size: 18,
-          ),
-          label: const Text(
-            'Fehler',
-            style: TextStyle(color: Colors.red),
-          ),
-          style: OutlinedButton.styleFrom(
-            side: BorderSide(color: Colors.grey.shade300),
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+        onPressed: null,
+        icon: const FaIcon(
+          FontAwesomeIcons.triangleExclamation,
+          color: Colors.red,
+          size: 18,
+        ),
+        label: const Text(
+          'Fehler',
+          style: TextStyle(color: Colors.red),
+        ),
+        style: OutlinedButton.styleFrom(
+          side: BorderSide(color: Colors.grey.shade300),
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
           ),
         ),
+      ),
+
+    // Loading state
       GoogleSignInState.loading => OutlinedButton.icon(
-          onPressed: null,
-          icon: const SizedBox(
-            height: 18,
-            width: 18,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.grey),
-            ),
-          ),
-          label: const Text('Mit Google anmelden'),
-          style: OutlinedButton.styleFrom(
-            side: BorderSide(color: Colors.grey.shade300),
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+        onPressed: null,
+        icon: const SizedBox(
+          height: 18,
+          width: 18,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            valueColor: AlwaysStoppedAnimation<Color>(Colors.grey),
           ),
         ),
+        label: const Text('Mit Google anmelden'),
+        style: OutlinedButton.styleFrom(
+          side: BorderSide(color: Colors.grey.shade300),
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      ),
     };
   }
 }

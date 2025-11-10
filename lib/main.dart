@@ -16,24 +16,29 @@ import 'utilities/constants.dart';
 import 'utilities/global_snackbar.dart';
 
 void main() async {
-  // The following line enables that the URL shows the last route on the stack,
-  // even if it was pushed. Stanard behavior is that the URL only shows routes you [go] to.
-  // GoRouter.optionURLReflectsImperativeAPIs = true;
+  /// The following line enables that the URL shows the last route on the stack,
+  /// even if it was pushed. Standard behavior is that the URL only shows routes you [go] to.
+  /// GoRouter.optionURLReflectsImperativeAPIs = true;
 
-  WidgetsFlutterBinding.ensureInitialized();
-  usePathUrlStrategy();
+  WidgetsFlutterBinding.ensureInitialized(); // initialize every binding to prevent errors
+  usePathUrlStrategy(); // no hash in url
+
   await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
+    options: DefaultFirebaseOptions.currentPlatform, // connect project with Firebase
   );
 
-  runApp(const MainApp());
+  runApp(const MainApp()); // start the app and display MainApp as the root of the widget tree
 }
 
+/// Root widget of the application.
+/// Sets up theming, localization, routing, and authentication provider wrapper.
 class MainApp extends StatelessWidget {
   const MainApp({super.key});
 
   @override
   Widget build(BuildContext context) {
+    // DynamicColorBuilder automatically adapts the app colors to system theme
+    // (Android 12+), falling back to a seeded color scheme otherwise.
     return DynamicColorBuilder(builder: (light, dark) {
       light ??= ColorScheme.fromSeed(
         seedColor: Colors.blue,
@@ -44,9 +49,11 @@ class MainApp extends StatelessWidget {
         brightness: Brightness.dark,
       );
 
+      // Wrap the MaterialApp in the authentication provider shell
+      // so the whole widget tree has access to AuthenticationProvider.
       return authenticationProviderShell(
         child: MaterialApp.router(
-          scaffoldMessengerKey: scaffoldMessengerKey,
+          scaffoldMessengerKey: scaffoldMessengerKey, // Snackbar manager
           localizationsDelegates: const [
             GlobalMaterialLocalizations.delegate,
             GlobalWidgetsLocalizations.delegate,
@@ -54,8 +61,8 @@ class MainApp extends StatelessWidget {
           ],
           theme: _buildTheme(light, Brightness.light),
           darkTheme: _buildTheme(dark, Brightness.dark),
-          themeMode: ThemeMode.system,
-          routerConfig: appRouter,
+          themeMode: ThemeMode.system, // Use system light/dark preference
+          routerConfig: appRouter, // Main router
           supportedLocales: const [
             Locale('de', 'DE'),
             Locale('en', 'US'),
@@ -66,47 +73,62 @@ class MainApp extends StatelessWidget {
     });
   }
 
+  /// Builds and returns a customized theme for a given ColorScheme and brightness.
+  /// Standardizes look of text fields, tiles, borders, etc.
   ThemeData _buildTheme(ColorScheme colorScheme, Brightness brightness) {
     var standardInputBorder = OutlineInputBorder(
       borderRadius: BorderRadius.circular(BorderRadiusConstants.textFields),
       borderSide: const BorderSide(color: Colors.grey),
     );
+
     return ThemeData(
       colorScheme: colorScheme,
       brightness: brightness,
-      useMaterial3: true,
+      useMaterial3: true, // Use Material 3 design
       listTileTheme: ListTileThemeData(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(BorderRadiusConstants.listTiles),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
-          border: standardInputBorder,
-          enabledBorder: standardInputBorder,
-          focusedBorder: OutlineInputBorder(
-            borderRadius: standardInputBorder.borderRadius,
-            borderSide: BorderSide(
-              color: colorScheme.primary,
-              width: 2,
-            ),
+        border: standardInputBorder,
+        enabledBorder: standardInputBorder,
+        focusedBorder: OutlineInputBorder(
+          borderRadius: standardInputBorder.borderRadius,
+          borderSide: BorderSide(
+            color: colorScheme.primary,
+            width: 2,
           ),
-          disabledBorder: standardInputBorder),
+        ),
+        disabledBorder: standardInputBorder,
+      ),
     );
   }
 }
 
+///
+/// Provides the AuthenticationProvider to the widget tree.
+/// Initializes FirebaseAuth, GoogleSignIn, and allowed email list,
+/// then exposes them via ChangeNotifierProvider.
+///
+/// This ensures authentication state and logic is available everywhere.
+///
 Widget authenticationProviderShell({required Widget child}) {
-  final firebaseAuth = FirebaseAuth.instance;
-  final googleSignIn = GoogleSignIn.instance;
-  final allowedEmails =
-      FirestoreAllowedEmails(firestore: FirebaseFirestore.instance);
+  final firebaseAuth = FirebaseAuth.instance;  // Get the shared Firebase Authentication instance
+  final googleSignIn = GoogleSignIn.instance;  // Get the shared Google Sign-In service
 
+  // Create helper to check Firestore for allowed email accounts
+  final allowedEmails =
+  FirestoreAllowedEmails(firestore: FirebaseFirestore.instance);
+
+  // Provide AuthenticationProvider to descendant widgets
+  // and run initialize() right away (.. syntax = cascade)
   return ChangeNotifierProvider<AuthenticationProvider>(
     create: (BuildContext context) => AuthenticationProvider(
-        firebaseAuth: firebaseAuth,
-        googleSignIn: googleSignIn,
-        allowedEmails: allowedEmails)
-      ..initialize(),
-    child: child,
+      firebaseAuth: firebaseAuth,
+      googleSignIn: googleSignIn,
+      allowedEmails: allowedEmails,
+    )..initialize(),
+    child: child, // The widget subtree that needs auth context
   );
 }

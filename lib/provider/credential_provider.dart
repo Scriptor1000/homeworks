@@ -10,8 +10,8 @@ import '../utilities/enums.dart';
 
 /// Provider for managing Untis credentials
 ///
-/// This class handles the loading, saving, and online status of Untis credentials.
-/// It uses [FlutterSecureStorage] for local storage and [FirestoreCredentials] for online storage.
+/// Handles loading, saving, session creation, and online status of Untis credentials.
+/// Uses [FlutterSecureStorage] for local storage and [FirestoreCredentials] for online storage.
 class CredentialProvider extends ChangeNotifier {
   static const _credentialsKey = 'UntisCredentials';
   static const FlutterSecureStorage _storage = FlutterSecureStorage();
@@ -19,8 +19,8 @@ class CredentialProvider extends ChangeNotifier {
   final FirestoreCredentials _firestoreCredentials;
   final ItemFactory _itemFactory;
 
-  UntisCredentials? _credentials;
-  UntisSession? _session;
+  UntisCredentials? _credentials; // locally stored credentials
+  UntisSession? _session; // current Untis session
   UntisSessionState _sessionState = UntisSessionState.noCredentials;
   bool _isLoadingCredentials = false;
 
@@ -29,17 +29,17 @@ class CredentialProvider extends ChangeNotifier {
 
   CredentialProvider(
       {required FirestoreCredentials firestoreCredentials,
-      required ItemFactory itemFactory})
+        required ItemFactory itemFactory})
       : _firestoreCredentials = firestoreCredentials,
         _itemFactory = itemFactory;
 
-  /// Wheter the credentials are currently being loaded or the loading process is finished.
+  /// Whether credentials are being loaded
   bool get isLoading => _isLoadingCredentials;
 
-  /// Whether the credentials are available.
+  /// Whether any credentials are currently available
   bool get hasCredentials => _credentials != null;
 
-  /// The current online status of the credentials.
+  /// Current online status of the credentials
   CredentailsOnlineStatus get credentialsOnlineStatus =>
       _credentialsOnlineStatus;
 
@@ -55,10 +55,9 @@ class CredentialProvider extends ChangeNotifier {
   /// The current Untis credentials
   UntisCredentials? get credentials => _credentials;
 
-  /// Initializes the provider by loading credentials from local storage.
+  /// Initializes the provider by loading credentials from local storage
   ///
-  /// This method should be called at the start of the application to ensure credentials are loaded or
-  /// to refresh the the credentials and their onlineStatus.
+  /// This should be called at app start to load existing credentials and check online status.
   Future<void> initialize() async {
     _isLoadingCredentials = true;
     notifyListeners();
@@ -69,6 +68,7 @@ class CredentialProvider extends ChangeNotifier {
     await _loadOnlineStatus();
   }
 
+  /// Sets the current credentials, saves locally, and creates a session
   Future<void> setCredentials(UntisCredentials credentials) async {
     _credentials = credentials;
     await _saveCredentialsLocal();
@@ -77,6 +77,7 @@ class CredentialProvider extends ChangeNotifier {
     _loadOnlineStatus();
   }
 
+  /// Loads credentials from local secure storage
   Future<void> _loadCredentialsLocal() async {
     final storedCredentials = await _storage.read(key: _credentialsKey);
     if (storedCredentials != null) {
@@ -86,6 +87,7 @@ class CredentialProvider extends ChangeNotifier {
     }
   }
 
+  /// Creates a Untis session using current credentials
   Future<void> _createSession() async {
     if (_credentials == null) return;
     _sessionState = UntisSessionState.loading;
@@ -100,6 +102,7 @@ class CredentialProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Saves the current credentials to local secure storage
   Future<void> _saveCredentialsLocal() async {
     if (_credentials != null) {
       await _storage.write(
@@ -107,7 +110,7 @@ class CredentialProvider extends ChangeNotifier {
     }
   }
 
-  /// Deletes the credentials from [FlutterSecureStorage].
+  /// Deletes credentials from local storage and clears session
   Future<void> clearCredentialsLocal() async {
     _credentials = null;
     _session = null;
@@ -116,14 +119,11 @@ class CredentialProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Loads the credentials from Firestore.
-  ///
-  /// It uses the [FirestoreCredentials] class to fetch the credentials and
-  /// decrypt them using the provided [password].
+  /// Loads credentials from Firestore and decrypts with [password]
   Future<void> loadCredentialsOnline(String password) async {
     try {
       final storedCredentials =
-          await _firestoreCredentials.loadCredentials(password);
+      await _firestoreCredentials.loadCredentials(password);
       if (storedCredentials == null) {
         return Future.error('Keine Anmeldedaten gefunden.');
       }
@@ -138,10 +138,7 @@ class CredentialProvider extends ChangeNotifier {
     }
   }
 
-  /// Uploads the current credentials to Firestore.
-  ///
-  /// It uses the [FirestoreCredentials] class to save the credentials
-  /// after encrypting them with the provided [password].
+  /// Uploads current credentials to Firestore, encrypted with [password]
   Future<void> uploadCredentialsOnline(String password) async {
     if (_credentials == null) return;
     try {
@@ -154,6 +151,7 @@ class CredentialProvider extends ChangeNotifier {
     }
   }
 
+  /// Loads the online status of credentials by comparing local and online hashes
   Future<void> _loadOnlineStatus() async {
     _credentialsOnlineStatus = CredentailsOnlineStatus.loading;
     notifyListeners();

@@ -27,23 +27,28 @@ class ProviderShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final firestore = FirebaseFirestore.instance;
-    // this could be a constant or config
+    // Range of days for UntisProvider to manage lesson dates
     final range = const Duration(days: 30);
 
+    // Cryptography utility for encrypting/decrypting credentials
     final cryptography = CredentialCryptography(uid: uid);
+    // Factory to create data models
     final itemFactory = ItemFactory();
 
-    // Create service instances
+    // Firestore user service
     final firestoreUser = FirestoreUser(firestore: firestore, uid: uid);
+    // Firestore credentials service
     final firestoreCredentials = FirestoreCredentials(
       firestoreUser: firestoreUser,
       cryptography: cryptography,
       itemFactory: itemFactory,
     );
+    // Firestore homeworks service
     final firestoreHomeworks = FirestoreHomeworks(
       firestoreUser: firestoreUser,
       itemFactory: itemFactory,
     );
+    // Firestore subjects service
     final firestoreSubjects = FirestoreSubjects(
       firestoreUser: firestoreUser,
       itemFactory: itemFactory,
@@ -51,6 +56,7 @@ class ProviderShell extends StatelessWidget {
 
     return MultiProvider(
       providers: [
+        // Provides local and online credentials
         ChangeNotifierProvider(
           create: (_) => CredentialProvider(
             firestoreCredentials: firestoreCredentials,
@@ -58,34 +64,38 @@ class ProviderShell extends StatelessWidget {
           )..initialize(),
           lazy: false,
         ),
+        // Provides Untis session data based on credentials
         ChangeNotifierProxyProvider<CredentialProvider, UntisProvider>(
           create: (_) => UntisProvider(range: range),
           update: (_, untisCredentialProvider, previous) =>
-              (previous?..updateCredentials(untisCredentialProvider.session)) ??
+          (previous?..updateCredentials(untisCredentialProvider.session)) ??
               UntisProvider(range: range),
           lazy: false,
         ),
+        // Provides homework data, updated when UntisProvider changes
         ChangeNotifierProxyProvider<UntisProvider, HomeworksProvider>(
           create: (_) => HomeworksProvider(
             firestoreHomeworks: firestoreHomeworks,
           )..initialize(),
           update: (_, untisProvider, previous) =>
-              (previous
-                ?..updateDueDates(untisProvider.getNextLessonDates(),
-                    untisProvider.endDate)) ??
+          (previous
+            ?..updateDueDates(untisProvider.getNextLessonDates(),
+                untisProvider.endDate)) ??
               HomeworksProvider(firestoreHomeworks: firestoreHomeworks),
           lazy: false,
         ),
+        // Provides subject data, updated when UntisProvider changes
         ChangeNotifierProxyProvider<UntisProvider, SubjectProvider>(
           create: (_) => SubjectProvider(
             firestoreSubjects: firestoreSubjects,
           )..initialize(),
           update: (_, untisAPIProvider, previous) =>
-              (previous?..updateUntisSubjects(untisAPIProvider)) ??
+          (previous?..updateUntisSubjects(untisAPIProvider)) ??
               SubjectProvider(firestoreSubjects: firestoreSubjects),
           lazy: false,
         ),
       ],
+      // The child widget which now has access to all above providers
       child: child,
     );
   }
