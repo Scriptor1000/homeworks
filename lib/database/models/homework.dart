@@ -3,6 +3,8 @@ import 'dart:core';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../utilities/enums.dart';
+
 /// A Homework wich can be saved to Firestore.
 class Homework {
   final String id;
@@ -10,9 +12,10 @@ class Homework {
   final String description;
   final String subjectDocId;
   final bool toNextLesson;
-  final bool isExam;
   final bool fromUntis;
   final DateTime createdAt;
+
+  final HomeworkType type;
   bool isCompleted;
 
   // dueDate can be null, but only if toNextLesson is true wich can only be if the subject is from Untis.
@@ -27,7 +30,7 @@ class Homework {
     required this.isCompleted,
     required this.fromUntis,
     this.dueDate,
-    this.isExam = false, // TODO remove --> own Exam class
+    this.type = HomeworkType.homework,
     DateTime? createdAt,
   })  : createdAt = createdAt ?? DateTime.now(),
         id = id ?? const Uuid().v4() {
@@ -53,7 +56,7 @@ class Homework {
       subjectDocId: json['subjectDocId'] as String,
       toNextLesson: json['toNextLesson'] as bool,
       isCompleted: json['isCompleted'] as bool,
-      isExam: json['isExam'] as bool? ?? false,
+      type: HomeworkType.values[json['homeworkType'] as int],
       fromUntis: json['fromUntis'] as bool,
       dueDate: json.containsKey('dueDate')
           ? (json['dueDate'] as Timestamp).toDate()
@@ -70,7 +73,7 @@ class Homework {
       'toNextLesson': toNextLesson,
       'isCompleted': isCompleted,
       'fromUntis': fromUntis,
-      'isExam': isExam,
+      'homeworkType': type.index,
       'subjectDocId': subjectDocId,
       if (dueDate != null) 'dueDate': Timestamp.fromDate(dueDate!),
       'createdAt': Timestamp.fromDate(createdAt),
@@ -86,5 +89,5 @@ class Homework {
       DateTime(dueDate!.year, dueDate!.month, dueDate!.day)
               .difference(DateTime.now())
               .inDays <
-          (isExam ? 3 : 1);
+          (type == HomeworkType.exam ? 3 : 1);
 }

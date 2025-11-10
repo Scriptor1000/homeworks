@@ -8,6 +8,7 @@ import '../database/models/subject.dart';
 import '../provider/homeworks_provider.dart';
 import '../provider/subject_provider.dart';
 import '../utilities/constants.dart';
+import '../utilities/enums.dart';
 import '../utilities/global_snackbar.dart';
 import 'subject_avatar.dart';
 
@@ -72,9 +73,11 @@ class HomeworkTile extends StatelessWidget {
       leading: SubjectAvatar(
         subject: subject,
       ),
-      title: Text('${homework.isExam ? 'LK: ' : ''}${homework.title}'),
+      title: Text(
+          '${homework.type == HomeworkType.exam ? 'LK: ' : ''}${homework.title}'),
       subtitle: dateText != null ? Text(dateText) : null,
-      tileColor: homework.isExam ? backColor?.withAlpha(50) : null,
+      tileColor:
+          homework.type == HomeworkType.exam ? backColor?.withAlpha(50) : null,
       // textColor: homework.isExam ? foreColor : null,
       onLongPress: () async {
         // Show options to edit or delete the homework

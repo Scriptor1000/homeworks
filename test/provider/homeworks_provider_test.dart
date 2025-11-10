@@ -6,6 +6,7 @@ import 'package:homeworks/provider/homeworks_provider.dart';
 import 'package:homeworks/provider/untis_provider.dart';
 import 'package:homeworks/utilities/analytics_service.dart';
 import 'package:homeworks/utilities/constants.dart';
+import 'package:homeworks/utilities/enums.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
@@ -261,7 +262,7 @@ void main() {
       // the original homework was given as reference and is updated too
       expect(homework.dueDate, equals(dueDate));
       verify(mockFirestoreHomeworks.saveHomework(homework)).called(1);
-      verify(mockAnalyticsService.reviveHomework(isExam: homework.isExam))
+      verify(mockAnalyticsService.reviveHomework(type: homework.type))
           .called(1);
     });
 
@@ -283,7 +284,8 @@ void main() {
       expect(homeworksProvider.newDueDate(homework, dueDate), completes);
       // verify
       verifyNever(mockFirestoreHomeworks.saveHomework(homework));
-      verifyNever(mockAnalyticsService.reviveHomework(isExam: homework.isExam));
+      verifyNever(
+          mockAnalyticsService.reviveHomework(type: HomeworkType.homework));
     });
 
     test('should create Homework just with current Subject', () async {
@@ -305,7 +307,9 @@ void main() {
       expect(homework.title, equals('LB.S.pi/e'));
       verify(mockFirestoreHomeworks.saveHomework(homework)).called(1);
       verify(mockAnalyticsService.createHomework(
-              isExam: false, isToNextLesson: true, isCreatedFast: true))
+              type: HomeworkType.homework,
+              isToNextLesson: true,
+              isCreatedFast: true))
           .called(1);
     });
 
@@ -330,11 +334,13 @@ void main() {
       for (final homework in homeworksProvider.homeworks) {
         expect(homework.subjectDocId, equals('untis_42'));
         expect(homework.title, equals('irgendwas'));
-        expect(homework.isExam, isTrue);
+        expect(homework.type, equals(HomeworkType.exam));
         verify(mockFirestoreHomeworks.saveHomework(homework)).called(1);
       }
       verify(mockAnalyticsService.createHomework(
-              isExam: true, isToNextLesson: true, isCreatedFast: true))
+              type: HomeworkType.exam,
+              isToNextLesson: true,
+              isCreatedFast: true))
           .called(prefixes.length);
     });
 
@@ -382,7 +388,7 @@ void main() {
       expect(homeworksProvider.homeworks[0].isCompleted, isTrue);
       verify(mockFirestoreHomeworks.saveHomework(homework)).called(1);
       verify(mockAnalyticsService.completeHomework(
-              isExam: homework.isExam, isPastDueBy: anyNamed('isPastDueBy')))
+              type: homework.type, isPastDueBy: anyNamed('isPastDueBy')))
           .called(1);
     });
 
@@ -397,7 +403,7 @@ void main() {
       verify(mockFirestoreHomeworks.deleteHomework(homework.documentId))
           .called(1);
       verify(mockAnalyticsService.completeAndDeleteHomework(
-              isExam: homework.isExam, isPastDueBy: anyNamed('isPastDueBy')))
+              type: homework.type, isPastDueBy: anyNamed('isPastDueBy')))
           .called(1);
     });
 
@@ -445,7 +451,7 @@ void main() {
       verify(mockFirestoreHomeworks.deleteHomework(homework.documentId))
           .called(1);
       verify(mockAnalyticsService.deleteHomework(
-          isExam: homework.isExam,
+          type: homework.type,
           isPastDueBy: anyNamed('isPastDueBy'),
           isCompleted: homework.isCompleted));
     });

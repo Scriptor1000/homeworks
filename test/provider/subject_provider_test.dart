@@ -3,7 +3,7 @@ import 'package:homeworks/database/models/subject.dart';
 import 'package:homeworks/database/subjects.dart';
 import 'package:homeworks/provider/subject_provider.dart';
 import 'package:homeworks/provider/untis_provider.dart';
-import 'package:homeworks/utilities/enums.dart' hide test;
+import 'package:homeworks/utilities/enums.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 

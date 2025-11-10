@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:homeworks/database/models/homework.dart';
+import 'package:homeworks/utilities/enums.dart';
 
 void main() {
   group('Homework Model Tests', () {
@@ -22,7 +23,7 @@ void main() {
       expect(readHomework.fromUntis, equals(originalHomework.fromUntis));
       expect(readHomework.dueDate, equals(originalHomework.dueDate));
       expect(readHomework.createdAt, equals(originalHomework.createdAt));
-      expect(readHomework.isExam, equals(originalHomework.isExam));
+      expect(readHomework.type, equals(originalHomework.type));
       expect(readHomework.createdAt, isA<DateTime>());
     });
 
@@ -77,6 +78,6 @@ Homework homeworkWithFalseData({DateTime? dueDate, bool? isExam}) {
     isCompleted: false,
     fromUntis: false,
     dueDate: dueDate ?? DateTime.now(),
-    isExam: isExam ?? false,
+    type: (isExam ?? false) ? HomeworkType.exam : HomeworkType.homework,
   );
 }

@@ -16,7 +16,13 @@ enum CredentailsOnlineStatus {
   error,
 }
 
-var test = CredentailsOnlineStatus.offline;
+/// The type of an entry
+enum HomeworkType {
+  homework,
+  exam,
+  appointment,
+  submission,
+}
 
 /// The status of the subjects wich are loaded from Untis.
 enum UntisSubjectStatus {

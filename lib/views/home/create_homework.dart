@@ -9,11 +9,10 @@ import '../../database/models/subject.dart';
 import '../../provider/homeworks_provider.dart';
 import '../../provider/untis_provider.dart';
 import '../../routes/typesafe_router.dart';
+import '../../utilities/enums.dart';
 import '../../utilities/global_snackbar.dart';
 import '../../widgets/fab.dart';
 import '../../widgets/subject_tile.dart';
-
-enum HomeworkType { homework, exam }
 
 /// A widget for creating a [Homework] with all available Options.
 class CreateHomework extends StatefulWidget {
@@ -109,7 +108,7 @@ class _CreateHomeworkState extends State<CreateHomework> {
         isCompleted: false,
         dueDate: dueDate,
         fromUntis: false,
-        isExam: selected == HomeworkType.exam,
+        type: selected,
       );
 
       // Save the homework

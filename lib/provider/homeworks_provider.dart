@@ -4,6 +4,7 @@ import '../database/homeworks.dart';
 import '../database/models/homework.dart';
 import '../database/models/subject.dart';
 import '../utilities/analytics_service.dart';
+import '../utilities/enums.dart';
 import '../utilities/homeworks_list.dart';
 import '../utilities/constants.dart';
 import 'untis_provider.dart';
@@ -112,10 +113,10 @@ class HomeworksProvider extends ChangeNotifier {
   /// The homework will be added to the [_homeworks] list and saved in Firestore.
   Future<void> fastCreateHomework(String title, Subject subject) async {
     final nextLesson = subject.nextLesson;
-    bool isExam = false;
+    HomeworkType type = HomeworkType.homework;
     for (final prefix in examPrefixes) {
       if (title.startsWith(prefix)) {
-        isExam = true;
+        type = HomeworkType.exam;
         title = title.replaceFirst(prefix, '').trim();
         break;
       }
@@ -128,14 +129,14 @@ class HomeworksProvider extends ChangeNotifier {
       isCompleted: false,
       dueDate: nextLesson,
       fromUntis: false,
-      isExam: isExam,
+      type: type,
     );
     _homeworks.add(homework);
     await _firestoreHomeworks.saveHomework(homework);
     notifyListeners();
 
     _analyticsService.createHomework(
-        isExam: isExam, isToNextLesson: true, isCreatedFast: true);
+        type: type, isToNextLesson: true, isCreatedFast: true);
   }
 
   Future<void> createHomework(Homework homework) async {
@@ -144,7 +145,7 @@ class HomeworksProvider extends ChangeNotifier {
     notifyListeners();
 
     _analyticsService.createHomework(
-        isExam: homework.isExam,
+        type: homework.type,
         isToNextLesson: homework.toNextLesson,
         isCreatedFast: false);
   }
@@ -161,7 +162,7 @@ class HomeworksProvider extends ChangeNotifier {
       notifyListeners();
 
       _analyticsService.deleteHomework(
-          isExam: homework.isExam,
+          type: homework.type,
           isPastDueBy: homework.dueDate != null
               ? DateTime.now().difference(homework.dueDate!)
               : null,
@@ -184,7 +185,7 @@ class HomeworksProvider extends ChangeNotifier {
       notifyListeners();
 
       // because this functions is only called when a homework is revived
-      _analyticsService.reviveHomework(isExam: homework.isExam);
+      _analyticsService.reviveHomework(type: homework.type);
     } else {
       print('Homework with id ${homework.id} not found.');
       print('Current homeworks: ${_homeworks.map((hw) => hw.id).join(', ')}');
@@ -201,7 +202,7 @@ class HomeworksProvider extends ChangeNotifier {
         notifyListeners();
 
         _analyticsService.completeAndDeleteHomework(
-            isExam: homework.isExam,
+            type: homework.type,
             isPastDueBy: DateTime.now().difference(homework.dueDate!));
       } else {
         _homeworks[index].isCompleted = true;
@@ -209,7 +210,7 @@ class HomeworksProvider extends ChangeNotifier {
         notifyListeners();
 
         _analyticsService.completeHomework(
-            isExam: homework.isExam,
+            type: homework.type,
             isPastDueBy: homework.dueDate != null
                 ? DateTime.now().difference(homework.dueDate!)
                 : null);

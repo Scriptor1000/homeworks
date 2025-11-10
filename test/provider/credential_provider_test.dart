@@ -5,7 +5,7 @@ import 'package:homeworks/database/credentials.dart';
 import 'package:homeworks/database/models/credentials.dart';
 import 'package:homeworks/database/models/factory.dart';
 import 'package:homeworks/provider/credential_provider.dart';
-import 'package:homeworks/utilities/enums.dart' hide test;
+import 'package:homeworks/utilities/enums.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
