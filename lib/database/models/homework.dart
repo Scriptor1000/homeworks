@@ -49,6 +49,11 @@ class Homework {
   }
 
   factory Homework.fromDocument(Map<String, dynamic> json) {
+    if (!json.containsKey('homeworkType')) {
+      json['homeworkType'] = json['isExam'] == true
+          ? HomeworkType.exam.index
+          : HomeworkType.homework.index;
+    }
     return Homework(
       id: json['id'] as String,
       title: json['title'] as String,
@@ -74,6 +79,7 @@ class Homework {
       'isCompleted': isCompleted,
       'fromUntis': fromUntis,
       'homeworkType': type.index,
+      'isExam': type == HomeworkType.exam,
       'subjectDocId': subjectDocId,
       if (dueDate != null) 'dueDate': Timestamp.fromDate(dueDate!),
       'createdAt': Timestamp.fromDate(createdAt),
