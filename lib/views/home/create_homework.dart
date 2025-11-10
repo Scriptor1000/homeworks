@@ -167,7 +167,9 @@ class _CreateHomeworkState extends State<CreateHomework> {
 
     if (picked != null && picked != dueDate) {
       setState(() {
-        dueDate = picked;
+        // The time in dueDate is used to determine if the homework can be deleted.
+        // It is set to 18:00 here, so it is not automatically deleted too early in the day.
+        dueDate = picked.add(Duration(hours: 18));
         toNextLesson = false; // Automatik deaktivieren wenn manuell gesetzt
       });
     }
