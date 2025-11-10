@@ -94,7 +94,6 @@ class HomeworkTile extends StatelessWidget {
           if (homework.dueDate != null &&
               homework.dueDate!.isBefore(DateTime.now()) &&
               !homework.isCompleted &&
-              homework.toNextLesson &&
               subject != null &&
               subject.nextLesson != null)
             IconButton(

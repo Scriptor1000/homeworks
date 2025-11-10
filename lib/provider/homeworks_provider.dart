@@ -21,7 +21,7 @@ class HomeworksProvider extends ChangeNotifier {
       : _firestoreHomeworks = firestoreHomeworks,
         _analyticsService = analyticsService;
 
-  /// The list of homeworks wich have a due date.
+  /// The list of homeworks which have a due date.
   ///
   /// This list is unmodifiable because any change should be done through the methods of this provider.
   Homeworks get homeworks =>
@@ -65,13 +65,21 @@ class HomeworksProvider extends ChangeNotifier {
       return;
     }
     final nextLessonDates = untisProvider.getNextLessonDates();
+    final todaySubjects = untisProvider.todaySubjects;
     final now = DateTime.now();
     int count = 0;
+
+    bool isPastDue(DateTime? dueDate) =>
+        dueDate != null && dueDate.isBefore(now);
+    bool happensToday(Homework homework) =>
+        todaySubjects.any((s) => s.documentId == homework.subjectDocId);
+
     for (var homework in _homeworks) {
       // Check if homework is addressed
       if (!homework.toNextLesson ||
           homework.fromUntis ||
-          (homework.dueDate != null && homework.dueDate!.isBefore(now))) {
+          isPastDue(homework.dueDate) ||
+          happensToday(homework)) {
         continue;
       }
 
@@ -84,7 +92,7 @@ class HomeworksProvider extends ChangeNotifier {
         _firestoreHomeworks.saveHomework(homework);
         count++;
       } else
-      // If there is a next lesson date wich differs from the due date
+      // If there is a next lesson date which differs from the due date
       if (nextLessonDates.containsKey(homework.subjectDocId) &&
           nextLessonDates[homework.subjectDocId] != homework.dueDate) {
         homework.dueDate = nextLessonDates[homework.subjectDocId];
@@ -154,8 +162,6 @@ class HomeworksProvider extends ChangeNotifier {
 
       _analyticsService.deleteHomework(
           isExam: homework.isExam,
-          isPastDue: homework.dueDate != null &&
-              homework.dueDate!.isBefore(DateTime.now()),
           isPastDueBy: homework.dueDate != null
               ? DateTime.now().difference(homework.dueDate!)
               : null,
@@ -188,17 +194,26 @@ class HomeworksProvider extends ChangeNotifier {
   Future<void> completeHomework(Homework homework) async {
     final index = _homeworks.indexWhere((hw) => hw.id == homework.id);
     if (index != -1) {
-      _homeworks[index].isCompleted = true;
-      await _firestoreHomeworks.saveHomework(_homeworks[index]);
-      notifyListeners();
+      if (_homeworks[index].dueDate != null &&
+          _homeworks[index].dueDate!.isBefore(DateTime.now())) {
+        _homeworks.removeAt(index);
+        await _firestoreHomeworks.deleteHomework(homework.documentId);
+        notifyListeners();
 
-      _analyticsService.completeHomework(
-          isExam: homework.isExam,
-          isPastDue: homework.dueDate != null &&
-              homework.dueDate!.isBefore(DateTime.now()),
-          isPastDueBy: homework.dueDate != null
-              ? DateTime.now().difference(homework.dueDate!)
-              : null);
+        _analyticsService.completeAndDeleteHomework(
+            isExam: homework.isExam,
+            isPastDueBy: DateTime.now().difference(homework.dueDate!));
+      } else {
+        _homeworks[index].isCompleted = true;
+        await _firestoreHomeworks.saveHomework(_homeworks[index]);
+        notifyListeners();
+
+        _analyticsService.completeHomework(
+            isExam: homework.isExam,
+            isPastDueBy: homework.dueDate != null
+                ? DateTime.now().difference(homework.dueDate!)
+                : null);
+      }
     } else {
       print('Homework with id ${homework.id} not found.');
       print('Current homeworks: ${_homeworks.map((hw) => hw.id).join(', ')}');
