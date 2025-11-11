@@ -144,7 +144,6 @@ class HomeworkTile extends StatelessWidget {
               style: Theme.of(context).textTheme.bodyLarge,
             )
           : null,
-      _ => const SizedBox.shrink(),
     };
   }
 }

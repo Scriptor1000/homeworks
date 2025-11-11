@@ -21,7 +21,6 @@ enum HomeworkType {
   homework,
   exam,
   appointment,
-  submission,
 }
 
 /// The status of the subjects wich are loaded from Untis.
