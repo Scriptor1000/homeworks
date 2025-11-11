@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -77,6 +78,8 @@ class _CreateHomeworkState extends State<CreateHomework> {
                 standardGap(),
                 _buildDate(context),
                 standardGap(),
+                _buildTime(context),
+                standardGap(),
                 _buildDetails(),
                 buildFABGap()
               ],
@@ -154,7 +157,7 @@ class _CreateHomeworkState extends State<CreateHomework> {
   }
 
   Future<void> _showDatePicker() async {
-    final DateTime? picked = await showDatePicker(
+    DateTime? picked = await showDatePicker(
       context: context,
       initialDate: dueDate,
       firstDate: DateTime.now(),
@@ -169,7 +172,12 @@ class _CreateHomeworkState extends State<CreateHomework> {
       setState(() {
         // The time in dueDate is used to determine if the homework can be deleted.
         // It is set to 18:00 here, so it is not automatically deleted too early in the day.
-        dueDate = picked.add(Duration(hours: 18));
+        dueDate = picked.add(toNextLesson
+            ? const Duration(hours: 18)
+            : Duration(
+                hours: dueDate.hour,
+                minutes: dueDate.minute,
+              ));
         toNextLesson = false; // Automatik deaktivieren wenn manuell gesetzt
       });
     }
@@ -208,6 +216,55 @@ class _CreateHomeworkState extends State<CreateHomework> {
         ),
       ),
       onTap: _showDatePicker,
+    );
+  }
+
+  void _showTimePicker() async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay(hour: dueDate.hour, minute: dueDate.minute),
+      helpText: 'Uhrzeit wählen',
+      cancelText: 'Abbrechen',
+      confirmText: 'Bestätigen',
+    );
+
+    if (picked != null) {
+      setState(() {
+        dueDate = DateTime(
+          dueDate.year,
+          dueDate.month,
+          dueDate.day,
+          picked.hour,
+          picked.minute,
+        );
+        toNextLesson = false;
+      });
+    }
+  }
+
+  ListTile _buildTime(BuildContext context) {
+    return ListTile(
+      title: const Text('Uhrzeit'),
+      trailing: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          color: Theme.of(context).colorScheme.primaryContainer,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              '${dueDate.hour.toString().padLeft(2, '0')}:${dueDate.minute.toString().padLeft(2, '0')}',
+              style: Theme.of(context).textTheme.bodyLarge,
+            ),
+            littleGap(),
+            const Icon(Icons.access_time_outlined),
+          ],
+        ),
+      ),
+      onTap: _showTimePicker,
     );
   }
 
@@ -272,6 +329,10 @@ class _CreateHomeworkState extends State<CreateHomework> {
           ButtonSegment<HomeworkType>(
             value: HomeworkType.exam,
             label: Text('Test'),
+          ),
+          ButtonSegment<HomeworkType>(
+            value: HomeworkType.appointment,
+            label: Text('Termin'),
           ),
         ],
         selected: {selected},
