@@ -22,14 +22,16 @@ class HomeworkTile extends StatelessWidget {
   final Homework homework;
   final VoidCallback onCompleted;
 
-  String? dueDateText(DateTime? dueDate) {
-    if (dueDate == null) return null;
+  String? dueDateText(DateTime? dueDateTime) {
+    if (dueDateTime == null) return null;
     // Formatierung des Datums für bessere Lesbarkeit
     final now = DateTime.now();
     final nowDate = DateTime(now.year, now.month, now.day);
-    dueDate = DateTime(dueDate.year, dueDate.month, dueDate.day);
+    final dueDay =
+        DateTime(dueDateTime.year, dueDateTime.month, dueDateTime.day);
 
-    final dayDifference = dueDate.difference(nowDate).inDays;
+    final dayDifference = dueDay.difference(nowDate).inDays;
+    final timeDifference = dueDateTime.difference(now);
 
     // Wochentage auf Deutsch
     const weekdays = [
@@ -41,15 +43,23 @@ class HomeworkTile extends StatelessWidget {
       'Samstag',
       'Sonntag'
     ];
-    final weekday = weekdays[dueDate.weekday - 1];
+    final weekday = weekdays[dueDay.weekday - 1];
 
     // Text für nächste Stunde
     if (dayDifference < 0) {
       return 'Überfällig, vor ${-dayDifference} Tagen';
     } else if (dayDifference == 0) {
-      return 'Heute';
+      if (timeDifference.inHours < 1) {
+        return 'in ${timeDifference.inMinutes} Minuten';
+      } else if (timeDifference.inMinutes > 0) {
+        return 'in ${timeDifference.inHours} Stunden und '
+            '${timeDifference.inMinutes.remainder(60)} Minuten';
+      } else {
+        return 'Heute';
+      }
     } else if (dayDifference == 1) {
-      return 'Morgen';
+      return 'Morgen, um ${dueDateTime.hour.toString().padLeft(2, '0')}:'
+          '${dueDateTime.minute.toString().padLeft(2, '0')} Uhr';
     } else {
       return '$weekday, in $dayDifference Tagen';
     }
@@ -91,33 +101,50 @@ class HomeworkTile extends StatelessWidget {
           width: 3,
         ),
       ),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (homework.dueDate != null &&
-              homework.dueDate!.isBefore(DateTime.now()) &&
-              !homework.isCompleted &&
-              subject != null &&
-              subject.nextLesson != null)
-            IconButton(
-                onPressed: () {
-                  context
-                      .read<HomeworksProvider>()
-                      .newDueDate(homework, subject.nextLesson!);
-                },
-                icon: Icon(Icons.replay_rounded)),
-          homework.isCompleted
-              ? const Icon(Icons.check_circle, color: Colors.green)
-              : IconButton(
-                  onPressed: () {
-                    context
-                        .read<HomeworksProvider>()
-                        .completeHomework(homework);
-                    onCompleted();
-                  },
-                  icon: const Icon(Icons.circle_outlined, color: Colors.grey)),
-        ],
-      ),
+      trailing: _buildTrailing(subject, context),
     );
+  }
+
+  Widget? _buildTrailing(Subject? subject, BuildContext context) {
+    var row = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (homework.dueDate != null &&
+            homework.dueDate!.isBefore(DateTime.now()) &&
+            !homework.isCompleted &&
+            subject != null &&
+            subject.nextLesson != null)
+          IconButton(
+              onPressed: () {
+                context
+                    .read<HomeworksProvider>()
+                    .newDueDate(homework, subject.nextLesson!);
+              },
+              icon: Icon(Icons.replay_rounded)),
+        homework.isCompleted
+            ? const Icon(Icons.check_circle, color: Colors.green)
+            : IconButton(
+                onPressed: () {
+                  context.read<HomeworksProvider>().completeHomework(homework);
+                  onCompleted();
+                },
+                icon: const Icon(Icons.circle_outlined, color: Colors.grey)),
+      ],
+    );
+    return switch (homework.type) {
+      HomeworkType.homework => row,
+      HomeworkType.exam =>
+        homework.dueDate != null && DateTime.now().isAfter(homework.dueDate!)
+            ? row
+            : null,
+      HomeworkType.appointment => homework.dueDate != null
+          ? Text(
+              '${homework.dueDate!.hour.toString().padLeft(2, '0')}:'
+              '${homework.dueDate!.minute.toString().padLeft(2, '0')}',
+              style: Theme.of(context).textTheme.bodyLarge,
+            )
+          : null,
+      _ => const SizedBox.shrink(),
+    };
   }
 }
