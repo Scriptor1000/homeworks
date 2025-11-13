@@ -63,7 +63,6 @@ jobs:
           cache: true
 
       - name: Determine Release Name
-        id: release_name  
         run: echo "SENTRY_RELEASE=${GITHUB_HEAD_REF##*/}@${GITHUB_SHA::7}" >> $GITHUB_ENV
 
       - name: Cache Flutter dependencies
@@ -91,7 +90,7 @@ jobs:
         env:
             SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_TOKEN }}
             SENTRY_RELEASE: ${{ env.SENTRY_RELEASE }}
-        run: dart run sentry_dart_plugin 
+        run: flutter run sentry_dart_plugin 
 
       - name: Deploy to Cloudflare Pages
         id: deploy
