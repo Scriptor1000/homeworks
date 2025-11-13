@@ -48,8 +48,9 @@ void main() async {
 
         if (SENTRY_RELEASE_NAME.isNotEmpty) {
           options.release = SENTRY_RELEASE_NAME;
-          options.environment =
-              SENTRY_RELEASE_NAME.startsWith('main') ? 'production' : 'staging';
+          options.environment = SENTRY_RELEASE_NAME.split('@').first == 'main'
+              ? 'production'
+              : 'staging';
         }
       },
       appRunner: () => runApp(SentryWidget(child: const MainApp())),

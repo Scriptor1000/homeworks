@@ -90,7 +90,7 @@ jobs:
         env:
             SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_TOKEN }}
             SENTRY_RELEASE: ${{ env.SENTRY_RELEASE }}
-        run: flutter run sentry_dart_plugin 
+        run: dart run sentry_dart_plugin 
 
       - name: Deploy to Cloudflare Pages
         id: deploy
