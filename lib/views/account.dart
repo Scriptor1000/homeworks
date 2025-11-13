@@ -13,13 +13,18 @@ class AccountView extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Konto'),
       ),
-      body: const SingleChildScrollView(
+      body: SingleChildScrollView(
         child: Padding(
           padding: EdgeInsets.all(16.0),
           child: Column(
             children: [
               UserContainer(),
               // Hier kann später weiterer Inhalt für die Account-Seite eingefügt werden
+               ListTile(
+                leading: Icon(Icons.error),
+                title: Text('Fehler zum Testen erzeugen'),
+                onTap: () => throw Exception('Test-Fehler aus AccountView'),
+              ),
             ],
           ),
         ),
