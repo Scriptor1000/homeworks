@@ -52,8 +52,6 @@ jobs:
     permissions:
       pull-requests: write
       contents: read
-    env: 
-      SENTRY_RELEASE: ${{ github.ref_name }}@${{ github.sha }}
     
     steps:
       - uses: actions/checkout@v5
@@ -63,11 +61,9 @@ jobs:
         with:
           channel: stable
           cache: true
-      
-      - name: Install Sentry CLI
-        run: curl -sL https://sentry.io/get-cli/ | bash
 
       - name: Determine Release Name
+        id: release_name  
         run: echo "SENTRY_RELEASE=${GITHUB_HEAD_REF##*/}@${GITHUB_SHA::7}" >> $GITHUB_ENV
 
       - name: Cache Flutter dependencies
@@ -94,12 +90,8 @@ jobs:
       - name: Upload Sourcemap to Sentry
         env:
             SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_TOKEN }}
-            SENTRY_ORG: max-uf
-            SENTRY_PROJECT: homeworks
-        run: |
-          sentry-cli releases new "${{ env.SENTRY_RELEASE }}"
-          sentry-cli sourcemaps upload --release=${{ env.SENTRY_RELEASE }} build/web
-          sentry-cli releases finalize "${{ env.SENTRY_RELEASE }}"
+            SENTRY_RELEASE: ${{ env.SENTRY_RELEASE }}
+        run: dart run sentry_dart_plugin 
 
       - name: Deploy to Cloudflare Pages
         id: deploy
