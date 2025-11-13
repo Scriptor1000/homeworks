@@ -63,6 +63,12 @@ jobs:
         with:
           channel: stable
           cache: true
+      
+      - name: Install Sentry CLI
+        run: curl -sL https://sentry.io/get-cli/ | bash
+
+      - name: Determine Release Name
+        run: echo "SENTRY_RELEASE=${GITHUB_HEAD_REF##*/}@${GITHUB_SHA::7}" >> $GITHUB_ENV
 
       - name: Cache Flutter dependencies
         uses: actions/cache@v4
@@ -82,20 +88,9 @@ jobs:
       - name: Run build runner
         run: dart run build_runner build
 
-      - name: Install Sentry CLI
-        run: curl -sL https://sentry.io/get-cli/ | bash
-
       - name: Build web
         run: flutter build web --release --source-maps --dart-define=SENTRY_RELEASE=${{ env.SENTRY_RELEASE }}
       
-      - name: Deploy to Cloudflare Pages
-        id: deploy
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy build/web --project-name=${{ vars.CLOUDFLARE_PROJECT_NAME }} --commit-dirty=true
-
       - name: Upload Sourcemap to Sentry
         env:
             SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_TOKEN }}
@@ -105,6 +100,14 @@ jobs:
           sentry-cli releases new "${{ env.SENTRY_RELEASE }}"
           sentry-cli sourcemaps upload --release=${{ env.SENTRY_RELEASE }} build/web
           sentry-cli releases finalize "${{ env.SENTRY_RELEASE }}"
+
+      - name: Deploy to Cloudflare Pages
+        id: deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy build/web --project-name=${{ vars.CLOUDFLARE_PROJECT_NAME }} --commit-dirty=true
 
       - name: Comment deployment URL on PR
         if: github.event_name == 'pull_request'
