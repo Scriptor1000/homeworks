@@ -18,6 +18,8 @@ import 'routes/typesafe_router.dart';
 import 'utilities/constants.dart';
 import 'utilities/global_snackbar.dart';
 
+const SENTRY_RELEASE_NAME = String.fromEnvironment('SENTRY_RELEASE');
+
 void main() async {
   // The following line enables that the URL shows the last route on the stack,
   // even if it was pushed. Standard behavior is that the URL only shows routes you [go] to.
@@ -43,6 +45,12 @@ void main() async {
         options.enableAutoSessionTracking = true;
         options.attachStacktrace = true;
         options.replay.onErrorSampleRate = 0.2;
+
+        if (SENTRY_RELEASE_NAME.isNotEmpty) {
+          options.release = SENTRY_RELEASE_NAME;
+          options.environment =
+              SENTRY_RELEASE_NAME.startsWith('main') ? 'production' : 'staging';
+        }
       },
       appRunner: () => runApp(SentryWidget(child: const MainApp())),
     );
