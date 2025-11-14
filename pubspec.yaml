@@ -94,6 +94,8 @@ dev_dependencies:
   google_sign_in_mocks: ^0.4.1
   fake_cloud_firestore: ^4.0.0
 
+  sentry_dart_plugin: ^3.2.0
+
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
@@ -134,3 +136,11 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+sentry:
+  upload_debug_symbols: true
+  upload_source_maps: true
+  upload_sources: true
+  
+  project: homeworks
+  org: max-uf
