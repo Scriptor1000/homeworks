@@ -14,13 +14,13 @@ import 'subject_avatar.dart';
 
 /// A [ListTile] widget that displays homework information and allows marking it as completed.
 ///
-/// When the homework is completed, the [onCompleted] callback is triggered.
+/// When the homework is completed or uncompleted, the [statusChange] callback is triggered.
 class HomeworkTile extends StatelessWidget {
   const HomeworkTile(
-      {super.key, required this.homework, required this.onCompleted});
+      {super.key, required this.homework, required this.statusChange});
 
   final Homework homework;
-  final VoidCallback onCompleted;
+  final VoidCallback statusChange;
 
   String? dueDateText(DateTime? dueDateTime) {
     if (dueDateTime == null) return null;
@@ -121,14 +121,21 @@ class HomeworkTile extends StatelessWidget {
                     .newDueDate(homework, subject.nextLesson!);
               },
               icon: Icon(Icons.replay_rounded)),
-        homework.isCompleted
-            ? const Icon(Icons.check_circle, color: Colors.green)
-            : IconButton(
-                onPressed: () {
-                  context.read<HomeworksProvider>().completeHomework(homework);
-                  onCompleted();
-                },
-                icon: const Icon(Icons.circle_outlined, color: Colors.grey)),
+        IconButton(
+            onPressed: () {
+              final homeworksProvider = context.read<HomeworksProvider>();
+              if (homework.isCompleted) {
+                homeworksProvider.uncompleteHomework(homework);
+              } else {
+                homeworksProvider.completeHomework(homework);
+              }
+              statusChange();
+            },
+            icon: Icon(
+                homework.isCompleted
+                    ? Icons.check_circle
+                    : Icons.circle_outlined,
+                color: Colors.grey)),
       ],
     );
     return switch (homework.type) {

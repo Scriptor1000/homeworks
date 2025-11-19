@@ -220,4 +220,20 @@ class HomeworksProvider extends ChangeNotifier {
       print('Current homeworks: ${_homeworks.map((hw) => hw.id).join(', ')}');
     }
   }
+
+  Future<void> uncompleteHomework(Homework homework) async {
+    final index = _homeworks.indexWhere((hw) => hw.id == homework.id);
+    if (index != -1) {
+      _homeworks[index].isCompleted = false;
+      await _firestoreHomeworks.saveHomework(_homeworks[index]);
+      notifyListeners();
+
+      _analyticsService.uncompleteHomework(
+          type: homework.type,
+          isDueIn: homework.dueDate?.difference(DateTime.now()));
+    } else {
+      print('Homework with id ${homework.id} not found.');
+      print('Current homeworks: ${_homeworks.map((hw) => hw.id).join(', ')}');
+    }
+  }
 }

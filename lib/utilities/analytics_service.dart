@@ -43,6 +43,17 @@ class AnalyticsService {
     });
   }
 
+  /// Logs the event of uncompleting a homework.
+  ///
+  /// The parameter [type] indicates the Type of the Homework as [HomeworkType].
+  /// The parameter [isDueIn] is optional and indicates in how much time the homework is due.
+  void uncompleteHomework({required HomeworkType type, Duration? isDueIn}) {
+    _analytics.logEvent(name: 'uncomplete_homework', parameters: {
+      'type': type.name,
+      if (isDueIn != null) 'isDueInMin': isDueIn.inMinutes,
+    });
+  }
+
   /// Logs the event of completing a homework which is then deleted.
   ///
   /// The parameter [type] indicates the Type of the Homework as [HomeworkType] .

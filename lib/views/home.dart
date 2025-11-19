@@ -103,8 +103,8 @@ class _HomeState extends State<Home> {
     );
   }
 
-  void onCompleted(int index) {
-    print('Homework at index $index completed');
+  void statusChange(int index) {
+    // this is just for possible future animations, etc.
   }
 
   Widget buildUrgentHomeworks(BuildContext context, Homeworks urgentHomeworks) {
@@ -182,8 +182,8 @@ class _HomeState extends State<Home> {
           padding: const EdgeInsets.symmetric(vertical: 6),
           child: HomeworkTile(
             homework: homework,
-            onCompleted: () {
-              onCompleted(index);
+            statusChange: () {
+              statusChange(index);
             },
           ),
         );
