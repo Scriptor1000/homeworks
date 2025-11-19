@@ -109,7 +109,15 @@ class HomeworkTile extends StatelessWidget {
 
   Widget? _buildTrailing(
       Subject? subject, HomeworksProvider homeworksProvider, ThemeData? theme) {
-    var row = Row(
+    final completeButton = IconButton(
+        onPressed: () {
+          homeworksProvider.toggleHomeworkCompletion(homework.id);
+          statusChange();
+        },
+        icon: Icon(
+            homework.isCompleted ? Icons.check_circle : Icons.circle_outlined,
+            color: Colors.grey));
+    final rowWithRevive = Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         if (homework.dueDate != null &&
@@ -122,29 +130,26 @@ class HomeworkTile extends StatelessWidget {
                 homeworksProvider.newDueDate(homework.id, subject.nextLesson!);
               },
               icon: Icon(Icons.replay_rounded)),
-        IconButton(
-            onPressed: () {
-              homeworksProvider.toggleHomeworkCompletion(homework.id);
-              statusChange();
-            },
-            icon: Icon(
-                homework.isCompleted
-                    ? Icons.check_circle
-                    : Icons.circle_outlined,
-                color: Colors.grey)),
+        completeButton,
       ],
     );
     return switch (homework.type) {
-      HomeworkType.homework => row,
+      HomeworkType.homework => rowWithRevive,
       HomeworkType.exam =>
         homework.dueDate != null && DateTime.now().isAfter(homework.dueDate!)
-            ? row
+            ? rowWithRevive
             : null,
       HomeworkType.appointment => homework.dueDate != null
-          ? Text(
-              '${homework.dueDate!.hour.toString().padLeft(2, '0')}:'
-              '${homework.dueDate!.minute.toString().padLeft(2, '0')}',
-              style: theme?.textTheme.bodyLarge,
+          ? Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '${homework.dueDate!.hour.toString().padLeft(2, '0')}:'
+                  '${homework.dueDate!.minute.toString().padLeft(2, '0')}',
+                  style: theme?.textTheme.bodyLarge,
+                ),
+                completeButton
+              ],
             )
           : null,
     };
