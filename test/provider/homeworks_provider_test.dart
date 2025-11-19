@@ -230,15 +230,16 @@ void main() {
       verifyNoMoreInteractions(mockFirestoreHomeworks);
     });
 
-    Future<Homework> oneHomeworkTestSetup(DateTime dueDate) async {
+    Future<Homework> oneHomeworkTestSetup(
+        {bool? completed, DateTime? dueDate}) async {
       final Homework homework = Homework(
           id: '1',
           title: 'title',
           description: 'des',
           subjectDocId: 'sub',
           toNextLesson: false,
-          isCompleted: false,
-          dueDate: dueDate,
+          isCompleted: completed ?? false,
+          dueDate: dueDate ?? now.add(const Duration(days: 1)),
           fromUntis: false);
       when(mockFirestoreHomeworks.loadAllHomeworks())
           .thenAnswer((_) async => [homework]);
@@ -253,10 +254,10 @@ void main() {
 
     test('should update due date in memory and in database', () async {
       // setup
-      final homework = await oneHomeworkTestSetup(now);
+      final homework = await oneHomeworkTestSetup(dueDate: now);
       final dueDate = now.add(const Duration(days: 5));
       // test
-      await homeworksProvider.newDueDate(homework, dueDate);
+      await homeworksProvider.newDueDate(homework.id, dueDate);
       // verify
       expect(homeworksProvider.homeworks[0].dueDate, equals(dueDate));
       // the original homework was given as reference and is updated too
@@ -281,7 +282,7 @@ void main() {
           fromUntis: false);
       final dueDate = now.add(const Duration(days: 5));
       // test
-      expect(homeworksProvider.newDueDate(homework, dueDate), completes);
+      expect(homeworksProvider.newDueDate(homework.id, dueDate), completes);
       // verify
       verifyNever(mockFirestoreHomeworks.saveHomework(homework));
       verifyNever(
@@ -365,24 +366,9 @@ void main() {
 
     test('should complete homework in memory and in database', () async {
       // setup
-      final Homework homework = Homework(
-          id: '1',
-          title: 'title',
-          description: 'des',
-          subjectDocId: 'sub',
-          toNextLesson: false,
-          isCompleted: false,
-          dueDate: now.add(Duration(days: 1)),
-          fromUntis: false);
-      when(mockFirestoreHomeworks.loadAllHomeworks())
-          .thenAnswer((_) async => [homework]);
-      await homeworksProvider.initialize();
-      // verify setup
-      expect(homeworksProvider.homeworks.length, equals(1));
-      expect(homeworksProvider.homeworksLoaded, isTrue);
-      verify(mockFirestoreHomeworks.loadAllHomeworks()).called(1);
+      final homework = await oneHomeworkTestSetup();
       // test
-      await homeworksProvider.completeHomework(homework);
+      await homeworksProvider.toggleHomeworkCompletion(homework.id);
       // verify
       expect(homeworksProvider.homeworks.length, equals(1));
       expect(homeworksProvider.homeworks[0].isCompleted, isTrue);
@@ -394,10 +380,10 @@ void main() {
 
     test('should delete past due homework when it is completed', () async {
       // setup
-      final homework =
-          await oneHomeworkTestSetup(now.subtract(const Duration(days: 1)));
+      final homework = await oneHomeworkTestSetup(
+          dueDate: now.subtract(const Duration(days: 1)));
       // test
-      await homeworksProvider.completeHomework(homework);
+      await homeworksProvider.toggleHomeworkCompletion(homework.id);
       // verify
       expect(homeworksProvider.homeworks.length, equals(0));
       verify(mockFirestoreHomeworks.deleteHomework(homework.documentId))
@@ -409,21 +395,26 @@ void main() {
 
     test('should not throw an error if no homework was found to complete',
         () async {
-      // setup
-      final Homework homework = Homework(
-          id: '1',
-          title: 'title',
-          description: 'des',
-          subjectDocId: 'sub',
-          toNextLesson: false,
-          isCompleted: false,
-          dueDate: now,
-          fromUntis: false);
       // test
-      expect(homeworksProvider.completeHomework(homework), completes);
+      expect(homeworksProvider.toggleHomeworkCompletion('not existent id'),
+          completes);
       // verify
-      verifyNever(mockFirestoreHomeworks.saveHomework(homework));
+      verifyZeroInteractions(mockFirestoreHomeworks);
       verifyZeroInteractions(mockAnalyticsService);
+    });
+
+    test('should uncomplete an already completed homework', () async {
+      // setup
+      final homework = await oneHomeworkTestSetup(completed: true);
+      // test
+      await homeworksProvider.toggleHomeworkCompletion(homework.id);
+      // verify
+      expect(homeworksProvider.homeworks.length, equals(1));
+      expect(homeworksProvider.homeworks[0].isCompleted, isFalse);
+      verify(mockFirestoreHomeworks.saveHomework(homework)).called(1);
+      verify(mockAnalyticsService.uncompleteHomework(
+              type: homework.type, isDueIn: anyNamed('isDueIn')))
+          .called(1);
     });
 
     test('should delete a homework from memory and database', () async {
@@ -445,7 +436,7 @@ void main() {
       expect(homeworksProvider.homeworksLoaded, isTrue);
       verify(mockFirestoreHomeworks.loadAllHomeworks()).called(1);
       // test
-      await homeworksProvider.deleteHomework(homework);
+      await homeworksProvider.deleteHomework(homework.id);
       // verify
       expect(homeworksProvider.homeworks.length, equals(0));
       verify(mockFirestoreHomeworks.deleteHomework(homework.documentId))
@@ -468,7 +459,7 @@ void main() {
           dueDate: now,
           fromUntis: false);
       // test
-      expect(homeworksProvider.deleteHomework(homework), completes);
+      expect(homeworksProvider.deleteHomework(homework.id), completes);
       // verify
       verifyNever(mockFirestoreHomeworks.deleteHomework(homework.documentId));
       verifyZeroInteractions(mockAnalyticsService);
