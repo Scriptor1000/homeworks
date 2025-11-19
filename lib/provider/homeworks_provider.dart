@@ -1,4 +1,6 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 
 import '../database/homeworks.dart';
 import '../database/models/homework.dart';
@@ -152,13 +154,14 @@ class HomeworksProvider extends ChangeNotifier {
 
   /// Deletes a homework from Firestore and [_homeworks].
   ///
-  /// It finds the homework by its [homework.id] in the [_homeworks] list and removes it.
-  /// The homework is also deleted from Firestore.
-  Future<void> deleteHomework(Homework homework) async {
-    final index = _homeworks.indexWhere((hw) => hw.id == homework.id);
-    if (index != -1) {
+  /// It finds the homework by its [HomeworkID] in the [_homeworks] list and removes it.
+  /// The homework is also deleted from Firestore. If no homework with the given ID is found,
+  /// an error is logged to Sentry but no exception is raised.
+  Future<void> deleteHomework(String homeworkID) async {
+    final homework = _homeworks.firstWhereOrNull((hw) => hw.id == homeworkID);
+    if (homework != null) {
       await _firestoreHomeworks.deleteHomework(homework.documentId);
-      _homeworks.removeAt(index);
+      _homeworks.remove(homework);
       notifyListeners();
 
       _analyticsService.deleteHomework(
@@ -168,72 +171,83 @@ class HomeworksProvider extends ChangeNotifier {
               : null,
           isCompleted: homework.isCompleted);
     } else {
-      print('Homework with id ${homework.id} not found.');
-      print('Current homeworks: ${_homeworks.map((hw) => hw.id).join(', ')}');
+      Sentry.logger.error('Homework with id $homeworkID not found for deleting.'
+          'Current homeworks ID: ${_homeworks.map((hw) => hw.id).join(', ')}');
     }
   }
 
   /// Updates an existing homework in Firestore and [_homeworks].
   ///
-  /// It finds the homework by its [homework.id] in the [_homeworks] list and updates its due date.
-  /// The updated homework is also saved in Firestore.
-  Future<void> newDueDate(Homework homework, DateTime dueDate) async {
-    final index = _homeworks.indexWhere((hw) => hw.id == homework.id);
-    if (index != -1) {
-      _homeworks[index].dueDate = dueDate;
-      await _firestoreHomeworks.saveHomework(_homeworks[index]);
+  /// It finds the homework by its [HomeworkID] in the [_homeworks] list and updates its due date.
+  /// The updated homework is also saved in Firestore. If no homework with the given ID is found,
+  /// an error is logged to Sentry but no exception is raised.
+  Future<void> newDueDate(String homeworkID, DateTime dueDate) async {
+    final homework = _homeworks.firstWhereOrNull((hw) => hw.id == homeworkID);
+    if (homework != null) {
+      homework.dueDate = dueDate;
+      await _firestoreHomeworks.saveHomework(homework);
       notifyListeners();
 
       // because this functions is only called when a homework is revived
       _analyticsService.reviveHomework(type: homework.type);
     } else {
-      print('Homework with id ${homework.id} not found.');
-      print('Current homeworks: ${_homeworks.map((hw) => hw.id).join(', ')}');
+      Sentry.logger.error(
+          'Homework with id $homeworkID not found for new due date.'
+          'Current homeworks ID: ${_homeworks.map((hw) => hw.id).join(', ')}');
     }
   }
 
-  Future<void> completeHomework(Homework homework) async {
-    final index = _homeworks.indexWhere((hw) => hw.id == homework.id);
-    if (index != -1) {
-      if (_homeworks[index].dueDate != null &&
-          _homeworks[index].dueDate!.isBefore(DateTime.now())) {
-        _homeworks.removeAt(index);
-        await _firestoreHomeworks.deleteHomework(homework.documentId);
-        notifyListeners();
-
-        _analyticsService.completeAndDeleteHomework(
-            type: homework.type,
-            isPastDueBy: DateTime.now().difference(homework.dueDate!));
+  /// Changes the completion status of a homework in Firestore and [_homeworks].
+  ///
+  /// It finds the homework by its [HomeworkID] in the [_homeworks] list and toggles its isCompleted flag.
+  /// The updated homework is also saved in Firestore. If no homework with the given ID is found,
+  /// an error is logged to Sentry but no exception is raised.
+  Future<void> toggleHomeworkCompletion(String homeworkID) {
+    final homework = _homeworks.firstWhereOrNull((hw) => hw.id == homeworkID);
+    if (homework != null) {
+      if (homework.isCompleted) {
+        return _uncompleteHomework(homework);
       } else {
-        _homeworks[index].isCompleted = true;
-        await _firestoreHomeworks.saveHomework(_homeworks[index]);
-        notifyListeners();
-
-        _analyticsService.completeHomework(
-            type: homework.type,
-            isPastDueBy: homework.dueDate != null
-                ? DateTime.now().difference(homework.dueDate!)
-                : null);
+        return _completeHomework(homework);
       }
     } else {
-      print('Homework with id ${homework.id} not found.');
-      print('Current homeworks: ${_homeworks.map((hw) => hw.id).join(', ')}');
+      Sentry.logger.error(
+          'Homework with id $homeworkID not found for changing status.'
+          'Current homeworks ID: ${_homeworks.map((hw) => hw.id).join(', ')}');
+      return Future.value();
     }
   }
 
-  Future<void> uncompleteHomework(Homework homework) async {
-    final index = _homeworks.indexWhere((hw) => hw.id == homework.id);
-    if (index != -1) {
-      _homeworks[index].isCompleted = false;
-      await _firestoreHomeworks.saveHomework(_homeworks[index]);
+  Future<void> _completeHomework(Homework homework) async {
+    if (homework.dueDate != null &&
+        homework.dueDate!.isBefore(DateTime.now())) {
+      _homeworks.remove(homework);
+      await _firestoreHomeworks.deleteHomework(homework.documentId);
       notifyListeners();
 
-      _analyticsService.uncompleteHomework(
+      _analyticsService.completeAndDeleteHomework(
           type: homework.type,
-          isDueIn: homework.dueDate?.difference(DateTime.now()));
+          isPastDueBy: DateTime.now().difference(homework.dueDate!));
     } else {
-      print('Homework with id ${homework.id} not found.');
-      print('Current homeworks: ${_homeworks.map((hw) => hw.id).join(', ')}');
+      homework.isCompleted = true;
+      await _firestoreHomeworks.saveHomework(homework);
+      notifyListeners();
+
+      _analyticsService.completeHomework(
+          type: homework.type,
+          isPastDueBy: homework.dueDate != null
+              ? DateTime.now().difference(homework.dueDate!)
+              : null);
     }
+  }
+
+  Future<void> _uncompleteHomework(Homework homework) async {
+    homework.isCompleted = false;
+    await _firestoreHomeworks.saveHomework(homework);
+    notifyListeners();
+
+    _analyticsService.uncompleteHomework(
+        type: homework.type,
+        isDueIn: homework.dueDate?.difference(DateTime.now()));
   }
 }

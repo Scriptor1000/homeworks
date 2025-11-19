@@ -72,10 +72,12 @@ class HomeworkTile extends StatelessWidget {
         (s) => s.documentId == homework.subjectDocId,
       ),
     );
+    final homeworksProvider = context.read<HomeworksProvider>();
+
     final backColor = subject?.backColor.harmonizeWith(
       Theme.of(context).primaryColor,
     );
-    final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
 
     final dateText = dueDateText(homework.dueDate);
 
@@ -91,21 +93,22 @@ class HomeworkTile extends StatelessWidget {
       // textColor: homework.isExam ? foreColor : null,
       onLongPress: () async {
         // Show options to edit or delete the homework
-        await context.read<HomeworksProvider>().deleteHomework(homework);
+        await homeworksProvider.deleteHomework(homework.id);
         showSnackBar('Hausaufgabe gelöscht');
       },
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(BorderRadiusConstants.homeworks),
         side: BorderSide(
-          color: backColor ?? colorScheme.error,
+          color: backColor ?? theme.colorScheme.error,
           width: 3,
         ),
       ),
-      trailing: _buildTrailing(subject, context),
+      trailing: _buildTrailing(subject, homeworksProvider, theme),
     );
   }
 
-  Widget? _buildTrailing(Subject? subject, BuildContext context) {
+  Widget? _buildTrailing(
+      Subject? subject, HomeworksProvider homeworksProvider, ThemeData? theme) {
     var row = Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -116,19 +119,12 @@ class HomeworkTile extends StatelessWidget {
             subject.nextLesson != null)
           IconButton(
               onPressed: () {
-                context
-                    .read<HomeworksProvider>()
-                    .newDueDate(homework, subject.nextLesson!);
+                homeworksProvider.newDueDate(homework.id, subject.nextLesson!);
               },
               icon: Icon(Icons.replay_rounded)),
         IconButton(
             onPressed: () {
-              final homeworksProvider = context.read<HomeworksProvider>();
-              if (homework.isCompleted) {
-                homeworksProvider.uncompleteHomework(homework);
-              } else {
-                homeworksProvider.completeHomework(homework);
-              }
+              homeworksProvider.toggleHomeworkCompletion(homework.id);
               statusChange();
             },
             icon: Icon(
@@ -148,7 +144,7 @@ class HomeworkTile extends StatelessWidget {
           ? Text(
               '${homework.dueDate!.hour.toString().padLeft(2, '0')}:'
               '${homework.dueDate!.minute.toString().padLeft(2, '0')}',
-              style: Theme.of(context).textTheme.bodyLarge,
+              style: theme?.textTheme.bodyLarge,
             )
           : null,
     };
