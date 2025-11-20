@@ -62,6 +62,9 @@ jobs:
           channel: stable
           cache: true
 
+      - name: Determine Release Name
+        run: echo "SENTRY_RELEASE=${GITHUB_HEAD_REF##*/}@${GITHUB_SHA::7}" >> $GITHUB_ENV
+
       - name: Cache Flutter dependencies
         uses: actions/cache@v4
         with:
@@ -79,10 +82,16 @@ jobs:
       
       - name: Run build runner
         run: dart run build_runner build
-        
+
       - name: Build web
-        run: flutter build web
+        run: flutter build web --release --source-maps --dart-define=SENTRY_RELEASE=${{ env.SENTRY_RELEASE }}
       
+      - name: Upload Sourcemap to Sentry
+        env:
+            SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_TOKEN }}
+            SENTRY_RELEASE: ${{ env.SENTRY_RELEASE }}
+        run: dart run sentry_dart_plugin 
+
       - name: Deploy to Cloudflare Pages
         id: deploy
         uses: cloudflare/wrangler-action@v3

@@ -274,11 +274,21 @@ class GoRouterRefreshStream extends ChangeNotifier {
         );
         await firestoreUser.ensureDocumentExists();
         _wasLoggedIn = true;
+        Sentry.configureScope((scope) {
+          scope.setUser(SentryUser(
+            id: user.uid,
+            email: user.email,
+            username: user.displayName,
+          ));
+        });
         notifyListeners();
       } else if (_wasLoggedIn) {
         _wasLoggedIn = false;
         notifyListeners();
       }
+      Sentry.configureScope((scope) {
+        scope.setUser(SentryUser());
+      });
     });
   }
 
