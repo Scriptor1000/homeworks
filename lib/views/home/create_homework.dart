@@ -13,9 +13,20 @@ import '../../utilities/global_snackbar.dart';
 import '../../widgets/fab.dart';
 import '../../widgets/subject_tile.dart';
 
+/// Defines the type of homework created.
+/// [homework] → normal task
+/// [exam] → exam or test
 enum HomeworkType { homework, exam }
 
-/// A widget for creating a [Homework] with all available Options.
+/// Page for creating and saving a new [Homework].
+///
+/// Features:
+/// - Select subject
+/// - Define title, description, due date
+/// - Optional: auto-set due date to next lesson
+/// - Can mark as homework or exam
+///
+/// Created Homework is stored using [HomeworksProvider].
 class CreateHomework extends StatefulWidget {
   const CreateHomework({super.key});
 
@@ -24,15 +35,28 @@ class CreateHomework extends StatefulWidget {
 }
 
 class _CreateHomeworkState extends State<CreateHomework> {
+  /// Validation wrapper for inputs
   final _formKey = GlobalKey<FormState>();
 
+  /// Text input for main title
   final _titleController = TextEditingController();
+
+  /// Text input for optional description
   final _descriptionController = TextEditingController();
 
+  /// Type selection (homework or exam)
   HomeworkType selected = HomeworkType.homework;
+
+  /// Currently selected subject
   Subject? selectedSubject;
+
+  /// Last auto-detected subject from lesson system
   Subject? lastCurrentSubject;
+
+  /// If true → due date syncs to next lesson when possible
   bool toNextLesson = true;
+
+  /// The due date of the task
   DateTime dueDate = DateTime.now().add(const Duration(days: 1));
 
   @override
@@ -44,13 +68,18 @@ class _CreateHomeworkState extends State<CreateHomework> {
 
   @override
   Widget build(BuildContext context) {
+    /// Automatically suggest the current lesson’s subject if none selected
     Subject? currentSubject =
-        context.watch<UntisProvider>().getCurrentSubject();
+    context.watch<UntisProvider>().getCurrentSubject();
+
     if (currentSubject != null &&
         (selectedSubject == null || selectedSubject == lastCurrentSubject)) {
       _updateSubject(currentSubject);
     }
+
     lastCurrentSubject ??= currentSubject;
+
+    // If no subject → automatic next-lesson mode disabled
     if (selectedSubject == null) {
       toNextLesson = false;
     }
@@ -62,9 +91,11 @@ class _CreateHomeworkState extends State<CreateHomework> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
+
         child: SingleChildScrollView(
           child: Form(
             key: _formKey,
+
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -85,7 +116,10 @@ class _CreateHomeworkState extends State<CreateHomework> {
           ),
         ),
       ),
+
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+
+      /// Save button
       floatingActionButton: ExtendedFAB(
         icon: Icons.save,
         label: 'Hausaufgabe hinzufügen',
@@ -95,12 +129,16 @@ class _CreateHomeworkState extends State<CreateHomework> {
     );
   }
 
+  /// Validates UI → Creates a [Homework] → Saves via [HomeworksProvider]
   void _submit() {
     if (_formKey.currentState!.validate()) {
+      // Subject required
       if (selectedSubject == null) {
         showSnackBar('Bitte wähle ein Fach aus');
         return;
       }
+
+      /// Construct homework object
       Homework homework = Homework(
         title: _titleController.text,
         description: _descriptionController.text,
@@ -118,6 +156,7 @@ class _CreateHomeworkState extends State<CreateHomework> {
     }
   }
 
+  /// Set new selected subject and update due date
   void _updateSubject(Subject subject) {
     setState(() {
       selectedSubject = subject;
@@ -125,6 +164,7 @@ class _CreateHomeworkState extends State<CreateHomework> {
     _findNextLesson();
   }
 
+  /// Finds and sets next lesson date from selected subject
   void _findNextLesson() {
     if (selectedSubject == null || !toNextLesson) return;
 
@@ -142,6 +182,11 @@ class _CreateHomeworkState extends State<CreateHomework> {
     });
   }
 
+  /// Reads next lesson from subject if available
+  ///
+  /// Returns:
+  /// - DateTime of next lesson
+  /// - null if unavailable
   Future<DateTime?> _getNextLessonDate() async {
     if (selectedSubject == null || !toNextLesson) return null;
 
@@ -154,6 +199,7 @@ class _CreateHomeworkState extends State<CreateHomework> {
     }
   }
 
+  /// Opens date picker → Manual date selection disables auto mode
   Future<void> _showDatePicker() async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -169,11 +215,12 @@ class _CreateHomeworkState extends State<CreateHomework> {
     if (picked != null && picked != dueDate) {
       setState(() {
         dueDate = picked;
-        toNextLesson = false; // Automatik deaktivieren wenn manuell gesetzt
+        toNextLesson = false; // Auto next-lesson disabled manually
       });
     }
   }
 
+  /// Homework description input
   TextFormField _buildDetails() {
     return TextFormField(
       controller: _descriptionController,
@@ -184,9 +231,11 @@ class _CreateHomeworkState extends State<CreateHomework> {
     );
   }
 
+  /// Shows current due date + opens picker
   ListTile _buildDate(BuildContext context) {
     return ListTile(
       title: const Text('Fälligkeitsdatum'),
+
       trailing: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
@@ -195,7 +244,6 @@ class _CreateHomeworkState extends State<CreateHomework> {
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
               '${dueDate.day}.${dueDate.month}.${dueDate.year}',
@@ -206,21 +254,19 @@ class _CreateHomeworkState extends State<CreateHomework> {
           ],
         ),
       ),
+
       onTap: _showDatePicker,
     );
   }
 
+  /// Auto next-lesson toggle
   SwitchListTile _buildNextLessonSwitch(BuildContext context) {
-    // TODO make safe:
-    // subject must be from Untis
-    // dueDate can only be null if nextLesson is true
-    // don't forget to make the same requiremts to fast create
     return SwitchListTile(
       title: const Text('Bis zur nächsten Stunde'),
       value: toNextLesson,
       onChanged: (value) async {
         if (selectedSubject == null || selected == HomeworkType.exam) {
-          return; // has to be false if no subject is selected or if it is an exam
+          return; // Disabled for exam/no subject
         }
         setState(() {
           toNextLesson = value;
@@ -230,34 +276,34 @@ class _CreateHomeworkState extends State<CreateHomework> {
     );
   }
 
+  /// Subject picker → pushes subject selection route
   SizedBox _buildSubjectSelection(BuildContext context) {
     return SizedBox(
       width: double.infinity,
       child: selectedSubject != null
           ? SubjectTile(
-              subject: selectedSubject!,
-              trailing: const Icon(Icons.arrow_drop_down),
+        subject: selectedSubject!,
+        trailing: const Icon(Icons.arrow_drop_down),
 
-              // This is pushed because it should not be showed in the URL
-              // and it should always navigate back to this page.
-              onTap: () =>
-                  SubjectSelectionRoute($extra: _updateSubject).push(context),
-            )
+        // Navigation handled via GoRouter; callback passed via $extra
+        onTap: () =>
+            SubjectSelectionRoute($extra: _updateSubject).push(context),
+      )
           : SubjectTileTemplate(
-              title: 'Fach bitte wählen',
-              avatarChild: const Icon(
-                Icons.question_mark,
-                color: Colors.grey,
-              ),
-              trailing: const Icon(Icons.arrow_drop_down),
-              // TODO responsive color
-              backColor: Colors.grey.shade200,
-              // see above
-              onTap: () =>
-                  SubjectSelectionRoute($extra: _updateSubject).push(context)),
+        title: 'Fach bitte wählen',
+        avatarChild: const Icon(
+          Icons.question_mark,
+          color: Colors.grey,
+        ),
+        trailing: const Icon(Icons.arrow_drop_down),
+        backColor: Colors.grey.shade200,
+        onTap: () =>
+            SubjectSelectionRoute($extra: _updateSubject).push(context),
+      ),
     );
   }
 
+  /// Type: homework vs exam
   SizedBox _buildTypeInput() {
     return SizedBox(
       width: double.infinity,
@@ -277,7 +323,7 @@ class _CreateHomeworkState extends State<CreateHomework> {
         onSelectionChanged: (Set<HomeworkType> newSelection) {
           setState(() {
             if (newSelection.contains(HomeworkType.exam)) {
-              toNextLesson = false; // Exams should not have next lesson
+              toNextLesson = false;
             }
             selected = newSelection.first;
           });
@@ -286,6 +332,7 @@ class _CreateHomeworkState extends State<CreateHomework> {
     );
   }
 
+  /// Title input
   Container _buildTitleInput(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
@@ -300,7 +347,6 @@ class _CreateHomeworkState extends State<CreateHomework> {
           border: InputBorder.none,
         ),
         style: Theme.of(context).textTheme.titleLarge,
-        // autofocus: true,
         textAlign: TextAlign.center,
         validator: (value) {
           if (value == null || value.isEmpty) {

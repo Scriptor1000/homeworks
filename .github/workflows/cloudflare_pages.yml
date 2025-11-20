@@ -63,7 +63,9 @@ jobs:
           cache: true
 
       - name: Determine Release Name
-        run: echo "SENTRY_RELEASE=${GITHUB_HEAD_REF##*/}@${GITHUB_SHA::7}" >> $GITHUB_ENV
+        env: 
+          BRANCH_NAME: ${{github.head_ref || github.ref_name }}
+        run: echo "SENTRY_RELEASE=${BRANCH_NAME##*/}@${GITHUB_SHA::7}" >> $GITHUB_ENV
 
       - name: Cache Flutter dependencies
         uses: actions/cache@v4

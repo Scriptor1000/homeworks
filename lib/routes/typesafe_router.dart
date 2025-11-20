@@ -25,31 +25,32 @@ import 'provider_shell.dart';
 
 part 'typesafe_router.g.dart';
 
+/// Stream that triggers GoRouter refresh when FirebaseAuth state changes
 final _refreshStream =
     GoRouterRefreshStream(FirebaseAuth.instance.authStateChanges());
 
+/// Shortcut getters for route locations
 String get _homeLocation => const HomeRoute().location;
 String get _untisLocation => const UntisRoute().location;
 String get _accountLocation => const AccountRoute().location;
-
 String get _authLocation => const AuthRoute().location;
 
+/// Main app router using GoRouter
 final appRouter = GoRouter(
+  // Initial location depends on whether user is logged in
   initialLocation:
       FirebaseAuth.instance.currentUser == null ? _authLocation : _homeLocation,
-  observers: [
-    SentryNavigatorObserver(),
-    FirebaseAnalyticsObserver(analytics: FirebaseAnalytics.instance),
-  ],
   refreshListenable: _refreshStream,
   redirect: (context, state) {
     final bool isLoggedIn = FirebaseAuth.instance.currentUser != null;
     final bool isOnAuth = state.matchedLocation == _authLocation;
     final bool isOnRoot = state.matchedLocation == '/';
 
+    // Redirect to login if not logged in
     if (!isLoggedIn && !isOnAuth) {
       return _authLocation;
     }
+    // Redirect logged in user away from login/root to home
     if (isLoggedIn && (isOnAuth || isOnRoot)) {
       return _homeLocation;
     }
@@ -60,9 +61,10 @@ final appRouter = GoRouter(
       router.go(_authLocation);
     }
   },
-  routes: $appRoutes,
+  routes: $appRoutes, // generated typed routes
 );
 
+/// Route for authentication screen
 @TypedGoRoute<AuthRoute>(path: '/auth')
 class AuthRoute extends GoRouteData with $AuthRoute {
   const AuthRoute();
@@ -85,6 +87,7 @@ class AuthRoute extends GoRouteData with $AuthRoute {
   }
 }
 
+/// Shell route for bottom navigation bar and nested navigation
 @TypedShellRoute<NavigationShellRoute>(
   routes: <TypedRoute<RouteData>>[
     TypedGoRoute<HomeRoute>(
@@ -116,6 +119,7 @@ class NavigationShellRoute extends ShellRouteData {
   ) {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
+      // Redirect to auth page if not logged in
       WidgetsBinding.instance.addPostFrameCallback((_) {
         GoRouter.of(context).go(_authLocation);
       });
@@ -131,6 +135,7 @@ class NavigationShellRoute extends ShellRouteData {
     }
     return CustomTransitionPage(
       key: state.pageKey,
+      // Wrap child with ProviderShell for access to providers
       child: ProviderShell(
         uid: user.uid,
         child: NavigationShell(
@@ -262,6 +267,7 @@ class GoRouterRefreshStream extends ChangeNotifier {
   GoRouterRefreshStream(Stream<User?> stream) {
     _subscription = stream.listen((user) async {
       if (user != null) {
+        // Ensure user document exists in Firestore
         final firestoreUser = FirestoreUser(
           uid: user.uid,
           firestore: FirebaseFirestore.instance,

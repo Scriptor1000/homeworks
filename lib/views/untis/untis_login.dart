@@ -23,6 +23,8 @@ class UntisLogin extends StatefulWidget {
 
 class _UntisLoginState extends State<UntisLogin> {
   final _formKey = GlobalKey<FormState>();
+
+  /// Controllers for user text input.
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   final _schoolController = TextEditingController();
@@ -32,6 +34,7 @@ class _UntisLoginState extends State<UntisLogin> {
 
   @override
   void dispose() {
+    /// Dispose controllers to prevent memory leaks
     _usernameController.dispose();
     _passwordController.dispose();
     _schoolController.dispose();
@@ -58,6 +61,7 @@ class _UntisLoginState extends State<UntisLogin> {
       server: _serverController.text,
     );
 
+    /// Mark login as loading
     setState(() {
       _isLoading = true;
     });
@@ -84,10 +88,12 @@ class _UntisLoginState extends State<UntisLogin> {
       ),
       body: Column(
         children: [
+          /// Top progress indicator (also driven by override checkbox)
           OwnProgressIndicator(
             active: _isLoading,
             backgroundColor: Theme.of(context).colorScheme.surface,
           ),
+
           Expanded(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -99,6 +105,8 @@ class _UntisLoginState extends State<UntisLogin> {
                       style: TextStyle(fontSize: 16),
                     ),
                     standardGap(),
+
+                    /// Form fields for credentials
                     CredentialForm(
                       formKey: _formKey,
                       usernameController: _usernameController,
@@ -106,6 +114,7 @@ class _UntisLoginState extends State<UntisLogin> {
                       schoolController: _schoolController,
                       serverController: _serverController,
                     ),
+
                     standardGap(),
                     const InfoBox(paragraphs: [
                       'Die Anmeldedaten werden lokal gespeichert und '
@@ -119,6 +128,8 @@ class _UntisLoginState extends State<UntisLogin> {
           ),
         ],
       ),
+
+      /// Button for submitting the form & saving credentials locally
       floatingActionButton: ExtendedFAB(
           onClick: submit,
           active: !_isLoading,

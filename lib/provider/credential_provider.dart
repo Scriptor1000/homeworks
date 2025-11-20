@@ -21,8 +21,8 @@ class CredentialProvider extends ChangeNotifier {
   final FirestoreCredentials _firestoreCredentials;
   final ItemFactory _itemFactory;
 
-  UntisCredentials? _credentials;
-  UntisSession? _session;
+  UntisCredentials? _credentials; // locally stored credentials
+  UntisSession? _session; // current Untis session
   UntisSessionState _sessionState = UntisSessionState.noCredentials;
   bool _isLoadingCredentials = false;
 
@@ -59,7 +59,7 @@ class CredentialProvider extends ChangeNotifier {
   /// The current Untis credentials
   UntisCredentials? get credentials => _credentials;
 
-  /// Initializes the provider by loading credentials from local storage.
+  /// Initializes the provider by loading credentials from local storage
   ///
   /// This method should be called at the start of the application to ensure credentials are loaded or
   /// to refresh the the credentials and their onlineStatus.
@@ -73,6 +73,7 @@ class CredentialProvider extends ChangeNotifier {
     await _loadOnlineStatus();
   }
 
+  /// Sets the current credentials, saves locally, and creates a session
   Future<void> setCredentials(UntisCredentials credentials) async {
     _credentials = credentials;
     await _createSession();
@@ -84,6 +85,7 @@ class CredentialProvider extends ChangeNotifier {
     _loadOnlineStatus();
   }
 
+  /// Loads credentials from local secure storage
   Future<void> _loadCredentialsLocal() async {
     final storedCredentials = await _storage.read(key: credentialsKey);
     if (storedCredentials != null) {
@@ -93,6 +95,7 @@ class CredentialProvider extends ChangeNotifier {
     }
   }
 
+  /// Creates a Untis session using current credentials
   Future<void> _createSession() async {
     if (_credentials == null) return;
     _sessionState = UntisSessionState.loading;
@@ -107,6 +110,7 @@ class CredentialProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Saves the current credentials to local secure storage
   Future<void> _saveCredentialsLocal() async {
     if (_credentials != null) {
       await _storage.write(
@@ -160,6 +164,7 @@ class CredentialProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Loads the online status of credentials by comparing local and online hashes
   Future<void> _loadOnlineStatus() async {
     _credentialsOnlineStatus = CredentailsOnlineStatus.loading;
     notifyListeners();

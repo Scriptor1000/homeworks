@@ -10,10 +10,13 @@ import '../../widgets/fab.dart';
 import '../../widgets/own_progress_indicator.dart';
 import '../../widgets/password_field.dart';
 
-/// A widget for loading Untis credentials from Firestore.
+/// Screen used to load Untis credentials stored in Firestore.
 ///
-/// The user can enter their user password wich is used to decrypt the stored credentials.
-/// If the credentials are found, they are given to [CredentialProvider] and stored locally.
+/// The user enters their **user password**, which is used locally to:
+/// - decrypt encrypted credentials retrieved from Firestore
+/// - then pass them to [CredentialProvider] to store locally
+///
+/// If loading succeeds → screen automatically closes.
 class LoadCredentials extends StatefulWidget {
   const LoadCredentials({super.key});
 
@@ -22,8 +25,10 @@ class LoadCredentials extends StatefulWidget {
 }
 
 class _LoadCredentialsState extends State<LoadCredentials> {
+  /// Controller for password text field
   final _userPasswordController = TextEditingController();
 
+  /// UI flag: when true, UI shows loading indicators and disables fields
   bool _isLoading = false;
 
   @override
@@ -37,16 +42,26 @@ class _LoadCredentialsState extends State<LoadCredentials> {
     super.dispose();
   }
 
+  /// Triggers loading of credentials from Firestore
+  ///
+  /// Steps:
+  /// 1. Check password not empty
+  /// 2. Show loading
+  /// 3. Ask [CredentialProvider] to load + decrypt credentials
+  /// 4. Stop loading or show error
   Future<void> _loadCredentials() async {
+    // User forgot password
     if (_userPasswordController.text.isEmpty) {
       showSnackBar('Bitte gib dein Benutzerpasswort ein');
       return;
     }
 
+    // UI: show loading
     setState(() {
       _isLoading = true;
     });
 
+    // Ask provider to load + decrypt credentials
     context
         .read<CredentialProvider>()
         .loadCredentialsOnline(_userPasswordController.text)
@@ -64,6 +79,7 @@ class _LoadCredentialsState extends State<LoadCredentials> {
 
   @override
   Widget build(BuildContext context) {
+    // Subscribe to provider updates
     var credentialProvider = context.watch<CredentialProvider>();
     return Scaffold(
       appBar: AppBar(
@@ -72,30 +88,32 @@ class _LoadCredentialsState extends State<LoadCredentials> {
       body: SafeArea(
         child: Column(
           children: [
-            // Ladeindikator
+            // Progress bar (at top)
             OwnProgressIndicator(
               active: _isLoading ||
                   credentialProvider.sessionState == UntisSessionState.loading,
               backgroundColor: Theme.of(context).colorScheme.surface,
             ),
 
-            // Hauptcontent mit ScrollView
+            // Main content below progress indicator
             Expanded(
               child: SingleChildScrollView(
                 physics: const ClampingScrollPhysics(),
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
+
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Erklärungstext
+                      // Text explaining purpose
                       const Text(
                         'Gib dein Benutzerpasswort ein, um deine gespeicherten Untis-Anmeldedaten zu laden.',
                         style: TextStyle(fontSize: 16),
                       ),
                       standardGap(),
 
-                      // Benutzerpasswort-Feld mit dem neuen PasswordField-Widget
+                      /// Password input
+                      /// (the password is never sent to server — only used locally to decrypt)
                       UserPasswordField(
                         controller: _userPasswordController,
                         disabled: _isLoading,
@@ -108,6 +126,8 @@ class _LoadCredentialsState extends State<LoadCredentials> {
                       ),
                       standardGap(),
 
+                      /// Shows stored credentials (already decrypted if available)
+                      /// but disabled — cannot edit here
                       Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: CredentialForm(
@@ -124,6 +144,10 @@ class _LoadCredentialsState extends State<LoadCredentials> {
           ],
         ),
       ),
+
+      // Bottom button:
+      // - If currently loading → disabled “sync” button
+      // - Otherwise → load credentials
       floatingActionButton:
           credentialProvider.sessionState == UntisSessionState.loading
               ? ExtendedFAB(

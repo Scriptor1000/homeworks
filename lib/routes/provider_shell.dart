@@ -34,22 +34,27 @@ class ProviderShell extends StatelessWidget {
     // this could be a constant or config
     final range = const Duration(days: 30);
 
+    // Cryptography utility for encrypting/decrypting credentials
     final cryptography = CredentialCryptography(uid: uid);
+    // Factory to create data models
     final itemFactory = ItemFactory();
     final storage = FlutterSecureStorage();
     final analyticsService = AnalyticsService(analytics: analytics);
 
     // Create service instances
     final firestoreUser = FirestoreUser(firestore: firestore, uid: uid);
+    // Firestore credentials service
     final firestoreCredentials = FirestoreCredentials(
       firestoreUser: firestoreUser,
       cryptography: cryptography,
       itemFactory: itemFactory,
     );
+    // Firestore homeworks service
     final firestoreHomeworks = FirestoreHomeworks(
       firestoreUser: firestoreUser,
       itemFactory: itemFactory,
     );
+    // Firestore subjects service
     final firestoreSubjects = FirestoreSubjects(
       firestoreUser: firestoreUser,
       itemFactory: itemFactory,
@@ -57,6 +62,7 @@ class ProviderShell extends StatelessWidget {
 
     return MultiProvider(
       providers: [
+        // Provides local and online credentials
         ChangeNotifierProvider(
           create: (_) => CredentialProvider(
             firestoreCredentials: firestoreCredentials,
@@ -65,6 +71,7 @@ class ProviderShell extends StatelessWidget {
           )..initialize(),
           lazy: false,
         ),
+        // Provides Untis session data based on credentials
         ChangeNotifierProxyProvider<CredentialProvider, UntisProvider>(
           create: (_) => UntisProvider(range: range),
           update: (_, untisCredentialProvider, previous) =>
@@ -72,6 +79,7 @@ class ProviderShell extends StatelessWidget {
               UntisProvider(range: range),
           lazy: false,
         ),
+        // Provides homework data, updated when UntisProvider changes
         ChangeNotifierProxyProvider<UntisProvider, HomeworksProvider>(
           create: (_) => HomeworksProvider(
             firestoreHomeworks: firestoreHomeworks,
@@ -85,6 +93,7 @@ class ProviderShell extends StatelessWidget {
               ),
           lazy: false,
         ),
+        // Provides subject data, updated when UntisProvider changes
         ChangeNotifierProxyProvider<UntisProvider, SubjectProvider>(
           create: (_) => SubjectProvider(
             firestoreSubjects: firestoreSubjects,
@@ -95,6 +104,7 @@ class ProviderShell extends StatelessWidget {
           lazy: false,
         ),
       ],
+      // The child widget which now has access to all above providers
       child: child,
     );
   }

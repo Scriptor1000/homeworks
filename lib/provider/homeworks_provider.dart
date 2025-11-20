@@ -8,9 +8,14 @@ import '../utilities/homeworks_list.dart';
 import '../utilities/constants.dart';
 import 'untis_provider.dart';
 
+/// Provider for managing homeworks
+///
+/// This class handles loading, creating, updating, and deleting homeworks.
+/// It interacts with [FirestoreHomeworks] for persistent storage and keeps
+/// a local list [_homeworks] in sync.
 class HomeworksProvider extends ChangeNotifier {
-  List<Homework> _homeworks = [];
-  bool _homeworksLoaded = false;
+  List<Homework> _homeworks = []; // local list of homeworks
+  bool _homeworksLoaded = false; // whether homeworks have been loaded
 
   final FirestoreHomeworks _firestoreHomeworks;
   final AnalyticsService _analyticsService;
@@ -39,6 +44,7 @@ class HomeworksProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Loads all homeworks from Firestore and removes old completed ones
   Future<void> _loadHomeworks() async {
     _homeworks = await _firestoreHomeworks.loadAllHomeworks();
     final now = DateTime.now();
@@ -52,10 +58,13 @@ class HomeworksProvider extends ChangeNotifier {
     for (var homework in toDelete) {
       await _firestoreHomeworks.deleteHomework(homework.id);
     }
+
+    // Remove the same homeworks locally
     _homeworks.removeWhere((homework) =>
         homework.dueDate != null &&
         homework.dueDate!.isBefore(now) &&
         homework.isCompleted);
+
     _homeworksLoaded = true;
     notifyListeners();
   }
@@ -113,6 +122,8 @@ class HomeworksProvider extends ChangeNotifier {
   Future<void> fastCreateHomework(String title, Subject subject) async {
     final nextLesson = subject.nextLesson;
     bool isExam = false;
+
+    // Check for exam prefixes
     for (final prefix in examPrefixes) {
       if (title.startsWith(prefix)) {
         isExam = true;
@@ -120,6 +131,7 @@ class HomeworksProvider extends ChangeNotifier {
         break;
       }
     }
+
     var homework = Homework(
       title: title,
       description: '',
@@ -130,6 +142,7 @@ class HomeworksProvider extends ChangeNotifier {
       fromUntis: false,
       isExam: isExam,
     );
+
     _homeworks.add(homework);
     await _firestoreHomeworks.saveHomework(homework);
     notifyListeners();
@@ -138,6 +151,9 @@ class HomeworksProvider extends ChangeNotifier {
         isExam: isExam, isToNextLesson: true, isCreatedFast: true);
   }
 
+  /// Creates a homework from a full [Homework] object
+  ///
+  /// Adds it to the local list and saves in Firestore.
   Future<void> createHomework(Homework homework) async {
     _homeworks.add(homework);
     await _firestoreHomeworks.saveHomework(homework);
@@ -191,6 +207,9 @@ class HomeworksProvider extends ChangeNotifier {
     }
   }
 
+  /// Marks a homework as completed
+  ///
+  /// Updates the local list and saves the change in Firestore.
   Future<void> completeHomework(Homework homework) async {
     final index = _homeworks.indexWhere((hw) => hw.id == homework.id);
     if (index != -1) {

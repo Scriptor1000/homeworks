@@ -12,9 +12,9 @@ import '../../widgets/password_field.dart';
 
 /// A widget for uploading Untis credentials to Firestore.
 ///
-/// The credentials are loaded from the [CredentialProvider].
-/// The user has to enter a secret key to encrypt the credentials before uploading them.
-/// Only the encrypted credentials are uploaded, the secret key is not stored or transmitted.
+/// Credentials are loaded from [CredentialProvider].
+/// The user enters a secret key to encrypt the credentials before uploading.
+/// Only the encrypted credentials are stored online; the secret key itself is never transmitted.
 class UploadCredentials extends StatefulWidget {
   const UploadCredentials({super.key});
 
@@ -30,13 +30,18 @@ class _UploadCredentialsState extends State<UploadCredentials> {
   final TextEditingController _serverController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
+  /// Loading state while uploading.
   bool loading = false;
+
+  /// Upload completed state (not used to block UI here but could be extended).
   bool completed = false;
 
   @override
   void initState() {
     super.initState();
     final credentials = context.read<CredentialProvider>().credentials;
+
+    /// If credentials exist, prefill form, otherwise pop the screen.
     if (credentials != null) {
       setState(() {
         _usernameController.text = credentials.username;
@@ -61,7 +66,6 @@ class _UploadCredentialsState extends State<UploadCredentials> {
 
   @override
   Widget build(BuildContext context) {
-    // Prüfe, ob die Credentials bereits hochgeladen wurden
     final untisProvider = Provider.of<CredentialProvider>(context);
     final bool alreadyUploaded =
         untisProvider.credentialsOnlineStatus == CredentailsOnlineStatus.online;
@@ -70,18 +74,19 @@ class _UploadCredentialsState extends State<UploadCredentials> {
       appBar: AppBar(
         title: const Text('Anmeldedaten online speichern'),
       ),
-      // GestureDetector beibehalten, um die Tastatur auszublenden
       body: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
         child: Form(
           key: _formKey,
           child: Column(
             children: [
+              /// Loading indicator
               OwnProgressIndicator(
                 active: loading,
                 backgroundColor: Theme.of(context).colorScheme.surface,
               ),
-              // Hauptinhalt mit ScrollView im Expanded
+
+              /// Main scrollable content
               Expanded(
                 child: SingleChildScrollView(
                   physics: const ClampingScrollPhysics(),
@@ -89,7 +94,7 @@ class _UploadCredentialsState extends State<UploadCredentials> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Zeige Info an, wenn die Daten bereits hochgeladen wurden
+                      /// Show info if already uploaded
                       if (alreadyUploaded)
                         const InfoBox(
                           title: 'Hinweis',
@@ -99,15 +104,15 @@ class _UploadCredentialsState extends State<UploadCredentials> {
                           icon: Icons.check_circle_outline,
                           accentColor: Colors.green,
                         ),
-
                       if (alreadyUploaded) standardGap(),
+
                       const Text(
                         'Gib einen geheimen Schlüssel ein, um deine Anmeldedaten sicher online zu speichern.',
                         style: TextStyle(fontSize: 16),
                       ),
                       standardGap(),
 
-                      // Geheimes Schlüssel Textfeld mit Sichtbarkeitsumschaltung
+                      /// Secret key input
                       UserPasswordField(
                         controller: _secretController,
                         validator: (value) {
@@ -124,18 +129,19 @@ class _UploadCredentialsState extends State<UploadCredentials> {
                         style: TextStyle(
                             fontSize: 18, fontWeight: FontWeight.bold),
                       ),
-
                       standardGap(),
-                      // Deaktivierte CredentialForm zur Anzeige der aktuellen Daten
+
+                      /// Disabled credential form for display only
                       CredentialForm(
                         usernameController: _usernameController,
                         passwordController: _passwordController,
                         schoolController: _schoolController,
                         serverController: _serverController,
-                        disabled: true, // Deaktiviert, nur zur Anzeige
+                        disabled: true,
                       ),
                       standardGap(),
-                      // Informationstext zur Verschlüsselung mit dem aktualisierten InfoBox-Widget
+
+                      /// Info box about encryption
                       const InfoBox(
                         title: 'Deine Daten sind sicher!',
                         paragraphs: [
@@ -144,7 +150,7 @@ class _UploadCredentialsState extends State<UploadCredentials> {
                         ],
                         icon: Icons.info_outline,
                       ),
-                      buildFABGap()
+                      buildFABGap(),
                     ],
                   ),
                 ),
@@ -153,17 +159,22 @@ class _UploadCredentialsState extends State<UploadCredentials> {
           ),
         ),
       ),
+
+      /// Floating action button to trigger upload
       floatingActionButton: ExtendedFAB(
-          onClick: save,
-          active: !loading,
-          icon: Icons.cloud_upload,
-          label: 'Hochladen'),
+        onClick: save,
+        active: !loading,
+        icon: Icons.cloud_upload,
+        label: 'Hochladen',
+      ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 
+  /// Validates the form and uploads the credentials online using the provided secret.
   void save() async {
     if (loading || completed) return;
+
     if (!_formKey.currentState!.validate()) {
       return;
     }
@@ -174,11 +185,10 @@ class _UploadCredentialsState extends State<UploadCredentials> {
 
     final secret = _secretController.text;
     final credentialProvider =
-        Provider.of<CredentialProvider>(context, listen: false);
+    Provider.of<CredentialProvider>(context, listen: false);
 
-    await credentialProvider
-        .uploadCredentialsOnline(secret)
-        .onError((error, _) {
+    /// Upload encrypted credentials
+    await credentialProvider.uploadCredentialsOnline(secret).onError((error, _) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(

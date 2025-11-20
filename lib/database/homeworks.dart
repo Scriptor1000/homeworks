@@ -4,7 +4,7 @@ import 'models/factory.dart';
 import 'models/homework.dart';
 import 'user.dart';
 
-/// Klasse für das Handling von Homeworks in Firestore mit Dependency Injection.
+/// Class for handling homework in Firestore with dependency injections.
 class FirestoreHomeworks {
   static const String homeworksCollections = 'homeworks';
 

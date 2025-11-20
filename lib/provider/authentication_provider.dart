@@ -9,20 +9,48 @@ import '../database/allowed_emails.dart';
 import '../utilities/enums.dart';
 import '../utilities/global_snackbar.dart';
 
+/// Authentication provider that handles Firebase authentication
+/// via Google Sign-In and email/password login.
+///
+/// Responsibilities:
+/// - Initialize Google sign-in
+/// - Authenticate users with Google
+/// - Link Google accounts to existing Firebase users
+/// - Sign out / unlink accounts
+/// - Authorize / revoke emails stored in Firestore
+///
+/// Exposes:
+/// - The currently signed-in Firebase [user]
+/// - The current [googleSignInState] used for UI decisions
 class AuthenticationProvider extends ChangeNotifier {
+  /// FirebaseAuth instance used for authentication.
   final FirebaseAuth _firebaseAuth;
+
+  /// Google Sign-In handler.
   final GoogleSignIn _googleSignIn;
+
+  /// Helper to check and manage allowed emails stored in Firestore.
   final FirestoreAllowedEmails _allowedEmails;
 
+  /// Completer resolved once Google sign-in support is determined.
   final Completer<bool> _googleSupported = Completer<bool>();
+
+  /// State describing whether Google sign-in is supported, errors, etc.
   GoogleSignInState googleSignInState = GoogleSignInState.loading;
 
+  /// Currently authenticated Firebase user.
   User? get user => _firebaseAuth.currentUser;
 
-  /// Client ID for the Google Sign-In.
+  /// OAuth Client ID used for Google authentication.
   static const clientId =
       '626284965826-iovj6s0lvft551f3d6ahdr6qkoc53njg.apps.googleusercontent.com';
 
+  /// Creates a new [AuthenticationProvider].
+  ///
+  /// Required:
+  /// - [firebaseAuth] Firebase authentication service
+  /// - [googleSignIn] Google sign-in instance
+  /// - [allowedEmails] Firestore helper for allowed email management
   AuthenticationProvider({
     required FirebaseAuth firebaseAuth,
     required GoogleSignIn googleSignIn,
@@ -31,18 +59,22 @@ class AuthenticationProvider extends ChangeNotifier {
         _googleSignIn = googleSignIn,
         _allowedEmails = allowedEmails;
 
+  /// Initializes Google Sign-In compatibility and event listeners.
+  ///
+  /// - Sets [googleSignInState] according to support
+  /// - Completes `_googleSupported` future
+  /// - On web, listens to Google authentication events
   Future<void> initialize() async {
     if (_googleSupported.isCompleted) return;
-    await _googleSignIn.initialize(
-      clientId: clientId,
-    );
+
+    await _googleSignIn.initialize(clientId: clientId);
+
     try {
       if (_googleSignIn.supportsAuthenticate()) {
         googleSignInState = GoogleSignInState.supported;
         return _googleSupported.complete(true);
       } else if (kIsWeb) {
-        // on web, there is an extra button by Google to sign in
-        // but this button doen't give us a callback so we have to listen to  events
+        // Web button authentication: events must be listened to manually
         _googleSignIn.authenticationEvents.listen((event) {
           // the event could also be a sign out event
           if (event is GoogleSignInAuthenticationEventSignIn) {
@@ -63,29 +95,29 @@ class AuthenticationProvider extends ChangeNotifier {
       );
       googleSignInState = GoogleSignInState.error;
     }
+
     notifyListeners();
     _googleSupported.complete(false);
   }
 
-  /// Starts the Google Sign-In process for linking and signing in.
+  /// Begins Google sign-in flow.
   ///
-  /// Lets the user sign in with their Google account and
-  /// checks if the email is allowed. If the email is allowed,
-  /// it signs in with Firebase.
+  /// If supported, attempts to authenticate via Google credentials.
+  /// Shows snackbars on error.
   Future<void> authenticateWithGoogle() async {
-    if (!(await _googleSupported.future)) {
-      return;
-    }
+    if (!(await _googleSupported.future)) return;
+
     try {
       final googleUser = await _googleSignIn.authenticate();
       return await _handleGoogleCredentials(googleUser);
     } catch (error) {
-      // TODO swich the error code if it is a GoogleSignInException
+      // TODO: switch error code if GoogleSignInException
       await _googleSignIn.disconnect();
       showSnackBar('Fehler bei der Anmeldung: $error');
     }
   }
 
+  /// Decides whether to sign in or link credentials based on existing user state.
   Future<void> _handleGoogleCredentials(GoogleSignInAccount googleUser) async {
     if (_firebaseAuth.currentUser == null) {
       return _signInWithGoogle(googleUser);
@@ -94,15 +126,23 @@ class AuthenticationProvider extends ChangeNotifier {
     }
   }
 
+  /// Signs in a new user via Google OAuth.
+  ///
+  /// Steps:
+  /// 1. Check email is allowed via Firestore
+  /// 2. Create Firebase credential from Google ID token
+  /// 3. Sign in to Firebase
+  /// 4. Remove temporary invitation entries if required
   Future<void> _signInWithGoogle(GoogleSignInAccount googleUser) async {
     try {
       final allowed = await _allowedEmails.isEmailAllowed(googleUser.email);
 
       if (!allowed) {
-        print('Email nicht erlaubt: ${googleUser.email}');
+        print('Email not allowed: ${googleUser.email}');
         showSnackBar(
-            'Kein Zugang mit dieser Email (${googleUser.email}) möglich.'
-            ' Bitte wende dich an den Administrator.');
+          'Kein Zugang mit dieser Email (${googleUser.email}) möglich.'
+              ' Bitte wende dich an den Administrator.',
+        );
         await _googleSignIn.disconnect();
         return;
       }
@@ -114,12 +154,16 @@ class AuthenticationProvider extends ChangeNotifier {
       );
 
       final userCredential =
-          await _firebaseAuth.signInWithCredential(credential);
+      await _firebaseAuth.signInWithCredential(credential);
       final user = userCredential.user;
 
       if (user != null) {
-        await _allowedEmails.removeTemporaryEntries(googleUser.email, user.uid);
+        await _allowedEmails.removeTemporaryEntries(
+          googleUser.email,
+          user.uid,
+        );
       }
+
       notifyListeners();
     } catch (error, stackTrace) {
       print('Google Sign-In Fehler: $error');
@@ -136,10 +180,15 @@ class AuthenticationProvider extends ChangeNotifier {
     }
   }
 
+  /// Links Google credentials to an existing Firebase user.
+  ///
+  /// Also:
+  /// - Updates profile picture & display name if needed
+  /// - Calls Firestore to authorize email
   Future<void> _linkWithGoogle(GoogleSignInAccount googleUser) async {
     final user = _firebaseAuth.currentUser;
     if (user == null) {
-      print('Kein Nutzer angemeldet, kann nicht verknüpfen.');
+      print('No user logged in; cannot link.');
       return;
     }
 
@@ -152,6 +201,7 @@ class AuthenticationProvider extends ChangeNotifier {
 
       await user.linkWithCredential(credential);
 
+      // Optionally update user info after linking
       if (googleUser.photoUrl != null) {
         await user.updatePhotoURL(googleUser.photoUrl);
       }
@@ -173,7 +223,7 @@ class AuthenticationProvider extends ChangeNotifier {
     }
   }
 
-  /// Unlinks the currently signed-in Firebase user from their Google account.
+  /// Unlinks Firebase user from Google provider.
   ///
   /// This method will unlink the Firebase user from their Google account.
   /// It will not delete the display name or photo URL, but will remove the
@@ -181,7 +231,7 @@ class AuthenticationProvider extends ChangeNotifier {
   Future<void> unlinkFromGoogle() async {
     final user = _firebaseAuth.currentUser;
     if (user == null) {
-      print('Kein Nutzer angemeldet, kann nicht trennen.');
+      print('No user logged in; cannot unlink.');
       return;
     }
 
@@ -190,15 +240,15 @@ class AuthenticationProvider extends ChangeNotifier {
     await _allowedEmails.revokeEmail(user.uid);
   }
 
-  /// Signs out the currently signed-in user from their Google account.
-  ///
-  /// In future sign ins, the user will have to select their Google account again.
-  /// This method does not unlink the Firebase user from their Google account.
+  /// Signs the Firebase user out, and disconnects Google session.
   Future<void> signOut() async {
     await _googleSignIn.disconnect();
     await _firebaseAuth.signOut();
   }
 
+  /// Logs in using email + password via Firebase.
+  ///
+  /// Shows a snackbar on failure.
   Future<void> loginWithEmail(String email, String password) async {
     final credentials = EmailAuthProvider.credential(
       email: email,
@@ -210,11 +260,13 @@ class AuthenticationProvider extends ChangeNotifier {
     } catch (e) {
       print('Error logging in with email: $e');
       showSnackBar(
-          'Anmeldung fehlgeschlagen: ${e is FirebaseAuthException ? _getErrorMessage(e) : e.toString()}');
+        'Anmeldung fehlgeschlagen: '
+            '${e is FirebaseAuthException ? _getErrorMessage(e) : e.toString()}',
+      );
     }
   }
 
-  /// The error messages for FirebaseAuth exceptions.
+  /// Human-friendly Firebase Auth error strings.
   static String _getErrorMessage(FirebaseAuthException e) {
     switch (e.code) {
       case 'user-not-found':
