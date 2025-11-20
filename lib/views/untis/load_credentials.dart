@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../provider/credential_provider.dart';
 import '../../utilities/enums.dart';
+import '../../utilities/global_snackbar.dart';
 import '../../widgets/credential_form.dart';
 import '../../widgets/fab.dart';
 import '../../widgets/own_progress_indicator.dart';
@@ -30,9 +31,6 @@ class _LoadCredentialsState extends State<LoadCredentials> {
   /// UI flag: when true, UI shows loading indicators and disables fields
   bool _isLoading = false;
 
-  /// UI–visible error message
-  String _errorMessage = '';
-
   @override
   void initState() {
     super.initState();
@@ -54,46 +52,35 @@ class _LoadCredentialsState extends State<LoadCredentials> {
   Future<void> _loadCredentials() async {
     // User forgot password
     if (_userPasswordController.text.isEmpty) {
-      setState(() {
-        _errorMessage = 'Bitte gib dein Benutzerpasswort ein';
-      });
+      showSnackBar('Bitte gib dein Benutzerpasswort ein');
       return;
     }
 
     // UI: show loading
     setState(() {
       _isLoading = true;
-      _errorMessage = '';
     });
 
     // Ask provider to load + decrypt credentials
     context
         .read<CredentialProvider>()
         .loadCredentialsOnline(_userPasswordController.text)
-    // If error occurs → show message + stop loading
-        .onError((error, stackTrace) {
+        .then((_) {
+      if (mounted) {
+        context.pop();
+      }
+    }).onError((error, stackTrace) {
       setState(() {
-        _errorMessage = error.toString();
+        showSnackBar('Fehler: $error');
         _isLoading = false;
       });
-    }).then((_) => setState(() {
-      _isLoading = false;
-    }));
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     // Subscribe to provider updates
     var credentialProvider = context.watch<CredentialProvider>();
-
-    // If loading was successful → close screen
-    if (credentialProvider.sessionState == UntisSessionState.accomplished) {
-      // Post frame callback to avoid update during build
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        context.pop();
-      });
-    }
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Gespeicherte Anmeldedaten laden'),
@@ -148,23 +135,6 @@ class _LoadCredentialsState extends State<LoadCredentials> {
                           disabled: true,
                         ),
                       ),
-
-                      standardGap(),
-
-                      /// Error message
-                      Container(
-                        alignment: Alignment.topLeft,
-                        child: _errorMessage.isNotEmpty
-                            ? Text(
-                          _errorMessage,
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.error,
-                          ),
-                        )
-                            : null,
-                      ),
-
-                      // Adds bottom spacing so FAB doesn’t overlap content
                       buildFABGap()
                     ],
                   ),
@@ -179,18 +149,18 @@ class _LoadCredentialsState extends State<LoadCredentials> {
       // - If currently loading → disabled “sync” button
       // - Otherwise → load credentials
       floatingActionButton:
-      credentialProvider.sessionState == UntisSessionState.loading
-          ? ExtendedFAB(
-        onClick: () {},
-        active: false,
-        icon: Icons.sync,
-        label: 'Verbinde mit Untis',
-      )
-          : ExtendedFAB(
-          onClick: _loadCredentials,
-          active: !_isLoading,
-          icon: Icons.cloud_download_outlined,
-          label: 'Anmeldedaten laden'),
+          credentialProvider.sessionState == UntisSessionState.loading
+              ? ExtendedFAB(
+                  onClick: () {},
+                  active: false,
+                  icon: Icons.sync,
+                  label: 'Verbinde mit Untis',
+                )
+              : ExtendedFAB(
+                  onClick: _loadCredentials,
+                  active: !_isLoading,
+                  icon: Icons.cloud_download_outlined,
+                  label: 'Anmeldedaten laden'),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }

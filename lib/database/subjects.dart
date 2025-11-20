@@ -47,16 +47,11 @@ class FirestoreSubjects {
   ///
   /// Gibt eine Liste von [Subject]-Objekten zurück, die in [subjectCollection] gespeichert sind.
   Future<List<Subject>> loadAllSubjects() async {
-    try {
-      final snapshot = await _subjectCollectionRef.get();
+    final snapshot = await _subjectCollectionRef.get();
 
-      return snapshot.docs
-          .map((doc) => _itemFactory.subjectFromDocument(doc.data()))
-          .toList();
-    } catch (e) {
-      print('Fehler beim Laden aller Fächer: $e');
-      return [];
-    }
+    return snapshot.docs
+        .map((doc) => _itemFactory.subjectFromDocument(doc.data()))
+        .toList();
   }
 
   /// Löscht ein Fach aus Firestore.

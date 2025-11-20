@@ -2,9 +2,11 @@ import 'dart:async';
 
 import 'package:animations/animations.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 
 import '../auth/login.dart';
 import '../database/models/subject.dart';
@@ -25,7 +27,7 @@ part 'typesafe_router.g.dart';
 
 /// Stream that triggers GoRouter refresh when FirebaseAuth state changes
 final _refreshStream =
-GoRouterRefreshStream(FirebaseAuth.instance.authStateChanges());
+    GoRouterRefreshStream(FirebaseAuth.instance.authStateChanges());
 
 /// Shortcut getters for route locations
 String get _homeLocation => const HomeRoute().location;
@@ -37,7 +39,7 @@ String get _authLocation => const AuthRoute().location;
 final appRouter = GoRouter(
   // Initial location depends on whether user is logged in
   initialLocation:
-  FirebaseAuth.instance.currentUser == null ? _authLocation : _homeLocation,
+      FirebaseAuth.instance.currentUser == null ? _authLocation : _homeLocation,
   refreshListenable: _refreshStream,
   redirect: (context, state) {
     final bool isLoggedIn = FirebaseAuth.instance.currentUser != null;
@@ -64,7 +66,7 @@ final appRouter = GoRouter(
 
 /// Route for authentication screen
 @TypedGoRoute<AuthRoute>(path: '/auth')
-class AuthRoute extends GoRouteData with _$AuthRoute {
+class AuthRoute extends GoRouteData with $AuthRoute {
   const AuthRoute();
 
   @override
@@ -111,10 +113,10 @@ class NavigationShellRoute extends ShellRouteData {
 
   @override
   Page pageBuilder(
-      BuildContext context,
-      GoRouterState state,
-      Widget navigator,
-      ) {
+    BuildContext context,
+    GoRouterState state,
+    Widget navigator,
+  ) {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       // Redirect to auth page if not logged in
@@ -155,7 +157,7 @@ class NavigationShellRoute extends ShellRouteData {
 }
 
 // Home Routes
-class HomeRoute extends GoRouteData with _$HomeRoute {
+class HomeRoute extends GoRouteData with $HomeRoute {
   const HomeRoute();
 
   @override
@@ -167,7 +169,7 @@ class HomeRoute extends GoRouteData with _$HomeRoute {
   }
 }
 
-class CreateHomeworkRoute extends GoRouteData with _$CreateHomeworkRoute {
+class CreateHomeworkRoute extends GoRouteData with $CreateHomeworkRoute {
   const CreateHomeworkRoute();
 
   @override
@@ -176,8 +178,12 @@ class CreateHomeworkRoute extends GoRouteData with _$CreateHomeworkRoute {
   }
 }
 
-class SubjectSelectionRoute extends GoRouteData with _$SubjectSelectionRoute {
-  /// Callback which is called when a subject is selected
+class SubjectSelectionRoute extends GoRouteData with $SubjectSelectionRoute {
+  /// Callback wich is called when a subject is selected.
+  ///
+  /// The callback receives the selected [Subject] or [Null]
+  /// if the selection was closed without selecting.
+  /// It has to be named [$extra] to satisfy the code generator.
   final void Function(Subject) $extra;
 
   const SubjectSelectionRoute({required this.$extra});
@@ -192,7 +198,7 @@ class SubjectSelectionRoute extends GoRouteData with _$SubjectSelectionRoute {
   @override
   FutureOr<String?> redirect(BuildContext context, GoRouterState state) {
     if (state.extra == null) {
-      // Redirect to home if no subject selected
+      // If no subject is selected, redirect to the home page
       return const HomeRoute().location;
     }
     return null;
@@ -200,7 +206,7 @@ class SubjectSelectionRoute extends GoRouteData with _$SubjectSelectionRoute {
 }
 
 // Untis Routes
-class UntisRoute extends GoRouteData with _$UntisRoute {
+class UntisRoute extends GoRouteData with $UntisRoute {
   const UntisRoute();
 
   @override
@@ -212,7 +218,7 @@ class UntisRoute extends GoRouteData with _$UntisRoute {
   }
 }
 
-class EnterCredentialsRoute extends GoRouteData with _$EnterCredentialsRoute {
+class EnterCredentialsRoute extends GoRouteData with $EnterCredentialsRoute {
   const EnterCredentialsRoute();
 
   @override
@@ -221,7 +227,7 @@ class EnterCredentialsRoute extends GoRouteData with _$EnterCredentialsRoute {
   }
 }
 
-class UploadCredentialsRoute extends GoRouteData with _$UploadCredentialsRoute {
+class UploadCredentialsRoute extends GoRouteData with $UploadCredentialsRoute {
   const UploadCredentialsRoute();
 
   @override
@@ -231,7 +237,7 @@ class UploadCredentialsRoute extends GoRouteData with _$UploadCredentialsRoute {
 }
 
 class DownloadCredentialsRoute extends GoRouteData
-    with _$DownloadCredentialsRoute {
+    with $DownloadCredentialsRoute {
   const DownloadCredentialsRoute();
 
   @override
@@ -241,7 +247,7 @@ class DownloadCredentialsRoute extends GoRouteData
 }
 
 // Account Route
-class AccountRoute extends GoRouteData with _$AccountRoute {
+class AccountRoute extends GoRouteData with $AccountRoute {
   const AccountRoute();
 
   @override
@@ -253,7 +259,8 @@ class AccountRoute extends GoRouteData with _$AccountRoute {
   }
 }
 
-/// Listens to Firebase Auth changes and notifies GoRouter
+/// A stream that listens to Firebase Auth state changes and notifies listeners
+/// when the user logs in or out.
 class GoRouterRefreshStream extends ChangeNotifier {
   bool _wasLoggedIn = false;
 
@@ -284,9 +291,9 @@ class GoRouterRefreshStream extends ChangeNotifier {
   }
 }
 
-/// Helper class for bottom navigation
+/// A utility class for type-safe navigation in the app.
 class DestinationsManager {
-  /// Returns selected index of bottom navigation bar based on route
+  /// Returns the index of the bottom navigation bar based on the current route.
   static int getNavigationIndex(GoRouterState state) {
     final location = state.matchedLocation;
     if (location.startsWith(_untisLocation)) return 1;
@@ -295,7 +302,7 @@ class DestinationsManager {
     return 0;
   }
 
-  /// Navigation destinations for the bottom navigation bar
+  /// Navigation destinations for bottom navigation bar
   static List<NavigationDestination> get bottomNavigationDestinations {
     return [
       const NavigationDestination(

@@ -5,6 +5,7 @@ import 'package:dart_untis_mobile/dart_untis_mobile.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 
 import '../database/models/credentials.dart';
 import '../utilities/enums.dart';
@@ -17,7 +18,7 @@ import '../database/models/subject.dart';
 class UntisProvider extends ChangeNotifier {
   UntisSession? _session;
 
-  List<UntisPeriod> todayPeriods = [];
+  List<UntisPeriod> _todayPeriods = [];
   List<Subject> _untisSubjects = [];
   UntisSubjectStatus _untisSubjectStatus = UntisSubjectStatus.untisUnavailable;
 
@@ -46,18 +47,27 @@ class UntisProvider extends ChangeNotifier {
   /// - [UntisSubjectStatus.error]: An error occurred while loading Untis subjects.
   UntisSubjectStatus get untisSubjectStatus => _untisSubjectStatus;
 
+  /// All subjects which happen today.
+  List<Subject> get todaySubjects => _todayPeriods
+      .where((period) =>
+          !period.isCancelled &&
+          period.subject != null &&
+          period.teacher != null)
+      .map((period) => Subject.fromUntisSubject(period.subject!))
+      .toList();
+
   /// Whether the Untis subjects are loaded and available.
   bool get untisSubjectsLoaded =>
       _untisSubjectStatus == UntisSubjectStatus.loaded;
 
-  /// Checks the [todayPeriods] and returns the current subject based on the current time.
+  /// Checks the [_todayPeriods] and returns the current subject based on the current time.
   ///
   /// The current subject is determined as the last period which started before now and ended in the last 30 minutes.
   /// This uses [lastWhereOrNull] to ensure that if multiple periods match, the most recent one (closest to now) is selected,
   /// which is important for single periods without a pause between.
   Subject? getCurrentSubject() {
     final now = DateTime.now();
-    final currentPeriod = todayPeriods.lastWhereOrNull(
+    final currentPeriod = _todayPeriods.lastWhereOrNull(
       (period) =>
           !period.isCancelled &&
           period.teacher != null &&
@@ -104,65 +114,67 @@ class UntisProvider extends ChangeNotifier {
       // negative is vice versa (start and end date are swapped)
       DateTime startDate = DateTime.now();
       DateTime endDate = startDate.add(_range);
-      DateTime todayNight =
-          DateTime(startDate.year, startDate.month, startDate.day + 1);
 
       // the periods today are loaded extra to find the current subject simpler
-      todayPeriods = await _session!
+      _todayPeriods = await _session!
           .getTimetable(
             startDate: startDate,
             endDate: startDate,
           )
           .then((timetable) => timetable.periods);
 
-      // because of an logic error in the dart_untis_mobile package it is
-      // only possible to load a 7 day range at once, so a loop is needed
-      for (startDate;
-          startDate.isBefore(endDate);
-          startDate = startDate.add(const Duration(days: 7))) {
-        final timetable = await _session!.getTimetable(
-          startDate: startDate,
-        );
-        for (var period in timetable.periods) {
-          if (period.subject == null) {
-            continue;
-          }
-          // sometimes only teacher is removed but the period is not cancelled
-          final isCancelled = period.isCancelled || period.teacher == null;
+      final timetable =
+          await _session!.getTimetable(startDate: startDate, endDate: endDate);
 
-          // this is the subject from the list, if the subject is already in the list
-          final listedSubject = _untisSubjects
-              .firstWhereOrNull((s) => s.id == period.subject!.id.id);
-
-          // if not, it is added with a next lesson date (if it is not cancelled and after today)
-          if (listedSubject == null) {
-            final subject = Subject.fromUntisSubject(period.subject!);
-
-            if (!isCancelled && period.startDateTime.isAfter(todayNight)) {
-              subject.nextLesson = period.startDateTime;
-            }
-            _untisSubjects.add(subject);
-
-            // if a not cancelled period is before the next lesson (wich shouldn't be the case because
-            // the periods should be ordered) or there is't a next lesson (wich could be because the
-            // first lesson in wich the subject was found was cancelled) then the next lesson is updated
-          } else if (!isCancelled &&
-              (listedSubject.nextLesson == null ||
-                  period.startDateTime.isBefore(listedSubject.nextLesson!)) &&
-              period.startDateTime.isAfter(todayNight)) {
-            // NOTE: you can make the change  on the variable because it is only a reference to
-            // the subject in the list, so this changes the subject in the list
-            listedSubject.nextLesson = period.startDateTime;
-          }
-        }
+      for (var period in timetable.periods) {
+        _parsePeriod(period);
       }
 
       _untisSubjectStatus = UntisSubjectStatus.loaded;
-    } catch (e) {
+    } catch (error, stackTrace) {
       _untisSubjectStatus = UntisSubjectStatus.error;
-      print('Error loading timetable: $e');
+      print('Error loading timetable: $error');
+      Sentry.captureException(
+        error,
+        stackTrace: stackTrace,
+      );
     } finally {
       notifyListeners();
+    }
+  }
+
+  void _parsePeriod(UntisPeriod period) {
+    DateTime now = DateTime.now();
+    DateTime todayNight = DateTime(now.year, now.month, now.day + 1);
+    if (period.subject == null) {
+      return;
+    }
+    // sometimes only teacher is removed but the period is not cancelled
+    final isCancelled = period.isCancelled || period.teacher == null;
+
+    // this is the subject from the list, if the subject is already in the list
+    final listedSubject =
+        _untisSubjects.firstWhereOrNull((s) => s.id == period.subject!.id.id);
+
+    // if not, it is added with a next lesson date (if it is not cancelled and after today)
+    if (listedSubject == null) {
+      final subject = Subject.fromUntisSubject(period.subject!);
+
+      if (!isCancelled && period.startDateTime.isAfter(todayNight)) {
+        subject.nextLesson = period.startDateTime;
+      }
+      _untisSubjects.add(subject);
+
+      // if a not cancelled period is before the next lesson (which shouldn't be the case because
+      // the periods should be ordered) or there isn't a next lesson (which could be because the
+      // first lesson in which the subject was found was cancelled) then the next lesson is updated
+    } else if (!isCancelled &&
+        (listedSubject.nextLesson == null ||
+            period.startDateTime.isBefore(listedSubject.nextLesson!)) &&
+        period.startDateTime.isAfter(todayNight)) {
+      // NOTE: you can make the change  on the variable because it is only a reference to
+      // the subject in the list, so this changes the subject in the list
+      listedSubject.nextLesson = period.startDateTime;
     }
   }
 

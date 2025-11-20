@@ -55,6 +55,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '626284965826',
     projectId: 'homework-manager-untis',
     authDomain: 'homework-manager-untis.firebaseapp.com',
+    databaseURL: 'https://homework-manager-untis-default-rtdb.europe-west1.firebasedatabase.app',
     storageBucket: 'homework-manager-untis.firebasestorage.app',
     measurementId: 'G-0VCS9KKWM2',
   );
@@ -64,6 +65,7 @@ class DefaultFirebaseOptions {
     appId: '1:626284965826:android:fb5237955242d6f1d1f05b',
     messagingSenderId: '626284965826',
     projectId: 'homework-manager-untis',
+    databaseURL: 'https://homework-manager-untis-default-rtdb.europe-west1.firebasedatabase.app',
     storageBucket: 'homework-manager-untis.firebasestorage.app',
   );
 

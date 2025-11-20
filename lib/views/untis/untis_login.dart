@@ -4,20 +4,16 @@ import 'package:provider/provider.dart';
 
 import '../../provider/credential_provider.dart';
 import '../../database/models/credentials.dart';
+import '../../utilities/global_snackbar.dart';
 import '../../widgets/credential_form.dart';
 import '../../widgets/fab.dart';
 import '../../widgets/info_box.dart';
 import '../../widgets/own_progress_indicator.dart';
 
-/// The UI state for logging in to Untis.
-enum LoginState { none, loading, success }
-
 /// A widget for logging into Untis and creating a session.
 ///
-/// The user enters credentials (username, password, school, server),
-/// which are passed to [CredentialProvider].
-/// If login succeeds → credentials are stored locally and
-/// the screen is closed.
+/// The user can enter their Untis credentials, which are then used to create a session.
+/// If the session is created successfully, the credentials are given to the [CredentialProvider] and stored locally.
 class UntisLogin extends StatefulWidget {
   const UntisLogin({super.key});
 
@@ -26,13 +22,6 @@ class UntisLogin extends StatefulWidget {
 }
 
 class _UntisLoginState extends State<UntisLogin> {
-  /// Tracks the current authentication state.
-  LoginState _loginState = LoginState.none;
-
-  /// Will hold the new credentials after form submission.
-  UntisCredentials? _credentials;
-
-  /// Form key for validating the credential form.
   final _formKey = GlobalKey<FormState>();
 
   /// Controllers for user text input.
@@ -41,16 +30,7 @@ class _UntisLoginState extends State<UntisLogin> {
   final _schoolController = TextEditingController();
   final _serverController = TextEditingController();
 
-  /// A checkbox UI flag (used for testing / manual override of indicator)
-  bool value = false;
-
-  @override
-  void initState() {
-    /// Pre-fill example/preferred values
-    _schoolController.text = 'Albert Schweitzer';
-    _serverController.text = 'hektor.webuntis.com';
-    super.initState();
-  }
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -62,17 +42,19 @@ class _UntisLoginState extends State<UntisLogin> {
     super.dispose();
   }
 
-  /// Validates the input → builds [UntisCredentials] → stores them via
-  /// [CredentialProvider].
-  ///
-  /// On success → screen is closed.
-  Future<void> submit() async {
+  @override
+  void initState() {
+    _schoolController.text = 'Albert Schweitzer';
+    _serverController.text = 'hektor.webuntis.com';
+
+    super.initState();
+  }
+
+  void submit() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
-
-    /// Build credentials from input
-    _credentials = UntisCredentials(
+    final credentials = UntisCredentials(
       username: _usernameController.text,
       school: _schoolController.text,
       password: _passwordController.text,
@@ -81,25 +63,21 @@ class _UntisLoginState extends State<UntisLogin> {
 
     /// Mark login as loading
     setState(() {
-      _loginState = LoginState.loading;
+      _isLoading = true;
     });
-
-    try {
-      /// Attempt storing credentials & creating session
-      await context.read<CredentialProvider>().setCredentials(_credentials!);
-
-      // TODO maybe straight to upload or import?
-
-      /// Close screen if still mounted
+    CredentialProvider provider = context.read<CredentialProvider>();
+    await provider.setCredentials(credentials).then((_) {
       if (mounted) {
         context.pop();
       }
-    } on Exception {
-      /// On failure → reset state
+    }).onError((error, _) {
       setState(() {
-        _loginState = LoginState.none;
+        showSnackBar('Fehler: $error');
+        _isLoading = false;
       });
-    }
+    });
+
+    // TODO maybe straight to upload or import?
   }
 
   @override
@@ -112,7 +90,7 @@ class _UntisLoginState extends State<UntisLogin> {
         children: [
           /// Top progress indicator (also driven by override checkbox)
           OwnProgressIndicator(
-            active: _loginState == LoginState.loading || value,
+            active: _isLoading,
             backgroundColor: Theme.of(context).colorScheme.surface,
           ),
 
@@ -138,16 +116,11 @@ class _UntisLoginState extends State<UntisLogin> {
                     ),
 
                     standardGap(),
-
-                    /// Explanatory info box about storage behavior
-                    const InfoBox(
-                      paragraphs: [
-                        'Die Anmeldedaten werden lokal gespeichert und '
-                            'können später für die Synchronisation mit der '
-                            'Cloud verwendet werden.'
-                      ],
-                      title: 'Hinweis',
-                    ),
+                    const InfoBox(paragraphs: [
+                      'Die Anmeldedaten werden lokal gespeichert und '
+                          'können später für die Synchronisation mit der '
+                          'Cloud verwendet werden.'
+                    ], title: 'Hinweis'),
                   ],
                 ),
               ),
@@ -158,30 +131,11 @@ class _UntisLoginState extends State<UntisLogin> {
 
       /// Button for submitting the form & saving credentials locally
       floatingActionButton: ExtendedFAB(
-        onClick: submit,
-        active: _loginState == LoginState.none,
-        icon: Icons.login,
-        label: 'Session erstellen und lokal speichern',
-      ),
+          onClick: submit,
+          active: !_isLoading,
+          icon: Icons.login,
+          label: 'Session erstellen und lokal speichern'),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-    );
-  }
-
-  /// A checkbox to force-enable the progress indicator.
-  ///
-  /// (Seems to be experimental / debug UI)
-  Widget buildCheckBox() {
-    return CheckboxListTile(
-      title: const Text('Progress Indicator überschreiben'),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-      ),
-      value: value,
-      onChanged: (bool? newValue) {
-        setState(() {
-          value = newValue!;
-        });
-      },
     );
   }
 }

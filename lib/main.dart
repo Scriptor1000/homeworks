@@ -1,12 +1,15 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dynamic_color/dynamic_color.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:provider/provider.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 
 import 'database/allowed_emails.dart';
 import 'firebase_options.dart';
@@ -28,6 +31,24 @@ void main() async {
   );
 
   runApp(const MainApp()); // start the app and display MainApp as the root of the widget tree
+  FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(kReleaseMode);
+
+  if (kDebugMode) {
+    runApp(const MainApp());
+  } else {
+    await SentryFlutter.init(
+      (options) {
+        options.dsn =
+            'https://2937d7b0e20d869f78933ba866a6c078@o4510119803092992.ingest.de.sentry.io/4510119812661328';
+        options.environment = 'production';
+        options.tracesSampleRate = 0.0; // Performance-Tracking aus
+        options.enableAutoSessionTracking = true;
+        options.attachStacktrace = true;
+        options.replay.onErrorSampleRate = 0.2;
+      },
+      appRunner: () => runApp(SentryWidget(child: const MainApp())),
+    );
+  }
 }
 
 /// Root widget of the application.
@@ -91,17 +112,16 @@ class MainApp extends StatelessWidget {
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
-        border: standardInputBorder,
-        enabledBorder: standardInputBorder,
-        focusedBorder: OutlineInputBorder(
-          borderRadius: standardInputBorder.borderRadius,
-          borderSide: BorderSide(
-            color: colorScheme.primary,
-            width: 2,
+          border: standardInputBorder,
+          enabledBorder: standardInputBorder,
+          focusedBorder: OutlineInputBorder(
+            borderRadius: standardInputBorder.borderRadius,
+            borderSide: BorderSide(
+              color: colorScheme.primary,
+              width: 2,
+            ),
           ),
-        ),
-        disabledBorder: standardInputBorder,
-      ),
+          disabledBorder: standardInputBorder),
     );
   }
 }
@@ -119,7 +139,7 @@ Widget authenticationProviderShell({required Widget child}) {
 
   // Create helper to check Firestore for allowed email accounts
   final allowedEmails =
-  FirestoreAllowedEmails(firestore: FirebaseFirestore.instance);
+      FirestoreAllowedEmails(firestore: FirebaseFirestore.instance);
 
   // Provide AuthenticationProvider to descendant widgets
   // and run initialize() right away (.. syntax = cascade)

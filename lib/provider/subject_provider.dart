@@ -38,12 +38,7 @@ class SubjectProvider extends ChangeNotifier {
   ///
   /// Should be called at app start to load or refresh subjects.
   Future<void> initialize() async {
-    try {
-      await _loadSubjects();
-    } catch (e) {
-      print('Error loading Firestore data: $e');
-      rethrow;
-    }
+    await _loadSubjects();
     notifyListeners();
   }
 
@@ -55,6 +50,7 @@ class SubjectProvider extends ChangeNotifier {
     if (!untisProvider.untisSubjectsLoaded) {
       _untisSubjects = [];
       _untisSubjectStatus = untisProvider.untisSubjectStatus;
+      notifyListeners();
       return;
     }
 

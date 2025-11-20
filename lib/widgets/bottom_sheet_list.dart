@@ -5,7 +5,6 @@ import 'package:provider/provider.dart';
 import '../database/models/subject.dart';
 import '../provider/subject_provider.dart';
 import '../utilities/enums.dart';
-import '../utilities/global_snackbar.dart';
 import 'fab.dart';
 import 'subject_tile.dart';
 
@@ -46,20 +45,15 @@ class _SubjectBottomSheetContentState extends State<SubjectBottomSheetContent> {
       _isProcessing[subject.id] = true;
     });
 
-    try {
-      SubjectProvider provider =
-          Provider.of<SubjectProvider>(context, listen: false);
-      await provider.addSubject(subject);
-      _removeSubjectFromList(subject, index);
-    } catch (e) {
-      print('Fehler beim Importieren von ${subject.name}: $e');
-      showSnackBar('Fehler beim Importieren von ${subject.name}');
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isProcessing.remove(subject.id);
-        });
-      }
+    SubjectProvider provider =
+        Provider.of<SubjectProvider>(context, listen: false);
+    await provider.addSubject(subject);
+    _removeSubjectFromList(subject, index);
+
+    if (mounted) {
+      setState(() {
+        _isProcessing.remove(subject.id);
+      });
     }
   }
 
@@ -70,20 +64,15 @@ class _SubjectBottomSheetContentState extends State<SubjectBottomSheetContent> {
       _isProcessing[subject.id] = true;
     });
 
-    try {
-      SubjectProvider provider =
-          Provider.of<SubjectProvider>(context, listen: false);
-      await provider.removeSubject(subject);
-      _removeSubjectFromList(subject, index);
-    } catch (e) {
-      print('Fehler beim Entfernen von ${subject.name}: $e');
-      showSnackBar('Fehler beim Entfernen von ${subject.name}');
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isProcessing.remove(subject.id);
-        });
-      }
+    SubjectProvider provider =
+        Provider.of<SubjectProvider>(context, listen: false);
+    await provider.removeSubject(subject);
+    _removeSubjectFromList(subject, index);
+
+    if (mounted) {
+      setState(() {
+        _isProcessing.remove(subject.id);
+      });
     }
   }
 
@@ -97,26 +86,14 @@ class _SubjectBottomSheetContentState extends State<SubjectBottomSheetContent> {
       }
     });
 
-    try {
-      SubjectProvider provider =
-          Provider.of<SubjectProvider>(context, listen: false);
+    SubjectProvider provider =
+        Provider.of<SubjectProvider>(context, listen: false);
 
-      // Füge alle Fächer hinzu
-      for (var subject in List<Subject>.from(_subjects)) {
-        await provider.addSubject(subject);
-      }
-
-      // Schließe das BottomSheet nach erfolgreichem Import
-      if (mounted) {
-        Navigator.pop(context);
-      }
-    } catch (e) {
-      print('Fehler beim Importieren aller Fächer: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Fehler beim Importieren aller Fächer')),
-        );
-      }
+    for (var subject in List<Subject>.from(_subjects)) {
+      await provider.addSubject(subject);
+    }
+    if (mounted) {
+      Navigator.pop(context);
     }
   }
 
@@ -163,26 +140,15 @@ class _SubjectBottomSheetContentState extends State<SubjectBottomSheetContent> {
       }
     });
 
-    try {
-      SubjectProvider provider =
-          Provider.of<SubjectProvider>(context, listen: false);
+    SubjectProvider provider =
+        Provider.of<SubjectProvider>(context, listen: false);
 
-      // Entferne alle Fächer
-      for (var subject in List<Subject>.from(_subjects)) {
-        await provider.removeSubject(subject);
-      }
+    for (var subject in List<Subject>.from(_subjects)) {
+      await provider.removeSubject(subject);
+    }
 
-      // Schließe das BottomSheet nach erfolgreichem Entfernen
-      if (mounted) {
-        Navigator.pop(context);
-      }
-    } catch (e) {
-      print('Fehler beim Entfernen aller Fächer: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Fehler beim Entfernen aller Fächer')),
-        );
-      }
+    if (mounted) {
+      Navigator.pop(context);
     }
   }
 
