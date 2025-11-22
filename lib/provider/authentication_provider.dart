@@ -216,11 +216,11 @@ class AuthenticationProvider extends ChangeNotifier {
 
   Future<void> resetPassword(String email) async {
     try {
-      _firebaseAuth.sendPasswordResetEmail(email: email);
+      await _firebaseAuth.sendPasswordResetEmail(email: email);
     } on Exception catch (e) {
       print('Error logging in with email: $e');
       showSnackBar(
-          'Anmeldung fehlgeschlagen: ${e is FirebaseAuthException ? _getErrorMessage(e) : e.toString()}');
+          'Email senden fehlgeschlagen: ${e is FirebaseAuthException ? _getErrorMessage(e) : e.toString()}');
     }
   }
 
