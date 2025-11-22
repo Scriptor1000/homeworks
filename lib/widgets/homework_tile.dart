@@ -45,24 +45,33 @@ class HomeworkTile extends StatelessWidget {
     ];
     final weekday = weekdays[dueDay.weekday - 1];
 
-    // Text für nächste Stunde
+    String text;
+
     if (dayDifference < 0) {
-      return 'Überfällig, vor ${-dayDifference} Tagen';
+      text = 'Überfällig, vor ${-dayDifference} Tagen';
     } else if (dayDifference == 0) {
-      if (timeDifference.inHours < 1) {
-        return 'in ${timeDifference.inMinutes} Minuten';
-      } else if (timeDifference.inMinutes > 0) {
-        return 'in ${timeDifference.inHours} Stunden und '
-            '${timeDifference.inMinutes.remainder(60)} Minuten';
+      text = 'Heute';
+      if (homework.type == HomeworkType.appointment) {
+        if (timeDifference.inHours < 1) {
+          text += ', in ${timeDifference.inMinutes} Minuten';
+        } else if (timeDifference.inMinutes > 0) {
+          text = ', in ${timeDifference.inHours}h und '
+              '${timeDifference.inMinutes.remainder(60)}min';
+        }
       } else {
-        return 'Heute';
+        text += ', bis ${dueDateTime.hour.toString().padLeft(2, '0')}:'
+            '${dueDateTime.minute.toString().padLeft(2, '0')}';
       }
     } else if (dayDifference == 1) {
-      return 'Morgen, um ${dueDateTime.hour.toString().padLeft(2, '0')}:'
-          '${dueDateTime.minute.toString().padLeft(2, '0')} Uhr';
+      text = 'Morgen';
+      if (homework.type != HomeworkType.appointment) {
+        text += ', bis ${dueDateTime.hour.toString().padLeft(2, '0')}:'
+            '${dueDateTime.minute.toString().padLeft(2, '0')}';
+      }
     } else {
-      return '$weekday, in $dayDifference Tagen';
+      text = '$weekday, in $dayDifference Tagen';
     }
+    return text;
   }
 
   @override
