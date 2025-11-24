@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import '../../database/models/homework.dart';
 import '../../database/models/subject.dart';
 import '../../provider/homeworks_provider.dart';
+import '../../provider/subject_provider.dart';
 import '../../provider/untis_provider.dart';
 import '../../routes/typesafe_router.dart';
 import '../../utilities/enums.dart';
@@ -43,8 +44,13 @@ class _CreateHomeworkState extends State<CreateHomework> {
 
   @override
   Widget build(BuildContext context) {
-    Subject? currentSubject =
-        context.watch<UntisProvider>().getCurrentSubject();
+    final currentSubjectID = context.watch<UntisProvider>().getCurrentSubject();
+    Subject? currentSubject;
+    if (currentSubjectID != null) {
+      currentSubject =
+          context.read<SubjectProvider>().getSubjectByUntisId(currentSubjectID);
+    }
+
     if (currentSubject != null &&
         (selectedSubject == null || selectedSubject == lastCurrentSubject)) {
       _updateSubject(currentSubject);

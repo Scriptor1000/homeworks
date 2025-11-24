@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 
 import '../database/models/homework.dart';
 import '../database/models/subject.dart';
 import '../provider/homeworks_provider.dart';
+import '../provider/subject_provider.dart';
 import '../provider/untis_provider.dart';
 import '../routes/typesafe_router.dart';
 import '../utilities/constants.dart';
@@ -239,17 +241,30 @@ class _HomeState extends State<Home> {
 
   Future<void> fastCreate() async {
     final untisProvider = context.read<UntisProvider>();
-    var currentSubject = untisProvider.getCurrentSubject();
+    final currentSubjectID = untisProvider.getCurrentSubject();
 
-    if (currentSubject == null) {
+    if (currentSubjectID == null) {
       // This is pushed because it should not be showed in the URL
       // and it should always navigate back to this page.
       SubjectSelectionRoute($extra: onSubjectForFastCreate).push(context);
     } else {
+      final subjectProvider = context.read<SubjectProvider>();
       final homeworkProvider = context.read<HomeworksProvider>();
-      await homeworkProvider.fastCreateHomework(
-          _textController.text, currentSubject);
-      _textController.clear();
+      final currentSubject =
+          subjectProvider.getSubjectByUntisId(currentSubjectID);
+      if (currentSubject == null) {
+        Sentry.logger.warn(
+            'No subject found for current subject ID: ${currentSubjectID.id}');
+        SubjectSelectionRoute($extra: onSubjectForFastCreate).push(context);
+      } else {
+        if (currentSubject.visible == false) {
+          showSnackBar(
+              'Das erkannte aktuelle Fach ist ausgeblendet, es wurde trotzdem verwendet.');
+        }
+        await homeworkProvider.fastCreateHomework(
+            _textController.text, currentSubject);
+        _textController.clear();
+      }
     }
   }
 

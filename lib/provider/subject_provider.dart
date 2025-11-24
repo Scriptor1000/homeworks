@@ -1,4 +1,5 @@
 import 'package:collection/collection.dart';
+import 'package:dart_untis_mobile/dart_untis_mobile.dart';
 import 'package:flutter/material.dart';
 
 import 'untis_provider.dart';
@@ -36,6 +37,15 @@ class SubjectProvider extends ChangeNotifier {
   Future<void> initialize() async {
     await _loadSubjects();
     notifyListeners();
+  }
+
+  Subject? getSubjectByUntisId(UntisElementDescriptor untisId) {
+    if (untisId.type != UntisElementType.subject) {
+      return null;
+    }
+    return _firestoreSubjects.firstWhereOrNull(
+      (subject) => subject.id == untisId.id && subject.fromUntis,
+    );
   }
 
   void updateUntisSubjects(UntisProvider untisProvider) {
@@ -78,6 +88,17 @@ class SubjectProvider extends ChangeNotifier {
   Future<void> removeSubject(Subject subject) async {
     await _firestoreSubjectsService.deleteSubject(subject);
     _firestoreSubjects.removeWhere((s) => s.id == subject.id);
+    notifyListeners();
+  }
+
+  Future<void> toggleSubjectVisibility(String subjectDocId) async {
+    final subject = _firestoreSubjects
+        .firstWhereOrNull((subject) => subject.documentId == subjectDocId);
+    if (subject == null) return;
+    subject.visible = !subject.visible;
+    await _firestoreSubjectsService.saveSubject(subject);
+    print(
+        'Visibility toggled for subject: ${subject.name} to ${subject.visible}');
     notifyListeners();
   }
 }

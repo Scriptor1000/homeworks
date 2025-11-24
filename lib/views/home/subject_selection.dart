@@ -26,7 +26,11 @@ class _SubjectSelectionState extends State<SubjectSelection> {
 
   @override
   Widget build(BuildContext context) {
-    final subjects = context.watch<SubjectProvider>().subjects;
+    final subjects = context
+        .watch<SubjectProvider>()
+        .subjects
+        .where((subject) => subject.visible)
+        .toList();
 
     final filteredSubjects = subjects.where((subject) {
       return subject.name.toLowerCase().contains(query.toLowerCase()) ||

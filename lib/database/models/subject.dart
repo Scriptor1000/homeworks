@@ -10,6 +10,7 @@ class Subject {
   final bool fromUntis;
   final String name;
   final String shortName;
+  bool visible;
   DateTime? nextLesson;
 
   Subject.fromUntisSubject(UntisSubject untisSubject)
@@ -18,6 +19,7 @@ class Subject {
         id = untisSubject.id.id,
         name = untisSubject.longName,
         fromUntis = true,
+        visible = true,
         shortName = untisSubject.name;
 
   Subject.fromDocument(Map<String, dynamic> doc)
@@ -26,7 +28,8 @@ class Subject {
         id = doc['id'] ?? -1,
         fromUntis = doc['fromUntis'] ?? false,
         name = doc['name'] ?? '<Kein Name gespeichert>',
-        shortName = doc['shortName'] ?? '<0>';
+        shortName = doc['shortName'] ?? '<0>',
+        visible = doc['visible'] ?? true;
 
   Map<String, dynamic> toDocument() {
     return {
@@ -36,6 +39,7 @@ class Subject {
       'fromUntis': fromUntis,
       'name': name,
       'shortName': shortName,
+      'visible': visible,
     };
   }
 

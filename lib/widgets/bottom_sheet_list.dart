@@ -57,6 +57,25 @@ class _SubjectBottomSheetContentState extends State<SubjectBottomSheetContent> {
     }
   }
 
+  Future<void> _handleVisibilityToggle(Subject subject, int index) async {
+    if (_isProcessing[subject.id] == true) return;
+
+    setState(() {
+      _isProcessing[subject.id] = true;
+    });
+
+    SubjectProvider provider =
+        Provider.of<SubjectProvider>(context, listen: false);
+    await provider.toggleSubjectVisibility(subject.documentId);
+    // _subjects[index].visible = !_subjects[index].visible;
+
+    if (mounted) {
+      setState(() {
+        _isProcessing.remove(subject.id);
+      });
+    }
+  }
+
   Future<void> _handleRemove(Subject subject, int index) async {
     if (_isProcessing[subject.id] == true) return;
 
@@ -302,23 +321,33 @@ class _SubjectBottomSheetContentState extends State<SubjectBottomSheetContent> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : IconButton(
-                      icon: widget.subjectListType ==
-                              SubjectListType.inUnitsButNotInFirestore
-                          ? const Icon(Icons.add)
-                          : const Icon(Icons.remove),
+                      icon: switch (widget.subjectListType) {
+                        SubjectListType.inUnitsButNotInFirestore =>
+                          const Icon(Icons.add_circle_outline),
+                        SubjectListType.inFirestoreButNotInUntis =>
+                          const Icon(Icons.delete_outline),
+                        SubjectListType.inBoth ||
+                        SubjectListType.inFirestoreUntisNotAvailable =>
+                          Icon(subject.visible
+                              ? Icons.visibility_off_outlined
+                              : Icons.visibility_outlined),
+                      },
                       onPressed: () async {
                         final currentSubject = _subjects[index];
                         if (widget.subjectListType ==
                             SubjectListType.inUnitsButNotInFirestore) {
                           // Importieren erfordert keine Bestätigung
                           _handleImport(currentSubject, index);
-                        } else {
+                        } else if (widget.subjectListType ==
+                            SubjectListType.inFirestoreButNotInUntis) {
                           // Beim Löschen Bestätigungsdialog anzeigen
                           bool confirm =
                               await _showConfirmationDialog(currentSubject);
                           if (confirm && mounted) {
                             _handleRemove(currentSubject, index);
                           }
+                        } else {
+                          _handleVisibilityToggle(currentSubject, index);
                         }
                       },
                     ),
