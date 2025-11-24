@@ -1,0 +1,62 @@
+index_generator:
+  exclude:
+    - "**.g.dart"
+    - "web_authentication/stub.dart"
+    - "web_authentication/on_web.dart"
+    - "widgets/own_progress_indicator.dart"
+
+  libraries:
+    - directory_path: lib
+      name: Homeworks
+      file_name: Homeworks
+      exclude:
+        - "database/**"
+        - "provider/**"
+        - "routes/**"
+        - "utilities/**"
+        - "views/**"
+        - "widgets/**"
+
+    - directory_path: lib
+      name: Database
+      output_path: lib
+      file_name: Database
+      include:
+        - "database/**"
+      use_package_exports: false
+
+    - directory_path: lib
+      name: Provider
+      output_path: lib
+      file_name: Provider
+      include:
+        - "provider/**"
+
+    - directory_path: lib
+      name: Routing
+      output_path: lib
+      file_name: Routing
+      include:
+        - "routes/**"
+
+    - directory_path: lib
+      name: Utilities
+      output_path: lib
+      file_name: Utilities
+      include:
+        - "utilities/**"
+
+    - directory_path: lib
+      name: Screens
+      output_path: lib
+      file_name: Screens
+      include:
+        - "views/**"
+
+    - directory_path: lib
+      name: Widgets
+      output_path: lib
+      file_name: Widgets   
+      include:
+        - "widgets/**"
+

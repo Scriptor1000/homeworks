@@ -95,6 +95,7 @@ dev_dependencies:
   fake_cloud_firestore: ^4.0.0
 
   sentry_dart_plugin: ^3.2.0
+  index_generator: ^4.1.2
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

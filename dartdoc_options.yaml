@@ -1,0 +1,9 @@
+dartdoc:
+  include:
+    - Homeworks
+    - Widgets
+    - Screens
+    - Utilities
+    - Routing
+    - Provider
+    - Database
