@@ -63,7 +63,7 @@ class UntisProvider extends ChangeNotifier {
   /// Checks the [_todayPeriods] and returns the current subject based on the current time.
   ///
   /// The current subject is determined as the last period which started before now and ended in the last 30 minutes.
-  /// This uses [lastWhereOrNull] to ensure that if multiple periods match, the most recent one (closest to now) is selected,
+  /// It is ensured, that if multiple periods match, the most recent one (closest to now) is selected,
   /// which is important for single periods without a pause between.
   Subject? getCurrentSubject() {
     final now = DateTime.now();

@@ -15,7 +15,7 @@ class HorizontalPaddingConstants {
 }
 
 /// List of prefixes for exam Homeworks.
-/// These prefixes are used to identify exams in [FirestoreProvider.fastCreateHomework].
+/// These prefixes are used to identify exams in [HomeworksProvider.fastCreateHomework].
 const List<String> examPrefixes = [
   'LK ',
   'LK: ',

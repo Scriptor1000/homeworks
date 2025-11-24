@@ -151,7 +151,7 @@ class HomeworksProvider extends ChangeNotifier {
 
   /// Deletes a homework from Firestore and [_homeworks].
   ///
-  /// It finds the homework by its [homework.id] in the [_homeworks] list and removes it.
+  /// It finds the homework by the `Id` Attribut of [Homework] in the [_homeworks] list and removes it.
   /// The homework is also deleted from Firestore.
   Future<void> deleteHomework(Homework homework) async {
     final index = _homeworks.indexWhere((hw) => hw.id == homework.id);
@@ -174,7 +174,7 @@ class HomeworksProvider extends ChangeNotifier {
 
   /// Updates an existing homework in Firestore and [_homeworks].
   ///
-  /// It finds the homework by its [homework.id] in the [_homeworks] list and updates its due date.
+  /// It finds the homework by the `Id` Attribut of [Homework] in the [_homeworks] list and updates its due date.
   /// The updated homework is also saved in Firestore.
   Future<void> newDueDate(Homework homework, DateTime dueDate) async {
     final index = _homeworks.indexWhere((hw) => hw.id == homework.id);
