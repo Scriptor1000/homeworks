@@ -326,6 +326,7 @@ class _CreateHomeworkState extends State<CreateHomework> {
       width: double.infinity,
       child: SegmentedButton<HomeworkType>(
         multiSelectionEnabled: false,
+        showSelectedIcon: false,
         segments: const [
           ButtonSegment<HomeworkType>(
             value: HomeworkType.homework,
