@@ -215,7 +215,7 @@ void main() {
         expect(currentSubject, isNull);
       } else {
         expect(currentSubject, isNotNull);
-        expect(currentSubject!.name, equals(expected.toIso8601String()));
+        expect(currentSubject!.id, equals(expected.toIso8601String().hashCode));
       }
     }
 

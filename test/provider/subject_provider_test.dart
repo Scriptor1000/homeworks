@@ -30,6 +30,7 @@ void main() {
       when(mockSubject.documentId).thenReturn('subject_$i');
       when(mockSubject.nextLesson)
           .thenReturn(DateTime.now().add(Duration(days: i + 1)));
+      when(mockSubject.visible).thenReturn(true);
       return mockSubject;
     }).toList();
 
@@ -136,6 +137,23 @@ void main() {
       expect(subjectProvider.untisSubjects, isEmpty);
       expect(
           subjectProvider.untisSubjectStatus, equals(UntisSubjectStatus.error));
+    });
+
+    test('should toggle visibility correctly on call', () {
+      // setup
+      when(mockUntisProvider.untisSubjectStatus)
+          .thenReturn(UntisSubjectStatus.loaded);
+      when(mockUntisProvider.untisSubjectsLoaded).thenReturn(true);
+      subjectProvider.updateUntisSubjects(mockUntisProvider);
+      final subjectToToggle = untisSubjects[0];
+      // verify setup
+      expect(subjectProvider.untisSubjects, equals(untisSubjects));
+      // test
+      subjectProvider.toggleSubjectVisibility(subjectToToggle.documentId);
+      // verify
+      expect(subjectToToggle.visible, isFalse);
+      verify(mockFirestoreSubjects.saveSubject(subjectToToggle)).called(1);
+      expect(subjectToToggle.visible, isTrue);
     });
   });
 }
