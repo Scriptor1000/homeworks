@@ -71,7 +71,7 @@ class HistoryAnalyzer:
         self.g = Github(auth=auth)
         self.origin_repo = self.g.get_repo(GITHUB_REPO)
 
-        self.pull_requests: list[PullRequest] = [self.origin_repo.get_pull(13)]
+        self.pull_requests: list[PullRequest] = []
 
     def _add_commit_to_table(self, table: LongTable, commit: Commit, pr_number: int | None = None):
         if commit.sha == 'c9f6eedeaed033611a0473788eff135e894c8128':
@@ -191,27 +191,35 @@ class HistoryAnalyzer:
 
 def add_explanation(doc: Document):
     with doc.create(Section('Erklärung dieses Berichtshefts')):
-        doc.append('Wir haben bei der Entwicklung das Versionierungssystem Git zusammen mit GitHub verwendet.'
-                   'Dabei wird jede Änderung im Code als sogenannter Commit gespeichert. '
-                   'Durch Abzweigungen ist es möglich, an mehreren Funktionen gleichzeitig zu arbeiten, '
-                   'ohne sich dabei in die Quere zu kommen.Um eine Abzweigung zurück in den Hauptzweig (bei uns main) '
-                   'zu führen, wird ein sogenannter Pull Request (kurz PR) erstellt. '
-                   'Nach Bestätigung des jeweils Anderen werden die Änderungen eins PR in den Hauptzweig übernommen, '
-                   'dieser Vorgang wird mergen genannt.Dabei wird wiederum ein eigener commit auf dem Hauptzweig erstellt.')
+        doc.append(
+            'Wir haben bei der Entwicklung das Versionierungssystem Git zusammen mit GitHub verwendet. '
+            'Dabei wird jede Änderung im Code als sogenannter Commit gespeichert. '
+            'Durch sogenannte Abzweigungen (Branches) ist es möglich, an mehreren Funktionen gleichzeitig '
+            'zu arbeiten, ohne sich dabei in die Quere zu kommen. '
+            'Um eine Abzweigung zurück in den Hauptzweig (bei uns „main“) zu führen, wird ein sogenannter '
+            'Pull Request (kurz PR) erstellt. '
+            'Nach gegenseitiger Überprüfung und Bestätigung der Änderungen werden diese im Rahmen eines '
+            'Pull Requests in den Hauptzweig übernommen; dieser Vorgang wird „mergen“ genannt.'
+            'Dabei wird wiederum ein eigener Commit auf dem Hauptzweig erstellt.'
+        )
         doc.append('\n\n')
-        doc.append('Im folgenden stehen in Tabellen sämtliche Commits. '
-                   'Ihnen wird dabei zuerst alle Commits auf dem Hauptzweig vorgestellt, '
-                   'welche mit den dazugehörigen PR über Fußnoten verknüpft sind. '
-                   'Anschließend finden sie eine Auflistung aller PR ihren jeweiligen Commits. ')
+        doc.append(
+            'Im Folgenden stehen in Tabellen sämtliche Commits. '
+            'Zuerst werden alle Commits auf dem Hauptzweig dargestellt; '
+            'sie sind über Fußnoten mit den dazugehörigen Pull Requests verknüpft. '
+            'Anschließend finden Sie eine Auflistung aller Pull Requests mit ihren jeweiligen Commits.'
+        )
         doc.append('\n\n')
-        doc.append('Ein Commit wird wie folgt dargestellt:')
+        doc.append('Ein Commit wird in den Tabellen wie folgt dargestellt:')
         table = LongTable(r'l l l p{12cm}')
         table.add_row(['Commit-Hash', 'Autor', 'Datum', 'Zusammenfassung'])
         doc.append(table)
-        doc.append(Command('noindent', 'Der Commit-Hash ist eine eindeutige Kennung des Commits. '
-                                       'Zudem verlinkt der Hash hier auf den entsprechenden Commit auf GitHub, '
-                                       'dort können Sie jede Änderung im Detail nachvollziehen.'))
-
+        doc.append(Command(
+            'noindent',
+            'Der Commit-Hash ist eine eindeutige Kennung des Commits. '
+            'Zudem verlinkt der Hash hier auf den entsprechenden Commit auf GitHub; '
+            'dort können Sie jede Änderung im Detail nachvollziehen.'
+        ))
 
 if __name__ == '__main__':
     analyzer = HistoryAnalyzer()
