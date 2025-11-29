@@ -34,9 +34,7 @@ class _SubjectSelectionState extends State<SubjectSelection> {
     }).toList();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Fach auswählen'),
-      ),
+      appBar: AppBar(title: const Text('Fach auswählen')),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Stack(
@@ -58,9 +56,11 @@ class _SubjectSelectionState extends State<SubjectSelection> {
                           subject: filteredSubjects[index],
                           onTap: () {
                             print(
-                                'Selected subject: ${filteredSubjects[index].name}');
-                            widget.onSubjectSelected
-                                ?.call(filteredSubjects[index]);
+                              'Selected subject: ${filteredSubjects[index].name}',
+                            );
+                            widget.onSubjectSelected?.call(
+                              filteredSubjects[index],
+                            );
                             Navigator.pop(context);
                           },
                         ),
@@ -91,7 +91,7 @@ class _SubjectSelectionState extends State<SubjectSelection> {
                 leading: const Icon(Icons.search),
                 hintText: 'Fach suchen...',
               ),
-            )
+            ),
           ],
         ),
       ),

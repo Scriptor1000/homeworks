@@ -7,8 +7,8 @@ import 'fab.dart';
 
 class DeepNextLessonSearchSnackbar {
   static ScaffoldFeatureController<SnackBar, SnackBarClosedReason>? _controller;
-// TODO to Dialog?
-// FIXME creates many errors (like when activated twice)
+  // TODO to Dialog?
+  // FIXME creates many errors (like when activated twice)
   static void show(Stream<DateTime> stream, Completer<void> aborter) async {
     // _controller?.close();
     _controller = await showComplexSnackBar(
@@ -28,7 +28,9 @@ class DeepNextLessonSearchSnackbar {
                     'Suche vom ${checkStart.day}.${checkStart.month}.${checkStart.year}'
                     ' bis zum ${checkEnd.day}.${checkEnd.month}.${checkEnd.year}',
                     style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.w500),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ],
               );

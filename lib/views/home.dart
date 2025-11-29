@@ -70,17 +70,11 @@ class _HomeState extends State<Home> {
     final nonUrgentHomeworks = homeworkProvider.homeworks.notUrgent.withDueDate;
     final poorlyHomeworks = homeworkProvider.homeworks.withoutDueDate;
 
-    urgentHomeworks.sort(
-      (a, b) => a.dueDate!.compareTo(b.dueDate!),
-    );
-    nonUrgentHomeworks.sort(
-      (a, b) => a.dueDate!.compareTo(b.dueDate!),
-    );
+    urgentHomeworks.sort((a, b) => a.dueDate!.compareTo(b.dueDate!));
+    nonUrgentHomeworks.sort((a, b) => a.dueDate!.compareTo(b.dueDate!));
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Hausaufgaben'),
-      ),
+      appBar: AppBar(title: const Text('Hausaufgaben')),
       body: !homeworkProvider.homeworksLoaded
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
@@ -89,12 +83,14 @@ class _HomeState extends State<Home> {
                   if (urgentHomeworks.isNotEmpty)
                     buildUrgentHomeworks(context, urgentHomeworks),
                   Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: horizontalPadding),
-                      child: buildHomeworks(nonUrgentHomeworks)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: horizontalPadding,
+                    ),
+                    child: buildHomeworks(nonUrgentHomeworks),
+                  ),
                   if (poorlyHomeworks.isNotEmpty)
                     buildPoorlyHomeworks(context, poorlyHomeworks),
-                  buildFABGap()
+                  buildFABGap(),
                 ],
               ),
             ),
@@ -109,44 +105,52 @@ class _HomeState extends State<Home> {
 
   Widget buildUrgentHomeworks(BuildContext context, Homeworks urgentHomeworks) {
     return buildDecoratedHomeworks(
-        context: context,
-        borderColor: Theme.of(context).colorScheme.primary,
-        label: 'Dringlich!',
-        child: Column(
-          children: [
-            buildHomeworks(urgentHomeworks.notCompleted),
-            buildHomeworks(urgentHomeworks.completed),
-          ],
-        ));
+      context: context,
+      borderColor: Theme.of(context).colorScheme.primary,
+      label: 'Dringlich!',
+      child: Column(
+        children: [
+          buildHomeworks(urgentHomeworks.notCompleted),
+          buildHomeworks(urgentHomeworks.completed),
+        ],
+      ),
+    );
   }
 
   Widget buildPoorlyHomeworks(
-      BuildContext context, List<Homework> poorlyHomeworks) {
+    BuildContext context,
+    List<Homework> poorlyHomeworks,
+  ) {
     return buildDecoratedHomeworks(
-        context: context,
-        borderColor: Colors.grey,
-        label: 'Ohne Abgabedatum',
-        child: buildHomeworks(poorlyHomeworks));
+      context: context,
+      borderColor: Colors.grey,
+      label: 'Ohne Abgabedatum',
+      child: buildHomeworks(poorlyHomeworks),
+    );
   }
 
-  Widget buildDecoratedHomeworks(
-      {required BuildContext context,
-      required Color borderColor,
-      required String label,
-      required Widget child}) {
+  Widget buildDecoratedHomeworks({
+    required BuildContext context,
+    required Color borderColor,
+    required String label,
+    required Widget child,
+  }) {
     return Stack(
       children: [
         Container(
           margin: const EdgeInsets.symmetric(
-              horizontal: urgentContainerMargin, vertical: 8),
+            horizontal: urgentContainerMargin,
+            vertical: 8,
+          ),
           padding: const EdgeInsets.all(urgentContainerPadding),
           decoration: BoxDecoration(
             border: Border.all(
               color: borderColor,
               width: urgentContainerBorderWidth,
             ),
-            borderRadius:
-                BorderRadius.circular(BorderRadiusConstants.homeworks),
+            borderRadius: BorderRadius.circular(
+              BorderRadiusConstants.homeworks,
+            ),
           ),
           child: child,
         ),
@@ -160,10 +164,9 @@ class _HomeState extends State<Home> {
             color: Theme.of(context).scaffoldBackgroundColor,
             child: Text(
               label,
-              style: Theme.of(context)
-                  .textTheme
-                  .labelMedium
-                  ?.copyWith(color: borderColor),
+              style: Theme.of(
+                context,
+              ).textTheme.labelMedium?.copyWith(color: borderColor),
             ),
           ),
         ),
@@ -212,15 +215,17 @@ class _HomeState extends State<Home> {
                 _textFocus.unfocus();
               },
               decoration: InputDecoration(
-                  hintText: 'Schnell hinzufügen...',
-                  fillColor: Theme.of(context).colorScheme.surface,
-                  filled: true),
+                hintText: 'Schnell hinzufügen...',
+                fillColor: Theme.of(context).colorScheme.surface,
+                filled: true,
+              ),
             ),
           ),
           AnimatedPadding(
             duration: duration,
-            padding:
-                EdgeInsets.only(left: focused ? 10 : 2 * horizontalPadding),
+            padding: EdgeInsets.only(
+              left: focused ? 10 : 2 * horizontalPadding,
+            ),
             child: AnimatedScale(
               alignment: Alignment.centerRight,
               duration: duration,
@@ -248,7 +253,9 @@ class _HomeState extends State<Home> {
     } else {
       final homeworkProvider = context.read<HomeworksProvider>();
       await homeworkProvider.fastCreateHomework(
-          _textController.text, currentSubject);
+        _textController.text,
+        currentSubject,
+      );
       _textController.clear();
     }
   }

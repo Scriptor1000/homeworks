@@ -40,7 +40,7 @@ class _UntisViewState extends State<UntisView> {
               const StatusCheck(),
               const Divider(),
               Consumer(
-                builder: (_, SubjectProvider provider, __) {
+                builder: (_, SubjectProvider provider, _) {
                   return SubjectOverview(
                     untisSubjects: provider.untisSubjects,
                     firestoreSubjects: provider.subjects,

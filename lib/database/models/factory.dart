@@ -21,7 +21,11 @@ class ItemFactory {
   Future<SessionResult> createUntisSession(UntisCredentials creds) async {
     try {
       final session = await UntisSession.init(
-          creds.server, creds.school, creds.username, creds.password);
+        creds.server,
+        creds.school,
+        creds.username,
+        creds.password,
+      );
       return SessionResult(session, UntisSessionStatus.sessionAccomplished);
     } catch (e) {
       if (e.hashCode == 635849374) {

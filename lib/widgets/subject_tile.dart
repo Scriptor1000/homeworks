@@ -7,8 +7,12 @@ import 'subject_avatar.dart';
 
 /// A [ListTile] to displays the subject with functionallity to provide an trailing Widget.
 class SubjectTile extends StatelessWidget {
-  const SubjectTile(
-      {super.key, required this.subject, this.trailing, this.onTap});
+  const SubjectTile({
+    super.key,
+    required this.subject,
+    this.trailing,
+    this.onTap,
+  });
 
   final Subject subject;
   final Widget? trailing;
@@ -16,8 +20,9 @@ class SubjectTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final backColor =
-        subject.backColor.harmonizeWith(Theme.of(context).primaryColor);
+    final backColor = subject.backColor.harmonizeWith(
+      Theme.of(context).primaryColor,
+    );
     final avatar = SubjectAvatar(subject: subject);
     final title = subject.name;
     return SubjectTileTemplate(
@@ -55,10 +60,7 @@ class SubjectTileTemplate extends StatelessWidget {
       ),
       child: ListTile(
         title: Text(title),
-        leading: CircleAvatar(
-          backgroundColor: backColor,
-          child: avatarChild,
-        ),
+        leading: CircleAvatar(backgroundColor: backColor, child: avatarChild),
         trailing: trailing,
         onTap: onTap,
       ),

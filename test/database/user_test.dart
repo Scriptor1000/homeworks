@@ -24,24 +24,26 @@ void main() {
       expect(userDocAfter.exists, isTrue);
     });
 
-    test('should preserve existing data when document already exists',
-        () async {
-      // setup
-      await mockFirestore
-          .collection(FirestoreUser.userCollection)
-          .doc(uid)
-          .set({'createdAt': 'now', 'isStillTheSame': true});
-      // test
-      await firestoreUser.ensureDocumentExists();
-      // verify
-      final userDocAfter = await firestoreUser.userDocument.get();
-      expect(userDocAfter.exists, isTrue);
-      expect(userDocAfter.data(), isNotNull);
+    test(
+      'should preserve existing data when document already exists',
+      () async {
+        // setup
+        await mockFirestore
+            .collection(FirestoreUser.userCollection)
+            .doc(uid)
+            .set({'createdAt': 'now', 'isStillTheSame': true});
+        // test
+        await firestoreUser.ensureDocumentExists();
+        // verify
+        final userDocAfter = await firestoreUser.userDocument.get();
+        expect(userDocAfter.exists, isTrue);
+        expect(userDocAfter.data(), isNotNull);
 
-      final userDocData = userDocAfter.data()!;
-      expect(userDocData['isStillTheSame'], isTrue);
-      expect(userDocData['createdAt'], equals('now'));
-    });
+        final userDocData = userDocAfter.data()!;
+        expect(userDocData['isStillTheSame'], isTrue);
+        expect(userDocData['createdAt'], equals('now'));
+      },
+    );
 
     test('should return correct document reference', () {
       // test

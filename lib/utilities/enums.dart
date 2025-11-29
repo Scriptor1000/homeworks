@@ -75,5 +75,5 @@ enum GoogleSignInState {
   notSupported,
   needWebButton,
   error,
-  loading
+  loading,
 }

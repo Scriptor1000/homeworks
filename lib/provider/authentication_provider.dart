@@ -27,15 +27,13 @@ class AuthenticationProvider extends ChangeNotifier {
     required FirebaseAuth firebaseAuth,
     required GoogleSignIn googleSignIn,
     required FirestoreAllowedEmails allowedEmails,
-  })  : _firebaseAuth = firebaseAuth,
-        _googleSignIn = googleSignIn,
-        _allowedEmails = allowedEmails;
+  }) : _firebaseAuth = firebaseAuth,
+       _googleSignIn = googleSignIn,
+       _allowedEmails = allowedEmails;
 
   Future<void> initialize() async {
     if (_googleSupported.isCompleted) return;
-    await _googleSignIn.initialize(
-      clientId: clientId,
-    );
+    await _googleSignIn.initialize(clientId: clientId);
     try {
       if (_googleSignIn.supportsAuthenticate()) {
         googleSignInState = GoogleSignInState.supported;
@@ -57,10 +55,7 @@ class AuthenticationProvider extends ChangeNotifier {
       if (kDebugMode) {
         print('Google Sign-In Initialisierungsfehler: $error');
       }
-      Sentry.captureException(
-        error,
-        stackTrace: stackTrace,
-      );
+      Sentry.captureException(error, stackTrace: stackTrace);
       googleSignInState = GoogleSignInState.error;
     }
     notifyListeners();
@@ -101,8 +96,9 @@ class AuthenticationProvider extends ChangeNotifier {
       if (!allowed) {
         print('Email nicht erlaubt: ${googleUser.email}');
         showSnackBar(
-            'Kein Zugang mit dieser Email (${googleUser.email}) möglich.'
-            ' Bitte wende dich an den Administrator.');
+          'Kein Zugang mit dieser Email (${googleUser.email}) möglich.'
+          ' Bitte wende dich an den Administrator.',
+        );
         await _googleSignIn.disconnect();
         return;
       }
@@ -113,8 +109,9 @@ class AuthenticationProvider extends ChangeNotifier {
         idToken: googleAuth.idToken,
       );
 
-      final userCredential =
-          await _firebaseAuth.signInWithCredential(credential);
+      final userCredential = await _firebaseAuth.signInWithCredential(
+        credential,
+      );
       final user = userCredential.user;
 
       if (user != null) {
@@ -124,10 +121,7 @@ class AuthenticationProvider extends ChangeNotifier {
     } catch (error, stackTrace) {
       print('Google Sign-In Fehler: $error');
       // TODO Future.error
-      Sentry.captureException(
-        error,
-        stackTrace: stackTrace,
-      );
+      Sentry.captureException(error, stackTrace: stackTrace);
 
       await _googleSignIn.disconnect();
       await _firebaseAuth.signOut();
@@ -164,10 +158,7 @@ class AuthenticationProvider extends ChangeNotifier {
 
       notifyListeners();
     } catch (error, stackTrace) {
-      Sentry.captureException(
-        error,
-        stackTrace: stackTrace,
-      );
+      Sentry.captureException(error, stackTrace: stackTrace);
       print('Google Verknüpfungsfehler: $error');
       showSnackBar('Fehler bei der Verknüpfung: $error');
     }
@@ -210,7 +201,8 @@ class AuthenticationProvider extends ChangeNotifier {
     } catch (e) {
       print('Error logging in with email: $e');
       showSnackBar(
-          'Anmeldung fehlgeschlagen: ${e is FirebaseAuthException ? _getErrorMessage(e) : e.toString()}');
+        'Anmeldung fehlgeschlagen: ${e is FirebaseAuthException ? _getErrorMessage(e) : e.toString()}',
+      );
     }
   }
 
