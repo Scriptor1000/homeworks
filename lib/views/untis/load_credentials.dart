@@ -51,30 +51,30 @@ class _LoadCredentialsState extends State<LoadCredentials> {
         .read<CredentialProvider>()
         .loadCredentialsOnline(_userPasswordController.text)
         .then((_) {
-      if (mounted) {
-        context.pop();
-      }
-    }).onError((error, stackTrace) {
-      setState(() {
-        showSnackBar('Fehler: $error');
-        _isLoading = false;
-      });
-    });
+          if (mounted) {
+            context.pop();
+          }
+        })
+        .onError((error, stackTrace) {
+          setState(() {
+            showSnackBar('Fehler: $error');
+            _isLoading = false;
+          });
+        });
   }
 
   @override
   Widget build(BuildContext context) {
     var credentialProvider = context.watch<CredentialProvider>();
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Gespeicherte Anmeldedaten laden'),
-      ),
+      appBar: AppBar(title: const Text('Gespeicherte Anmeldedaten laden')),
       body: SafeArea(
         child: Column(
           children: [
             // Ladeindikator
             OwnProgressIndicator(
-              active: _isLoading ||
+              active:
+                  _isLoading ||
                   credentialProvider.sessionState == UntisSessionState.loading,
               backgroundColor: Theme.of(context).colorScheme.surface,
             ),
@@ -115,7 +115,7 @@ class _LoadCredentialsState extends State<LoadCredentials> {
                           disabled: true,
                         ),
                       ),
-                      buildFABGap()
+                      buildFABGap(),
                     ],
                   ),
                 ),
@@ -126,17 +126,18 @@ class _LoadCredentialsState extends State<LoadCredentials> {
       ),
       floatingActionButton:
           credentialProvider.sessionState == UntisSessionState.loading
-              ? ExtendedFAB(
-                  onClick: () {},
-                  active: false,
-                  icon: Icons.sync,
-                  label: 'Verbinde mit Untis',
-                )
-              : ExtendedFAB(
-                  onClick: _loadCredentials,
-                  active: !_isLoading,
-                  icon: Icons.cloud_download_outlined,
-                  label: 'Anmeldedaten laden'),
+          ? ExtendedFAB(
+              onClick: () {},
+              active: false,
+              icon: Icons.sync,
+              label: 'Verbinde mit Untis',
+            )
+          : ExtendedFAB(
+              onClick: _loadCredentials,
+              active: !_isLoading,
+              icon: Icons.cloud_download_outlined,
+              label: 'Anmeldedaten laden',
+            ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }

@@ -40,7 +40,8 @@ void main() {
       mockHomeworks = List.generate(4, (_) => MockHomework());
 
       when(mockFirestoreUser.userDocument).thenReturn(
-          mockFirestore.collection(FirestoreUser.userCollection).doc(uid));
+        mockFirestore.collection(FirestoreUser.userCollection).doc(uid),
+      );
 
       for (var i = 0; i < mockHomeworks.length; i++) {
         when(mockHomeworks[i].documentId).thenReturn('homework-$i');
@@ -51,13 +52,15 @@ void main() {
               ? Timestamp.fromDate(now.add(Duration(days: 2)))
               : Timestamp.fromDate(now.subtract(Duration(days: 2))),
         });
-        when(mockItemFactory.homeworkFromDocument({
-          'homeworkId': i,
-          'done': i % 2 == 0,
-          'dueDate': i < 2
-              ? Timestamp.fromDate(now.add(Duration(days: 2)))
-              : Timestamp.fromDate(now.subtract(Duration(days: 2))),
-        })).thenReturn(mockHomeworks[i]);
+        when(
+          mockItemFactory.homeworkFromDocument({
+            'homeworkId': i,
+            'done': i % 2 == 0,
+            'dueDate': i < 2
+                ? Timestamp.fromDate(now.add(Duration(days: 2)))
+                : Timestamp.fromDate(now.subtract(Duration(days: 2))),
+          }),
+        ).thenReturn(mockHomeworks[i]);
       }
     });
 
@@ -70,7 +73,9 @@ void main() {
           .get();
       expect(collection.docs.length, equals(1));
       expect(
-          collection.docs.first.data(), equals(mockHomeworks[0].toDocument()));
+        collection.docs.first.data(),
+        equals(mockHomeworks[0].toDocument()),
+      );
     });
 
     test('should load all homeworks', () async {
@@ -87,7 +92,9 @@ void main() {
       expect(loadedHomeworks.length, equals(mockHomeworks.length));
       for (var i = 0; i < mockHomeworks.length; i++) {
         expect(
-            loadedHomeworks[i].documentId, equals(mockHomeworks[i].documentId));
+          loadedHomeworks[i].documentId,
+          equals(mockHomeworks[i].documentId),
+        );
       }
     });
 

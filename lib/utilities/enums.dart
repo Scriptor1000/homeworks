@@ -69,12 +69,7 @@ enum GoogleSignInState {
   notSupported,
   needWebButton,
   error,
-  loading
+  loading,
 }
 
-enum UntisSessionState {
-  noCredentials,
-  loading,
-  accomplished,
-  error,
-}
+enum UntisSessionState { noCredentials, loading, accomplished, error }

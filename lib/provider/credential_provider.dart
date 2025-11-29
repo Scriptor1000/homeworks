@@ -29,13 +29,13 @@ class CredentialProvider extends ChangeNotifier {
   CredentailsOnlineStatus _credentialsOnlineStatus =
       CredentailsOnlineStatus.loading;
 
-  CredentialProvider(
-      {required FirestoreCredentials firestoreCredentials,
-      required ItemFactory itemFactory,
-      required FlutterSecureStorage storage})
-      : _firestoreCredentials = firestoreCredentials,
-        _itemFactory = itemFactory,
-        _storage = storage;
+  CredentialProvider({
+    required FirestoreCredentials firestoreCredentials,
+    required ItemFactory itemFactory,
+    required FlutterSecureStorage storage,
+  }) : _firestoreCredentials = firestoreCredentials,
+       _itemFactory = itemFactory,
+       _storage = storage;
 
   /// Wheter the credentials are currently being loaded or the loading process is finished.
   bool get isLoading => _isLoadingCredentials;
@@ -110,7 +110,9 @@ class CredentialProvider extends ChangeNotifier {
   Future<void> _saveCredentialsLocal() async {
     if (_credentials != null) {
       await _storage.write(
-          key: credentialsKey, value: _credentials!.toJsonString());
+        key: credentialsKey,
+        value: _credentials!.toJsonString(),
+      );
     }
   }
 
@@ -183,10 +185,7 @@ class CredentialProvider extends ChangeNotifier {
     } catch (error, stackTrace) {
       _credentialsOnlineStatus = CredentailsOnlineStatus.error;
       print('Error checking credentials online status: $error');
-      Sentry.captureException(
-        error,
-        stackTrace: stackTrace,
-      );
+      Sentry.captureException(error, stackTrace: stackTrace);
     } finally {
       notifyListeners();
     }

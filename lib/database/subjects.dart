@@ -14,8 +14,8 @@ class FirestoreSubjects {
   FirestoreSubjects({
     required FirestoreUser firestoreUser,
     required ItemFactory itemFactory,
-  })  : _firestoreUser = firestoreUser,
-        _itemFactory = itemFactory;
+  }) : _firestoreUser = firestoreUser,
+       _itemFactory = itemFactory;
 
   CollectionReference<Map<String, dynamic>> get _subjectCollectionRef =>
       _firestoreUser.userDocument.collection(subjectCollection);
@@ -68,12 +68,13 @@ class FirestoreSubjects {
   /// Gibt eine Liste von [Subject]-Objekten zurück, die das Feld 'fromUntis'
   /// auf true gesetzt haben und in der [subjectCollection] gespeichert sind.
   Future<List<Subject>> loadAllUntisSubjects() async {
-    final snapshot =
-        await _subjectCollectionRef.where('fromUntis', isEqualTo: true).get();
+    final snapshot = await _subjectCollectionRef
+        .where('fromUntis', isEqualTo: true)
+        .get();
 
     final List<Subject> subjects = [
       for (var doc in snapshot.docs)
-        _itemFactory.subjectFromDocument(doc.data())
+        _itemFactory.subjectFromDocument(doc.data()),
     ];
 
     return subjects;

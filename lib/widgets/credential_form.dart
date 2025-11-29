@@ -4,26 +4,22 @@ import '../database/models/credentials.dart';
 import 'fab.dart';
 
 /// Enum für die verschiedenen Arten von Anmeldefeldern
-enum CredentialFieldType {
-  username,
-  password,
-  school,
-  server,
-}
+enum CredentialFieldType { username, password, school, server }
 
 /// A widget for entering Untis credentials.
 /// It provides a form with fields for username, password, school, and server.
 /// Can also be used to display the credentials in a read-only mode.
 class CredentialForm extends StatefulWidget {
-  const CredentialForm(
-      {super.key,
-      this.usernameController,
-      this.passwordController,
-      this.schoolController,
-      this.serverController,
-      this.formKey,
-      this.initialCredentials,
-      this.disabled = false});
+  const CredentialForm({
+    super.key,
+    this.usernameController,
+    this.passwordController,
+    this.schoolController,
+    this.serverController,
+    this.formKey,
+    this.initialCredentials,
+    this.disabled = false,
+  });
 
   final GlobalKey<FormState>? formKey;
   final TextEditingController? usernameController;
@@ -43,27 +39,38 @@ class _CredentialFormState extends State<CredentialForm> {
   @override
   Widget build(BuildContext context) {
     return Form(
-        key: widget.formKey,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            buildTextFormField(
-                CredentialFieldType.username, widget.usernameController),
-            standardGap(),
-            buildTextFormField(
-                CredentialFieldType.password, widget.passwordController),
-            standardGap(),
-            buildTextFormField(
-                CredentialFieldType.school, widget.schoolController),
-            standardGap(),
-            buildTextFormField(
-                CredentialFieldType.server, widget.serverController),
-          ],
-        ));
+      key: widget.formKey,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          buildTextFormField(
+            CredentialFieldType.username,
+            widget.usernameController,
+          ),
+          standardGap(),
+          buildTextFormField(
+            CredentialFieldType.password,
+            widget.passwordController,
+          ),
+          standardGap(),
+          buildTextFormField(
+            CredentialFieldType.school,
+            widget.schoolController,
+          ),
+          standardGap(),
+          buildTextFormField(
+            CredentialFieldType.server,
+            widget.serverController,
+          ),
+        ],
+      ),
+    );
   }
 
   Widget buildTextFormField(
-      CredentialFieldType fieldType, TextEditingController? controller) {
+    CredentialFieldType fieldType,
+    TextEditingController? controller,
+  ) {
     String labelText;
     IconData icon;
     bool obscureText = false;

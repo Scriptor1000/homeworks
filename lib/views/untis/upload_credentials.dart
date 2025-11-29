@@ -67,9 +67,7 @@ class _UploadCredentialsState extends State<UploadCredentials> {
         untisProvider.credentialsOnlineStatus == CredentailsOnlineStatus.online;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Anmeldedaten online speichern'),
-      ),
+      appBar: AppBar(title: const Text('Anmeldedaten online speichern')),
       // GestureDetector beibehalten, um die Tastatur auszublenden
       body: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
@@ -94,7 +92,7 @@ class _UploadCredentialsState extends State<UploadCredentials> {
                         const InfoBox(
                           title: 'Hinweis',
                           paragraphs: [
-                            'Deine Anmeldedaten wurden bereits erfolgreich online gespeichert. Eine erneute Speicherung überschreibt die bestehenden Daten.'
+                            'Deine Anmeldedaten wurden bereits erfolgreich online gespeichert. Eine erneute Speicherung überschreibt die bestehenden Daten.',
                           ],
                           icon: Icons.check_circle_outline,
                           accentColor: Colors.green,
@@ -122,7 +120,9 @@ class _UploadCredentialsState extends State<UploadCredentials> {
                       const Text(
                         'Deine aktuellen Untis-Anmeldedaten:',
                         style: TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold),
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
 
                       standardGap(),
@@ -140,11 +140,11 @@ class _UploadCredentialsState extends State<UploadCredentials> {
                         title: 'Deine Daten sind sicher!',
                         paragraphs: [
                           'Deine Anmeldedaten werden mit diesem Schlüssel lokal verschlüsselt und nur in dieser verschlüsselten Form online gespeichert. Der Schlüssel selbst wird niemals übertragen.',
-                          'Du benötigst diesen identischen Schlüssel für jeden zukünftigen Zugriff auf diese Daten. Bitte merke ihn dir gut oder speichere ihn sicher an einem anderen Ort.'
+                          'Du benötigst diesen identischen Schlüssel für jeden zukünftigen Zugriff auf diese Daten. Bitte merke ihn dir gut oder speichere ihn sicher an einem anderen Ort.',
                         ],
                         icon: Icons.info_outline,
                       ),
-                      buildFABGap()
+                      buildFABGap(),
                     ],
                   ),
                 ),
@@ -154,10 +154,11 @@ class _UploadCredentialsState extends State<UploadCredentials> {
         ),
       ),
       floatingActionButton: ExtendedFAB(
-          onClick: save,
-          active: !loading,
-          icon: Icons.cloud_upload,
-          label: 'Hochladen'),
+        onClick: save,
+        active: !loading,
+        icon: Icons.cloud_upload,
+        label: 'Hochladen',
+      ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
@@ -173,12 +174,15 @@ class _UploadCredentialsState extends State<UploadCredentials> {
     });
 
     final secret = _secretController.text;
-    final credentialProvider =
-        Provider.of<CredentialProvider>(context, listen: false);
+    final credentialProvider = Provider.of<CredentialProvider>(
+      context,
+      listen: false,
+    );
 
-    await credentialProvider
-        .uploadCredentialsOnline(secret)
-        .onError((error, _) {
+    await credentialProvider.uploadCredentialsOnline(secret).onError((
+      error,
+      _,
+    ) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(

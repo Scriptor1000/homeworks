@@ -44,8 +44,9 @@ class _CreateHomeworkState extends State<CreateHomework> {
 
   @override
   Widget build(BuildContext context) {
-    Subject? currentSubject =
-        context.watch<UntisProvider>().getCurrentSubject();
+    Subject? currentSubject = context
+        .watch<UntisProvider>()
+        .getCurrentSubject();
     if (currentSubject != null &&
         (selectedSubject == null || selectedSubject == lastCurrentSubject)) {
       _updateSubject(currentSubject);
@@ -56,10 +57,7 @@ class _CreateHomeworkState extends State<CreateHomework> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Hinzufügen'),
-        elevation: 0,
-      ),
+      appBar: AppBar(title: const Text('Hinzufügen'), elevation: 0),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: SingleChildScrollView(
@@ -79,7 +77,7 @@ class _CreateHomeworkState extends State<CreateHomework> {
                 _buildDate(context),
                 standardGap(),
                 _buildDetails(),
-                buildFABGap()
+                buildFABGap(),
               ],
             ),
           ),
@@ -177,9 +175,7 @@ class _CreateHomeworkState extends State<CreateHomework> {
   TextFormField _buildDetails() {
     return TextFormField(
       controller: _descriptionController,
-      decoration: const InputDecoration(
-        hintText: 'Beschreibung eingeben...',
-      ),
+      decoration: const InputDecoration(hintText: 'Beschreibung eingeben...'),
       maxLines: 5,
     );
   }
@@ -245,16 +241,14 @@ class _CreateHomeworkState extends State<CreateHomework> {
             )
           : SubjectTileTemplate(
               title: 'Fach bitte wählen',
-              avatarChild: const Icon(
-                Icons.question_mark,
-                color: Colors.grey,
-              ),
+              avatarChild: const Icon(Icons.question_mark, color: Colors.grey),
               trailing: const Icon(Icons.arrow_drop_down),
               // TODO responsive color
               backColor: Colors.grey.shade200,
               // see above
               onTap: () =>
-                  SubjectSelectionRoute($extra: _updateSubject).push(context)),
+                  SubjectSelectionRoute($extra: _updateSubject).push(context),
+            ),
     );
   }
 

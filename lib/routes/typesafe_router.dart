@@ -25,8 +25,9 @@ import 'provider_shell.dart';
 
 part 'typesafe_router.g.dart';
 
-final _refreshStream =
-    GoRouterRefreshStream(FirebaseAuth.instance.authStateChanges());
+final _refreshStream = GoRouterRefreshStream(
+  FirebaseAuth.instance.authStateChanges(),
+);
 
 String get _homeLocation => const HomeRoute().location;
 String get _untisLocation => const UntisRoute().location;
@@ -35,8 +36,9 @@ String get _accountLocation => const AccountRoute().location;
 String get _authLocation => const AuthRoute().location;
 
 final appRouter = GoRouter(
-  initialLocation:
-      FirebaseAuth.instance.currentUser == null ? _authLocation : _homeLocation,
+  initialLocation: FirebaseAuth.instance.currentUser == null
+      ? _authLocation
+      : _homeLocation,
   observers: [
     SentryNavigatorObserver(),
     FirebaseAnalyticsObserver(analytics: FirebaseAnalytics.instance),
@@ -133,10 +135,7 @@ class NavigationShellRoute extends ShellRouteData {
       key: state.pageKey,
       child: ProviderShell(
         uid: user.uid,
-        child: NavigationShell(
-          state: state,
-          child: navigator,
-        ),
+        child: NavigationShell(state: state, child: navigator),
       ),
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
         return SharedAxisTransition(
@@ -157,10 +156,7 @@ class HomeRoute extends GoRouteData with $HomeRoute {
 
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
-    return NoTransitionPage(
-      key: state.pageKey,
-      child: const Home(),
-    );
+    return NoTransitionPage(key: state.pageKey, child: const Home());
   }
 }
 
@@ -185,9 +181,7 @@ class SubjectSelectionRoute extends GoRouteData with $SubjectSelectionRoute {
 
   @override
   Widget build(BuildContext context, GoRouterState state) {
-    return SubjectSelection(
-      onSubjectSelected: $extra,
-    );
+    return SubjectSelection(onSubjectSelected: $extra);
   }
 
   @override
@@ -206,10 +200,7 @@ class UntisRoute extends GoRouteData with $UntisRoute {
 
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
-    return NoTransitionPage(
-      key: state.pageKey,
-      child: const UntisView(),
-    );
+    return NoTransitionPage(key: state.pageKey, child: const UntisView());
   }
 }
 
@@ -247,10 +238,7 @@ class AccountRoute extends GoRouteData with $AccountRoute {
 
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
-    return NoTransitionPage(
-      key: state.pageKey,
-      child: const AccountView(),
-    );
+    return NoTransitionPage(key: state.pageKey, child: const AccountView());
   }
 }
 
@@ -269,11 +257,13 @@ class GoRouterRefreshStream extends ChangeNotifier {
         await firestoreUser.ensureDocumentExists();
         _wasLoggedIn = true;
         Sentry.configureScope((scope) {
-          scope.setUser(SentryUser(
-            id: user.uid,
-            email: user.email,
-            username: user.displayName,
-          ));
+          scope.setUser(
+            SentryUser(
+              id: user.uid,
+              email: user.email,
+              username: user.displayName,
+            ),
+          );
         });
         notifyListeners();
       } else if (_wasLoggedIn) {

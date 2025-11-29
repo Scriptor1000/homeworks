@@ -7,8 +7,8 @@ class FirestoreUser {
   final String _uid;
 
   FirestoreUser({required FirebaseFirestore firestore, required String uid})
-      : _firestore = firestore,
-        _uid = uid;
+    : _firestore = firestore,
+      _uid = uid;
 
   DocumentReference<Map<String, dynamic>> get userDocument =>
       _firestore.collection(userCollection).doc(_uid);
@@ -19,9 +19,7 @@ class FirestoreUser {
   Future<void> ensureDocumentExists() async {
     final userDoc = await userDocument.get();
     if (!userDoc.exists) {
-      await userDocument.set({
-        'createdAt': FieldValue.serverTimestamp(),
-      });
+      await userDocument.set({'createdAt': FieldValue.serverTimestamp()});
     }
   }
 }

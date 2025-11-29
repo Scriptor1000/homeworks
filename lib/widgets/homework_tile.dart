@@ -15,8 +15,11 @@ import 'subject_avatar.dart';
 ///
 /// When the homework is completed, the [onCompleted] callback is triggered.
 class HomeworkTile extends StatelessWidget {
-  const HomeworkTile(
-      {super.key, required this.homework, required this.onCompleted});
+  const HomeworkTile({
+    super.key,
+    required this.homework,
+    required this.onCompleted,
+  });
 
   final Homework homework;
   final VoidCallback onCompleted;
@@ -38,7 +41,7 @@ class HomeworkTile extends StatelessWidget {
       'Donnerstag',
       'Freitag',
       'Samstag',
-      'Sonntag'
+      'Sonntag',
     ];
     final weekday = weekdays[dueDate.weekday - 1];
 
@@ -69,9 +72,7 @@ class HomeworkTile extends StatelessWidget {
     final dateText = dueDateText(homework.dueDate);
 
     return ListTile(
-      leading: SubjectAvatar(
-        subject: subject,
-      ),
+      leading: SubjectAvatar(subject: subject),
       title: Text('${homework.isExam ? 'LK: ' : ''}${homework.title}'),
       subtitle: dateText != null ? Text(dateText) : null,
       tileColor: homework.isExam ? backColor?.withAlpha(50) : null,
@@ -83,10 +84,7 @@ class HomeworkTile extends StatelessWidget {
       },
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(BorderRadiusConstants.homeworks),
-        side: BorderSide(
-          color: backColor ?? colorScheme.error,
-          width: 3,
-        ),
+        side: BorderSide(color: backColor ?? colorScheme.error, width: 3),
       ),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
@@ -97,22 +95,25 @@ class HomeworkTile extends StatelessWidget {
               subject != null &&
               subject.nextLesson != null)
             IconButton(
-                onPressed: () {
-                  context
-                      .read<HomeworksProvider>()
-                      .newDueDate(homework, subject.nextLesson!);
-                },
-                icon: Icon(Icons.replay_rounded)),
+              onPressed: () {
+                context.read<HomeworksProvider>().newDueDate(
+                  homework,
+                  subject.nextLesson!,
+                );
+              },
+              icon: Icon(Icons.replay_rounded),
+            ),
           homework.isCompleted
               ? const Icon(Icons.check_circle, color: Colors.green)
               : IconButton(
                   onPressed: () {
-                    context
-                        .read<HomeworksProvider>()
-                        .completeHomework(homework);
+                    context.read<HomeworksProvider>().completeHomework(
+                      homework,
+                    );
                     onCompleted();
                   },
-                  icon: const Icon(Icons.circle_outlined, color: Colors.grey)),
+                  icon: const Icon(Icons.circle_outlined, color: Colors.grey),
+                ),
         ],
       ),
     );
