@@ -38,6 +38,7 @@ class _LoadCredentialsState extends State<LoadCredentials> {
   }
 
   Future<void> _loadCredentials() async {
+    if (_isLoading) return;
     if (_userPasswordController.text.isEmpty) {
       showSnackBar('Bitte gib dein Benutzerpasswort ein');
       return;
@@ -128,7 +129,7 @@ class _LoadCredentialsState extends State<LoadCredentials> {
         ),
       ),
       floatingActionButton: ExtendedFAB(
-        onClick: _isLoading ? () {} : _loadCredentials,
+        onClick: _loadCredentials,
         active: false,
         icon: Icons.sync,
         label: 'Anmeldedaten importieren',

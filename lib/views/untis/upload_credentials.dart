@@ -30,8 +30,7 @@ class _UploadCredentialsState extends State<UploadCredentials> {
   final TextEditingController _serverController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
-  bool loading = false;
-  bool completed = false;
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -78,7 +77,7 @@ class _UploadCredentialsState extends State<UploadCredentials> {
           child: Column(
             children: [
               OwnProgressIndicator(
-                active: loading,
+                active: _isLoading,
                 backgroundColor: Theme.of(context).colorScheme.surface,
               ),
               // Hauptinhalt mit ScrollView im Expanded
@@ -155,7 +154,7 @@ class _UploadCredentialsState extends State<UploadCredentials> {
       ),
       floatingActionButton: ExtendedFAB(
           onClick: save,
-          active: !loading,
+          active: !_isLoading,
           icon: Icons.cloud_upload,
           label: 'Hochladen'),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
@@ -163,18 +162,17 @@ class _UploadCredentialsState extends State<UploadCredentials> {
   }
 
   void save() async {
-    if (loading || completed) return;
+    if (_isLoading) return;
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
     setState(() {
-      loading = true;
+      _isLoading = true;
     });
 
     final secret = _secretController.text;
-    final credentialProvider =
-        Provider.of<CredentialProvider>(context, listen: false);
+    final credentialProvider = context.read<CredentialProvider>();
 
     await credentialProvider
         .uploadCredentialsOnline(secret)
@@ -183,7 +181,6 @@ class _UploadCredentialsState extends State<UploadCredentials> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Fehler beim Hochladen der Anmeldedaten'),
-            backgroundColor: Colors.red,
           ),
         );
       }
@@ -191,7 +188,7 @@ class _UploadCredentialsState extends State<UploadCredentials> {
 
     if (mounted) {
       setState(() {
-        loading = false;
+        _isLoading = false;
       });
     }
   }
