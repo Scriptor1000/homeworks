@@ -52,25 +52,26 @@ class _LoadCredentialsState extends State<LoadCredentials> {
     context
         .read<CredentialProvider>()
         .loadCredentialsOnline(_userPasswordController.text)
-        .then((_) {
-      if (mounted) {
-        context.pop();
-      }
-    }).onError((error, stackTrace) {
-      setState(() {
-        showSnackBar('Fehler: $error');
-        _isLoading = false;
-      });
-    });
+        .then(
+          (_) {
+            if (mounted) {
+              context.pop();
+            }
+          },
+          onError: (error, stackTrace) {
+            setState(() {
+              showSnackBar('Fehler: $error');
+              _isLoading = false;
+            });
+          },
+        );
   }
 
   @override
   Widget build(BuildContext context) {
     final credentialProvider = context.watch<CredentialProvider>();
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Gespeicherte Anmeldedaten laden'),
-      ),
+      appBar: AppBar(title: const Text('Gespeicherte Anmeldedaten laden')),
       body: SafeArea(
         child: Column(
           children: [
@@ -95,7 +96,7 @@ class _LoadCredentialsState extends State<LoadCredentials> {
                             'Es sind bereits Anmeldedaten auf diesem Gerät gespeichert. Durch das Herunterladen der Clouddaten werden diese unwiderruflich überschrieben.',
                             if (credentialProvider.sessionStatus ==
                                 UntisSessionStatus.sessionAccomplished)
-                              'Mit den lokalen Anmeldedaten wurde bereits erfolgreich eine Verbindung zu Untis hergestellt.'
+                              'Mit den lokalen Anmeldedaten wurde bereits erfolgreich eine Verbindung zu Untis hergestellt.',
                           ],
                           icon: Icons.warning,
                           accentColor: Colors.orange,
@@ -129,7 +130,7 @@ class _LoadCredentialsState extends State<LoadCredentials> {
                           disabled: true,
                         ),
                       ),
-                      buildFABGap()
+                      buildFABGap(),
                     ],
                   ),
                 ),

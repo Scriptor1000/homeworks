@@ -47,7 +47,7 @@ class _UploadCredentialsState extends State<UploadCredentials> {
     final credentialProvider = context.watch<CredentialProvider>();
     final bool alreadyUploaded = [
       CredentailsOnlineStatus.online,
-      CredentailsOnlineStatus.changed
+      CredentailsOnlineStatus.changed,
     ].contains(credentialProvider.credentialsOnlineStatus);
 
     final credentials = credentialProvider.credentials;
@@ -59,9 +59,7 @@ class _UploadCredentialsState extends State<UploadCredentials> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Anmeldedaten online speichern'),
-      ),
+      appBar: AppBar(title: const Text('Anmeldedaten online speichern')),
       // GestureDetector beibehalten, um die Tastatur auszublenden
       body: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
@@ -87,7 +85,7 @@ class _UploadCredentialsState extends State<UploadCredentials> {
                           title: 'Achtung!',
                           paragraphs: [
                             'Es sind bereits Anmeldedaten in deiner Cloud gespeichert. Durch das Hochladen werden diese unwiderruflich überschrieben.',
-                            'Dein alter Schlüssel wird durch diesen Vorgang ungültig. Du kannst ausschließlich mit dem neuen Schlüssel auf deine Anmeldedaten zugreifen.'
+                            'Dein alter Schlüssel wird durch diesen Vorgang ungültig. Du kannst ausschließlich mit dem neuen Schlüssel auf deine Anmeldedaten zugreifen.',
                           ],
                           icon: Icons.warning,
                           accentColor: Colors.orange,
@@ -115,7 +113,9 @@ class _UploadCredentialsState extends State<UploadCredentials> {
                       const Text(
                         'Deine aktuellen Untis-Anmeldedaten:',
                         style: TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold),
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
 
                       standardGap(),
@@ -133,11 +133,11 @@ class _UploadCredentialsState extends State<UploadCredentials> {
                         title: 'Deine Daten sind sicher!',
                         paragraphs: [
                           'Deine Anmeldedaten werden mit diesem Schlüssel lokal verschlüsselt und nur in dieser verschlüsselten Form online gespeichert. Der Schlüssel selbst wird niemals übertragen.',
-                          'Du benötigst diesen identischen Schlüssel für jeden zukünftigen Zugriff auf diese Daten. Bitte merke ihn dir gut oder speichere ihn sicher an einem anderen Ort.'
+                          'Du benötigst diesen identischen Schlüssel für jeden zukünftigen Zugriff auf diese Daten. Bitte merke ihn dir gut oder speichere ihn sicher an einem anderen Ort.',
                         ],
                         icon: Icons.info_outline,
                       ),
-                      buildFABGap()
+                      buildFABGap(),
                     ],
                   ),
                 ),
@@ -147,10 +147,11 @@ class _UploadCredentialsState extends State<UploadCredentials> {
         ),
       ),
       floatingActionButton: ExtendedFAB(
-          onClick: save,
-          active: !_isLoading,
-          icon: Icons.cloud_upload,
-          label: 'Hochladen'),
+        onClick: save,
+        active: !_isLoading,
+        icon: Icons.cloud_upload,
+        label: 'Hochladen',
+      ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
@@ -170,20 +171,30 @@ class _UploadCredentialsState extends State<UploadCredentials> {
 
     await credentialProvider
         .uploadCredentialsOnline(secret)
-        .onError((error, _) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Fehler beim Hochladen der Anmeldedaten'),
-          ),
+        .then(
+          (_) => {
+            if (mounted)
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Anmeldedaten erfolgreich hochgeladen'),
+                ),
+              ),
+            setState(() {
+              _isLoading = false;
+            }),
+          },
+          onError: (error, _) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Fehler beim Hochladen der Anmeldedaten'),
+                ),
+              );
+              setState(() {
+                _isLoading = false;
+              });
+            }
+          },
         );
-      }
-    });
-
-    if (mounted) {
-      setState(() {
-        _isLoading = false;
-      });
-    }
   }
 }
