@@ -77,48 +77,44 @@ class StatusCheck extends StatelessWidget {
   ListTile buildLocalStatus(
       CredentialProvider credentialProvider, BuildContext context) {
     final sessionStatus = credentialProvider.sessionStatus;
-
-    return switch (sessionStatus) {
-      UntisSessionStatus.sessionAccomplished => ListTile(
-          leading: Icon(Icons.check_circle, color: Colors.green),
-          title: Text('Mit deinem Untis Konto verknüpft.'),
-          subtitle: Text(
-              'Deine Abgabezeiten orientieren sich an deinen Stundenplan.'),
-          onTap: () => const EnterCredentialsRoute().go(context),
-        ),
-      UntisSessionStatus.noCredentials => ListTile(
-          leading: const Icon(Icons.error, color: Colors.red),
-          title: const Text('Nicht mit deinem Untis Konto verknüpft.'),
-          subtitle: const Text('Klicke hier, um das zu ändern.'),
-          onTap: () => const EnterCredentialsRoute().go(context),
-        ),
-      UntisSessionStatus.loading => ListTile(
-          leading: SizedBox(
-            width: 20,
-            height: 20,
-            child: CircularProgressIndicator(),
-          ),
-          title: Text('Verknüpfung mit Untis.'),
-          subtitle:
-              Text('Die Verknüpfung mit deinem Untis Konto wird hergestellt.'),
-        ),
-      UntisSessionStatus.invalidCredentials => ListTile(
-          leading: const Icon(Icons.error, color: Colors.red),
-          title: const Text('Fehler bei der Verknüpfung mit Untis.'),
-          subtitle: const Text(
-              'Deine angegebenen Anmeldedaten scheinen ungültig zu sein. '
-              'Klicke hier, um sie zu ändern.'),
-          onTap: () => const EnterCredentialsRoute().go(context),
-        ),
-      UntisSessionStatus.error => ListTile(
-          leading: const Icon(Icons.error, color: Colors.red),
-          title: const Text('Fehler bei der Verknüpfung mit Untis.'),
-          subtitle: const Text(
-              'Bei der Abfrage deines Stundenplans ist ein Fehler aufgetreten.'
-              'Hier kannst du deine Anmeldedaten ändern.'),
-          onTap: () => const EnterCredentialsRoute().go(context),
-        ),
+    final subtitle = switch (sessionStatus) {
+      UntisSessionStatus.sessionAccomplished =>
+        'Deine Stundenplan steht zur Verfügung, um dir unnötige Arbeit zu ersparen.',
+      UntisSessionStatus.noCredentials => 'Klicke hier, um das zu ändern.',
+      UntisSessionStatus.loading =>
+        'Dein Stundenplan wird von Untis geladen...',
+      UntisSessionStatus.invalidCredentials =>
+        'Deine angegebenen Anmeldedaten scheinen ungültig zu sein.',
+      UntisSessionStatus.error =>
+        'Bei der Abfrage deines Stundenplans ist ein Fehler aufgetreten.',
     };
+    final title = switch (sessionStatus) {
+      UntisSessionStatus.sessionAccomplished =>
+        'Mit deinem Untis Konto verbunden.',
+      UntisSessionStatus.noCredentials =>
+        'Nicht mit deinem Untis Konto verbunden.',
+      UntisSessionStatus.loading => 'Verbindung wird hergestellt.',
+      UntisSessionStatus.invalidCredentials =>
+        'Fehler bei der Verknüpfung mit Untis.',
+      UntisSessionStatus.error => 'Fehler bei der Verknüpfung mit Untis.',
+    };
+    final icon = switch (sessionStatus) {
+      UntisSessionStatus.sessionAccomplished =>
+        Icon(Icons.check_circle, color: Colors.green),
+      UntisSessionStatus.loading => const SizedBox(
+          width: 20, height: 20, child: CircularProgressIndicator()),
+      _ => Icon(Icons.error, color: Colors.red),
+    };
+    final onTap = sessionStatus != UntisSessionStatus.loading
+        ? () => const EnterCredentialsRoute().go(context)
+        : null;
+
+    return ListTile(
+      leading: icon,
+      title: Text(title),
+      subtitle: Text(subtitle),
+      onTap: onTap,
+    );
   }
 
   ListTile buildOnlineStatus(
@@ -126,53 +122,57 @@ class StatusCheck extends StatelessWidget {
     final sessionStatus = credentialProvider.sessionStatus;
     final credentialsOnline = credentialProvider.credentialsOnlineStatus;
 
-    return switch (credentialsOnline) {
-      CredentailsOnlineStatus.loading => const ListTile(
-          leading: SizedBox(
-            width: 20,
-            height: 20,
-            child: CircularProgressIndicator(),
-          ),
-          title: Text('Anmeldedaten online gespeichert'),
-          subtitle: Text(
-              'Es wird geprüft, ob deine Anmeldedaten online gespeichert sind.'),
-        ),
-      CredentailsOnlineStatus.online => credentialProvider.hasCredentials
-          ? const ListTile(
-              leading: Icon(Icons.check_circle, color: Colors.green),
-              title: Text('Anmeldedaten online gespeichert.'),
-              subtitle: Text(
-                  'Deine Anmeldedaten sind online verschlüsselt gespeichert und auf allen Geräten verfügbar.'),
-            )
-          : ListTile(
-              leading: const Icon(Icons.check_circle, color: Colors.yellow),
-              title: const Text('Anmeldedaten online gespeichert.'),
-              subtitle: const Text(
-                  'Deine Anmeldedaten sind online gespeichert, aber nicht auf diesem Gerät.'),
-              onTap: () => const DownloadCredentialsRoute().go(context),
-            ),
-      CredentailsOnlineStatus.offline => ListTile(
-          leading: const Icon(Icons.close, color: Colors.red),
-          title: const Text('Anmeldedaten nicht online gespeichert.'),
-          subtitle: Text('Deine Anmeldedaten sind nicht online gespeichert.'
-              "${sessionStatus == UntisSessionStatus.sessionAccomplished ? "Klicke hier, um das zu ändern" : ""}"),
-          onTap: sessionStatus == UntisSessionStatus.sessionAccomplished
-              ? () => const UploadCredentialsRoute().go(context)
-              : null,
-        ),
-      CredentailsOnlineStatus.error => const ListTile(
-          leading: Icon(Icons.error, color: Colors.red),
-          title: Text('Anmeldedaten online gespeichert.'),
-          subtitle: Text(
-              'Bei der Abfrage ist ein Fehler aufgetreten. Bitte überprüfe deine Internetverbindung.'),
-        ),
-      CredentailsOnlineStatus.changed => const ListTile(
-          leading: Icon(Icons.change_circle, color: Colors.yellow),
-          title: Text('Andere Anmeldedaten online gespeichert.'),
-          subtitle: Text(
-              'Deine Anmeldedaten sind online gespeichert, stimmen aber nicht mit denen auf diesem Gerät überein.'),
-        ),
+    final title = switch (credentialsOnline) {
+      CredentailsOnlineStatus.online => 'Cloudsyncronisation aktiv.',
+      CredentailsOnlineStatus.offline => 'Cloudsyncronisation deaktiviert.',
+      CredentailsOnlineStatus.loading => 'Syncronisieren...',
+      CredentailsOnlineStatus.error => 'Cloudsyncronisation fehlgeschlagen.',
+      CredentailsOnlineStatus.changed => 'Andere Anmeldedaten',
     };
+    final subtitle = switch (credentialsOnline) {
+      CredentailsOnlineStatus.online =>
+        'Deine Anmeldedaten sind online verschlüsselt gespeichert und auf allen Geräten verfügbar.',
+      CredentailsOnlineStatus.offline =>
+        'Deine Anmeldedaten sind nicht online gespeichert.'
+            '${sessionStatus == UntisSessionStatus.sessionAccomplished ? "Klicke hier, um das zu ändern" : ""}',
+      CredentailsOnlineStatus.loading =>
+        'Es wird geprüft, ob deine Anmeldedaten online gespeichert sind.',
+      CredentailsOnlineStatus.error =>
+        'Bei der Abfrage ist ein Fehler aufgetreten. Bitte überprüfe deine Internetverbindung.',
+      CredentailsOnlineStatus.changed =>
+        'Es sind in der Cloud andere Anmeldedaten gespeichert als auf diesem Gerät.'
+            // TODO subtitle für changed anpassen
+            ' Tippe hier, um die Anmeldedaten zu aktualisieren.',
+    };
+    final icon = switch (credentialsOnline) {
+      CredentailsOnlineStatus.online =>
+        Icon(Icons.check_circle, color: Colors.green),
+      CredentailsOnlineStatus.loading => const SizedBox(
+          width: 20, height: 20, child: CircularProgressIndicator()),
+      CredentailsOnlineStatus.changed =>
+        Icon(Icons.change_circle, color: Colors.yellow),
+      _ => Icon(Icons.close, color: Colors.red),
+    };
+    final onTap = switch (credentialsOnline) {
+      CredentailsOnlineStatus.online => credentialProvider.hasCredentials
+          ? null
+          : () => const DownloadCredentialsRoute().go(context),
+      CredentailsOnlineStatus.offline =>
+        sessionStatus == UntisSessionStatus.sessionAccomplished
+            ? () => const UploadCredentialsRoute().go(context)
+            : null,
+      CredentailsOnlineStatus.changed => () {
+          // TODO
+        },
+      _ => null,
+    };
+
+    return ListTile(
+      leading: icon,
+      title: Text(title),
+      subtitle: Text(subtitle),
+      onTap: onTap,
+    );
   }
 }
 

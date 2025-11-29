@@ -72,8 +72,6 @@ class _UntisLoginState extends State<UntisLogin> {
         _isLoading = false;
       });
     });
-
-    // TODO maybe straight to upload or import?
   }
 
   @override
