@@ -5,7 +5,7 @@ import 'package:homeworks/database/credentials.dart';
 import 'package:homeworks/database/models/credentials.dart';
 import 'package:homeworks/database/models/factory.dart';
 import 'package:homeworks/provider/credential_provider.dart';
-import 'package:homeworks/utilities/enums.dart' hide test;
+import 'package:homeworks/utilities/enums.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
@@ -67,8 +67,8 @@ void main() {
       expect(credentialProvider.hasCredentials, isTrue);
       expect(credentialProvider.credentials, equals(testCredentials));
       expect(credentialProvider.session, equals(session));
-      expect(credentialProvider.sessionState,
-          equals(UntisSessionState.accomplished));
+      expect(credentialProvider.sessionStatus,
+          equals(UntisSessionStatus.sessionAccomplished));
       expect(credentialProvider.credentialsOnlineStatus,
           equals(CredentailsOnlineStatus.offline));
 
@@ -108,8 +108,8 @@ void main() {
       expect(credentialProvider.hasCredentials, isFalse);
       expect(credentialProvider.credentials, isNull);
       expect(credentialProvider.session, isNull);
-      expect(credentialProvider.sessionState,
-          equals(UntisSessionState.noCredentials));
+      expect(credentialProvider.sessionStatus,
+          equals(UntisSessionStatus.noCredentials));
       verify(storage.delete(key: CredentialProvider.credentialsKey)).called(1);
     });
 

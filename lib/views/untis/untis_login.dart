@@ -84,10 +84,12 @@ class _UntisLoginState extends State<UntisLogin> {
       ),
       body: Column(
         children: [
-          OwnProgressIndicator(
-            active: _isLoading,
-            backgroundColor: Theme.of(context).colorScheme.surface,
-          ),
+          Consumer(builder: (context, CredentialProvider provider, child) {
+            return OwnProgressIndicator(
+              active: provider.isLoading,
+              backgroundColor: Theme.of(context).colorScheme.surface,
+            );
+          }),
           Expanded(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),

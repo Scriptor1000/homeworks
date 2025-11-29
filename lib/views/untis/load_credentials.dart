@@ -75,7 +75,8 @@ class _LoadCredentialsState extends State<LoadCredentials> {
             // Ladeindikator
             OwnProgressIndicator(
               active: _isLoading ||
-                  credentialProvider.sessionState == UntisSessionState.loading,
+                  credentialProvider.sessionStatus ==
+                      UntisSessionStatus.loading,
               backgroundColor: Theme.of(context).colorScheme.surface,
             ),
 
@@ -125,7 +126,7 @@ class _LoadCredentialsState extends State<LoadCredentials> {
         ),
       ),
       floatingActionButton:
-          credentialProvider.sessionState == UntisSessionState.loading
+          credentialProvider.sessionStatus == UntisSessionStatus.loading
               ? ExtendedFAB(
                   onClick: () {},
                   active: false,

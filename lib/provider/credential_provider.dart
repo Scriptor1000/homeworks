@@ -23,7 +23,7 @@ class CredentialProvider extends ChangeNotifier {
 
   UntisCredentials? _credentials;
   UntisSession? _session;
-  UntisSessionState _sessionState = UntisSessionState.noCredentials;
+  UntisSessionStatus _sessionStatus = UntisSessionStatus.noCredentials;
   bool _isLoadingCredentials = false;
 
   CredentailsOnlineStatus _credentialsOnlineStatus =
@@ -49,12 +49,7 @@ class CredentialProvider extends ChangeNotifier {
 
   UntisSession? get session => _session;
 
-  UntisSessionState get sessionState => _sessionState;
-
-  set credentialsOnlineStatus(CredentailsOnlineStatus status) {
-    _credentialsOnlineStatus = status;
-    notifyListeners();
-  }
+  UntisSessionStatus get sessionStatus => _sessionStatus;
 
   /// The current Untis credentials
   UntisCredentials? get credentials => _credentials;
@@ -64,45 +59,41 @@ class CredentialProvider extends ChangeNotifier {
   /// This method should be called at the start of the application to ensure credentials are loaded or
   /// to refresh the the credentials and their onlineStatus.
   Future<void> initialize() async {
-    _isLoadingCredentials = true;
-    notifyListeners();
     await _loadCredentialsLocal();
-    _isLoadingCredentials = false;
-    print('Loaded credentials: $_credentials');
-
     await _loadOnlineStatus();
   }
 
   Future<void> setCredentials(UntisCredentials credentials) async {
-    _credentials = credentials;
-    await _createSession();
-    if (_sessionState == UntisSessionState.error) {
-      _credentials = null;
+    final res = await _itemFactory.createUntisSession(credentials);
+    if (res.status == UntisSessionStatus.error) {
       return Future.error('Anmeldung fehlgeschlagen.');
+    } else if (res.status == UntisSessionStatus.invalidCredentials) {
+      return Future.error('Ungültige Anmeldedaten.');
+    } else if (res.session == null) {
+      return Future.error('Unbekannter Fehler bei der Anmeldung.');
     }
+    _credentials = credentials;
+    _session = res.session;
+    _sessionStatus = res.status;
     await _saveCredentialsLocal();
+    notifyListeners();
     _loadOnlineStatus();
   }
 
   Future<void> _loadCredentialsLocal() async {
+    _isLoadingCredentials = true;
+    notifyListeners();
     final storedCredentials = await _storage.read(key: credentialsKey);
+    _isLoadingCredentials = false;
     if (storedCredentials != null) {
       _credentials = _itemFactory.untisCredentialsFromJSON(storedCredentials);
+      _sessionStatus = UntisSessionStatus.loading;
       notifyListeners();
-      await _createSession();
-    }
-  }
-
-  Future<void> _createSession() async {
-    if (_credentials == null) return;
-    _sessionState = UntisSessionState.loading;
-    notifyListeners();
-    try {
-      _session = await _itemFactory.createUntisSession(_credentials!);
-      _sessionState = UntisSessionState.accomplished;
-    } catch (e) {
-      _sessionState = UntisSessionState.error;
-      print('Error creating session: $e');
+      final res = await _itemFactory.createUntisSession(_credentials!);
+      _session = res.session;
+      _sessionStatus = res.status;
+    } else {
+      _sessionStatus = UntisSessionStatus.noCredentials;
     }
     notifyListeners();
   }
@@ -118,7 +109,7 @@ class CredentialProvider extends ChangeNotifier {
   Future<void> clearCredentialsLocal() async {
     _credentials = null;
     _session = null;
-    _sessionState = UntisSessionState.noCredentials;
+    _sessionStatus = UntisSessionStatus.noCredentials;
     await _storage.delete(key: credentialsKey);
     notifyListeners();
   }
@@ -138,14 +129,7 @@ class CredentialProvider extends ChangeNotifier {
       return Future.error('Keine Anmeldedaten gefunden.');
     }
 
-    _credentials = storedCredentials;
-    await _createSession();
-    if (_sessionState == UntisSessionState.error) {
-      _credentials = null;
-      return Future.error('Anmeldung fehlgeschlagen.');
-    }
-    await _saveCredentialsLocal();
-    _loadOnlineStatus();
+    return setCredentials(storedCredentials);
   }
 
   /// Uploads the current credentials to Firestore.

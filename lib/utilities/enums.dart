@@ -16,7 +16,13 @@ enum CredentailsOnlineStatus {
   error,
 }
 
-var test = CredentailsOnlineStatus.offline;
+enum UntisSessionStatus {
+  noCredentials,
+  loading,
+  sessionAccomplished,
+  invalidCredentials,
+  error,
+}
 
 /// The status of the subjects wich are loaded from Untis.
 enum UntisSubjectStatus {
@@ -70,11 +76,4 @@ enum GoogleSignInState {
   needWebButton,
   error,
   loading
-}
-
-enum UntisSessionState {
-  noCredentials,
-  loading,
-  accomplished,
-  error,
 }
