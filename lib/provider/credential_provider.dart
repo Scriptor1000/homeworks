@@ -24,7 +24,6 @@ class CredentialProvider extends ChangeNotifier {
   UntisCredentials? _credentials;
   UntisSession? _session;
   UntisSessionStatus _sessionStatus = UntisSessionStatus.noCredentials;
-  bool _isLoadingCredentials = false;
 
   CredentailsOnlineStatus _credentialsOnlineStatus =
       CredentailsOnlineStatus.loading;
@@ -36,9 +35,6 @@ class CredentialProvider extends ChangeNotifier {
       : _firestoreCredentials = firestoreCredentials,
         _itemFactory = itemFactory,
         _storage = storage;
-
-  /// Wheter the credentials are currently being loaded or the loading process is finished.
-  bool get isLoading => _isLoadingCredentials;
 
   /// Whether the credentials are available.
   bool get hasCredentials => _credentials != null;
@@ -81,14 +77,11 @@ class CredentialProvider extends ChangeNotifier {
   }
 
   Future<void> _loadCredentialsLocal() async {
-    _isLoadingCredentials = true;
+    _sessionStatus = UntisSessionStatus.loading;
     notifyListeners();
     final storedCredentials = await _storage.read(key: credentialsKey);
-    _isLoadingCredentials = false;
     if (storedCredentials != null) {
       _credentials = _itemFactory.untisCredentialsFromJSON(storedCredentials);
-      _sessionStatus = UntisSessionStatus.loading;
-      notifyListeners();
       final res = await _itemFactory.createUntisSession(_credentials!);
       _session = res.session;
       _sessionStatus = res.status;

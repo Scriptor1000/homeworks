@@ -29,6 +29,7 @@ class _UntisLoginState extends State<UntisLogin> {
   final _serverController = TextEditingController();
 
   bool _isLoading = false;
+  bool _firstBuild = true;
 
   @override
   void dispose() {
@@ -77,23 +78,23 @@ class _UntisLoginState extends State<UntisLogin> {
   @override
   Widget build(BuildContext context) {
     final provider = context.read<CredentialProvider>();
-    _usernameController.text = provider.credentials?.username ?? '';
-    _passwordController.text = provider.credentials?.password ?? '';
-    _schoolController.text = provider.credentials?.school ?? '';
-    _serverController.text = provider.credentials?.server ?? '';
-
+    if (_firstBuild) {
+      _usernameController.text = provider.credentials?.username ?? '';
+      _passwordController.text = provider.credentials?.password ?? '';
+      _schoolController.text = provider.credentials?.school ?? '';
+      _serverController.text = provider.credentials?.server ?? '';
+      _firstBuild = false;
+    }
     return Scaffold(
       appBar: AppBar(
         title: const Text('Untis Anmeldung'),
       ),
       body: Column(
         children: [
-          Consumer(builder: (context, CredentialProvider provider, child) {
-            return OwnProgressIndicator(
-              active: provider.isLoading,
-              backgroundColor: Theme.of(context).colorScheme.surface,
-            );
-          }),
+          OwnProgressIndicator(
+            active: _isLoading,
+            backgroundColor: Theme.of(context).colorScheme.surface,
+          ),
           Expanded(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
