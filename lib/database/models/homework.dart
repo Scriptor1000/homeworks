@@ -29,8 +29,8 @@ class Homework {
     this.dueDate,
     this.isExam = false, // TODO remove --> own Exam class
     DateTime? createdAt,
-  })  : createdAt = createdAt ?? DateTime.now(),
-        id = id ?? const Uuid().v4() {
+  }) : createdAt = createdAt ?? DateTime.now(),
+       id = id ?? const Uuid().v4() {
     if (toNextLesson) {
       assert(
         subjectDocId.startsWith("untis"),
@@ -83,8 +83,10 @@ class Homework {
   /// If the homework is an exam, it is urgent if it is due in the next 3 days.
   bool get isUrgent =>
       dueDate != null &&
-      DateTime(dueDate!.year, dueDate!.month, dueDate!.day)
-              .difference(DateTime.now())
-              .inDays <
+      DateTime(
+            dueDate!.year,
+            dueDate!.month,
+            dueDate!.day,
+          ).difference(DateTime.now()).inDays <
           (isExam ? 3 : 1);
 }

@@ -45,8 +45,10 @@ class _SubjectBottomSheetContentState extends State<SubjectBottomSheetContent> {
       _isProcessing[subject.id] = true;
     });
 
-    SubjectProvider provider =
-        Provider.of<SubjectProvider>(context, listen: false);
+    SubjectProvider provider = Provider.of<SubjectProvider>(
+      context,
+      listen: false,
+    );
     await provider.addSubject(subject);
     _removeSubjectFromList(subject, index);
 
@@ -64,8 +66,10 @@ class _SubjectBottomSheetContentState extends State<SubjectBottomSheetContent> {
       _isProcessing[subject.id] = true;
     });
 
-    SubjectProvider provider =
-        Provider.of<SubjectProvider>(context, listen: false);
+    SubjectProvider provider = Provider.of<SubjectProvider>(
+      context,
+      listen: false,
+    );
     await provider.removeSubject(subject);
     _removeSubjectFromList(subject, index);
 
@@ -86,8 +90,10 @@ class _SubjectBottomSheetContentState extends State<SubjectBottomSheetContent> {
       }
     });
 
-    SubjectProvider provider =
-        Provider.of<SubjectProvider>(context, listen: false);
+    SubjectProvider provider = Provider.of<SubjectProvider>(
+      context,
+      listen: false,
+    );
 
     for (var subject in List<Subject>.from(_subjects)) {
       await provider.addSubject(subject);
@@ -101,7 +107,8 @@ class _SubjectBottomSheetContentState extends State<SubjectBottomSheetContent> {
     if (_subjects.isEmpty) return;
 
     // Bestätigungsdialog zeigen
-    bool confirm = await showDialog<bool>(
+    bool confirm =
+        await showDialog<bool>(
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
@@ -113,7 +120,8 @@ class _SubjectBottomSheetContentState extends State<SubjectBottomSheetContent> {
                 ],
               ),
               content: Text(
-                  'Möchtest du wirklich alle ${_subjects.length} Fächer löschen?'),
+                'Möchtest du wirklich alle ${_subjects.length} Fächer löschen?',
+              ),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(false),
@@ -140,8 +148,10 @@ class _SubjectBottomSheetContentState extends State<SubjectBottomSheetContent> {
       }
     });
 
-    SubjectProvider provider =
-        Provider.of<SubjectProvider>(context, listen: false);
+    SubjectProvider provider = Provider.of<SubjectProvider>(
+      context,
+      listen: false,
+    );
 
     for (var subject in List<Subject>.from(_subjects)) {
       await provider.removeSubject(subject);
@@ -179,13 +189,14 @@ class _SubjectBottomSheetContentState extends State<SubjectBottomSheetContent> {
       // Formatierung des Datums für bessere Lesbarkeit
       final now = DateTime.now();
       final nextLesson = subject.nextLesson!;
-      final isToday = nextLesson.day == now.day &&
+      final isToday =
+          nextLesson.day == now.day &&
           nextLesson.month == now.month &&
           nextLesson.year == now.year;
       final isTomorrow =
           nextLesson.day == now.add(const Duration(days: 1)).day &&
-              nextLesson.month == now.add(const Duration(days: 1)).month &&
-              nextLesson.year == now.add(const Duration(days: 1)).year;
+          nextLesson.month == now.add(const Duration(days: 1)).month &&
+          nextLesson.year == now.add(const Duration(days: 1)).year;
 
       // Wochentage auf Deutsch
       const weekdays = [
@@ -195,7 +206,7 @@ class _SubjectBottomSheetContentState extends State<SubjectBottomSheetContent> {
         'Donnerstag',
         'Freitag',
         'Samstag',
-        'Sonntag'
+        'Sonntag',
       ];
       final weekday = weekdays[nextLesson.weekday - 1];
 
@@ -281,50 +292,57 @@ class _SubjectBottomSheetContentState extends State<SubjectBottomSheetContent> {
         false;
   }
 
-  Widget _buildItem(BuildContext context, Subject subject, int index,
-      Animation<double> animation) {
+  Widget _buildItem(
+    BuildContext context,
+    Subject subject,
+    int index,
+    Animation<double> animation,
+  ) {
     subject.backColor.harmonizeWith(Theme.of(context).primaryColor);
     bool isLoading = _isProcessing[subject.id] ?? false;
 
     return SizeTransition(
-        sizeFactor: animation,
-        axisAlignment: 0.0,
-        child: ScaleTransition(
-          scale: animation,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            child: SubjectTile(
-              subject: subject,
-              trailing: isLoading
-                  ? const SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : IconButton(
-                      icon: widget.subjectListType ==
-                              SubjectListType.inUnitsButNotInFirestore
-                          ? const Icon(Icons.add)
-                          : const Icon(Icons.remove),
-                      onPressed: () async {
-                        final currentSubject = _subjects[index];
-                        if (widget.subjectListType ==
-                            SubjectListType.inUnitsButNotInFirestore) {
-                          // Importieren erfordert keine Bestätigung
-                          _handleImport(currentSubject, index);
-                        } else {
-                          // Beim Löschen Bestätigungsdialog anzeigen
-                          bool confirm =
-                              await _showConfirmationDialog(currentSubject);
-                          if (confirm && mounted) {
-                            _handleRemove(currentSubject, index);
-                          }
+      sizeFactor: animation,
+      axisAlignment: 0.0,
+      child: ScaleTransition(
+        scale: animation,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: SubjectTile(
+            subject: subject,
+            trailing: isLoading
+                ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : IconButton(
+                    icon:
+                        widget.subjectListType ==
+                            SubjectListType.inUnitsButNotInFirestore
+                        ? const Icon(Icons.add)
+                        : const Icon(Icons.remove),
+                    onPressed: () async {
+                      final currentSubject = _subjects[index];
+                      if (widget.subjectListType ==
+                          SubjectListType.inUnitsButNotInFirestore) {
+                        // Importieren erfordert keine Bestätigung
+                        _handleImport(currentSubject, index);
+                      } else {
+                        // Beim Löschen Bestätigungsdialog anzeigen
+                        bool confirm = await _showConfirmationDialog(
+                          currentSubject,
+                        );
+                        if (confirm && mounted) {
+                          _handleRemove(currentSubject, index);
                         }
-                      },
-                    ),
-            ),
+                      }
+                    },
+                  ),
           ),
-        ));
+        ),
+      ),
+    );
   }
 
   Widget _buildRemovedItem(Subject subject, Animation<double> animation) {
@@ -335,8 +353,9 @@ class _SubjectBottomSheetContentState extends State<SubjectBottomSheetContent> {
       child: ScaleTransition(
         scale: animation,
         child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            child: SubjectTile(subject: subject)),
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: SubjectTile(subject: subject),
+        ),
       ),
     );
   }
@@ -351,9 +370,9 @@ class _SubjectBottomSheetContentState extends State<SubjectBottomSheetContent> {
         ListTile(
           title: Text(
             widget.title,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
           ),
           trailing: IconButton(
             icon: const Icon(Icons.close),
@@ -368,61 +387,68 @@ class _SubjectBottomSheetContentState extends State<SubjectBottomSheetContent> {
             widget.subjectListType !=
                 SubjectListType.inFirestoreUntisNotAvailable)
           Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
-              child: Container(
-                  width: double.infinity,
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .surfaceVariant
-                        .withOpacity(0.5),
-                    borderRadius: BorderRadius.circular(12),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 4.0,
+            ),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
+              decoration: BoxDecoration(
+                color: Theme.of(
+                  context,
+                ).colorScheme.surfaceVariant.withOpacity(0.5),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.info_outline, size: 16),
+                  const SizedBox(width: 8),
+                  Text(
+                    "${_subjects.length} ${_subjects.length == 1 ? 'Fach' : 'Fächer'} in der Liste",
+                    style: Theme.of(context).textTheme.bodyMedium,
                   ),
-                  child: Row(children: [
-                    const Icon(Icons.info_outline, size: 16),
-                    const SizedBox(width: 8),
-                    Text(
-                      "${_subjects.length} ${_subjects.length == 1 ? 'Fach' : 'Fächer'} in der Liste",
-                      style: Theme.of(context).textTheme.bodyMedium,
+                  const Spacer(),
+                  // "Alle importieren"-Button für Untis → Firebase
+                  if (widget.subjectListType ==
+                      SubjectListType.inUnitsButNotInFirestore)
+                    ElevatedButton.icon(
+                      onPressed: _isProcessing.isNotEmpty
+                          ? null
+                          : _importAllSubjects,
+                      icon: const Icon(Icons.add_circle_outline, size: 18),
+                      label: const Text('Alle importieren'),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 0,
+                        ),
+                        minimumSize: const Size(40, 36),
+                      ),
                     ),
-                    const Spacer(),
-                    // "Alle importieren"-Button für Untis → Firebase
-                    if (widget.subjectListType ==
-                        SubjectListType.inUnitsButNotInFirestore)
-                      ElevatedButton.icon(
-                        onPressed: _isProcessing.isNotEmpty
-                            ? null
-                            : _importAllSubjects,
-                        icon: const Icon(Icons.add_circle_outline, size: 18),
-                        label: const Text('Alle importieren'),
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 0),
-                          minimumSize: const Size(40, 36),
+                  // "Alle entfernen"-Button für Firebase-Fächer
+                  if (widget.subjectListType ==
+                      SubjectListType.inFirestoreButNotInUntis)
+                    ElevatedButton.icon(
+                      onPressed: _isProcessing.isNotEmpty
+                          ? null
+                          : _removeAllSubjects,
+                      icon: const Icon(Icons.delete_sweep, size: 18),
+                      label: const Text('Alle entfernen'),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 0,
                         ),
+                        minimumSize: const Size(40, 36),
+                        backgroundColor: Theme.of(context).colorScheme.error,
+                        foregroundColor: Theme.of(context).colorScheme.onError,
                       ),
-                    // "Alle entfernen"-Button für Firebase-Fächer
-                    if (widget.subjectListType ==
-                        SubjectListType.inFirestoreButNotInUntis)
-                      ElevatedButton.icon(
-                        onPressed: _isProcessing.isNotEmpty
-                            ? null
-                            : _removeAllSubjects,
-                        icon: const Icon(Icons.delete_sweep, size: 18),
-                        label: const Text('Alle entfernen'),
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 0),
-                          minimumSize: const Size(40, 36),
-                          backgroundColor: Theme.of(context).colorScheme.error,
-                          foregroundColor:
-                              Theme.of(context).colorScheme.onError,
-                        ),
-                      ),
-                  ]))),
+                    ),
+                ],
+              ),
+            ),
+          ),
 
         if (_subjects.isEmpty && _isProcessing.isEmpty)
           Padding(
@@ -443,8 +469,8 @@ class _SubjectBottomSheetContentState extends State<SubjectBottomSheetContent> {
                   Text(
                     'Keine Fächer in dieser Liste',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.outline,
-                        ),
+                      color: Theme.of(context).colorScheme.outline,
+                    ),
                   ),
                 ],
               ),

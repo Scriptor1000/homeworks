@@ -5,11 +5,7 @@ import 'typesafe_router.dart';
 
 /// A shell widget wich displays the bottom navigation bar at all routes.
 class NavigationShell extends StatelessWidget {
-  const NavigationShell({
-    super.key,
-    required this.child,
-    required this.state,
-  });
+  const NavigationShell({super.key, required this.child, required this.state});
 
   /// The shown screen of the current route, shown above the bottom navigation bar.
   final Widget child;

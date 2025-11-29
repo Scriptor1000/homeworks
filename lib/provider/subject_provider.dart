@@ -16,7 +16,7 @@ class SubjectProvider extends ChangeNotifier {
   final FirestoreSubjects _firestoreSubjectsService;
 
   SubjectProvider({required FirestoreSubjects firestoreSubjects})
-      : _firestoreSubjectsService = firestoreSubjects;
+    : _firestoreSubjectsService = firestoreSubjects;
 
   /// The list of all subjects, currently only from Untis.
   List<Subject> get subjects => _firestoreSubjects;

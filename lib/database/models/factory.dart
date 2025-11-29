@@ -19,6 +19,10 @@ class ItemFactory {
 
   Future<UntisSession> createUntisSession(UntisCredentials creds) {
     return UntisSession.init(
-        creds.server, creds.school, creds.username, creds.password);
+      creds.server,
+      creds.school,
+      creds.username,
+      creds.password,
+    );
   }
 }

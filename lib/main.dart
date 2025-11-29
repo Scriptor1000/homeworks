@@ -27,34 +27,29 @@ void main() async {
 
   SentryWidgetsFlutterBinding.ensureInitialized();
   usePathUrlStrategy();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(kReleaseMode);
 
   if (kDebugMode) {
     runApp(const MainApp());
   } else {
-    await SentryFlutter.init(
-      (options) {
-        options.dsn =
-            'https://2937d7b0e20d869f78933ba866a6c078@o4510119803092992.ingest.de.sentry.io/4510119812661328';
-        options.environment = 'production';
-        options.tracesSampleRate = 0.0; // Performance-Tracking aus
-        options.enableAutoSessionTracking = true;
-        options.attachStacktrace = true;
-        options.replay.onErrorSampleRate = 0.2;
+    await SentryFlutter.init((options) {
+      options.dsn =
+          'https://2937d7b0e20d869f78933ba866a6c078@o4510119803092992.ingest.de.sentry.io/4510119812661328';
+      options.environment = 'production';
+      options.tracesSampleRate = 0.0; // Performance-Tracking aus
+      options.enableAutoSessionTracking = true;
+      options.attachStacktrace = true;
+      options.replay.onErrorSampleRate = 0.2;
 
-        if (SENTRY_RELEASE_NAME.isNotEmpty) {
-          options.release = SENTRY_RELEASE_NAME;
-          options.environment = SENTRY_RELEASE_NAME.split('@').first == 'main'
-              ? 'production'
-              : 'staging';
-        }
-      },
-      appRunner: () => runApp(SentryWidget(child: const MainApp())),
-    );
+      if (SENTRY_RELEASE_NAME.isNotEmpty) {
+        options.release = SENTRY_RELEASE_NAME;
+        options.environment = SENTRY_RELEASE_NAME.split('@').first == 'main'
+            ? 'production'
+            : 'staging';
+      }
+    }, appRunner: () => runApp(SentryWidget(child: const MainApp())));
   }
 }
 
@@ -63,36 +58,35 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DynamicColorBuilder(builder: (light, dark) {
-      light ??= ColorScheme.fromSeed(
-        seedColor: Colors.blue,
-        brightness: Brightness.light,
-      );
-      dark ??= ColorScheme.fromSeed(
-        seedColor: Colors.blue,
-        brightness: Brightness.dark,
-      );
+    return DynamicColorBuilder(
+      builder: (light, dark) {
+        light ??= ColorScheme.fromSeed(
+          seedColor: Colors.blue,
+          brightness: Brightness.light,
+        );
+        dark ??= ColorScheme.fromSeed(
+          seedColor: Colors.blue,
+          brightness: Brightness.dark,
+        );
 
-      return authenticationProviderShell(
-        child: MaterialApp.router(
-          scaffoldMessengerKey: scaffoldMessengerKey,
-          localizationsDelegates: const [
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-          theme: _buildTheme(light, Brightness.light),
-          darkTheme: _buildTheme(dark, Brightness.dark),
-          themeMode: ThemeMode.system,
-          routerConfig: appRouter,
-          supportedLocales: const [
-            Locale('de', 'DE'),
-            Locale('en', 'US'),
-          ],
-          locale: const Locale('de', 'DE'),
-        ),
-      );
-    });
+        return authenticationProviderShell(
+          child: MaterialApp.router(
+            scaffoldMessengerKey: scaffoldMessengerKey,
+            localizationsDelegates: const [
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            theme: _buildTheme(light, Brightness.light),
+            darkTheme: _buildTheme(dark, Brightness.dark),
+            themeMode: ThemeMode.system,
+            routerConfig: appRouter,
+            supportedLocales: const [Locale('de', 'DE'), Locale('en', 'US')],
+            locale: const Locale('de', 'DE'),
+          ),
+        );
+      },
+    );
   }
 
   ThemeData _buildTheme(ColorScheme colorScheme, Brightness brightness) {
@@ -110,16 +104,14 @@ class MainApp extends StatelessWidget {
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
-          border: standardInputBorder,
-          enabledBorder: standardInputBorder,
-          focusedBorder: OutlineInputBorder(
-            borderRadius: standardInputBorder.borderRadius,
-            borderSide: BorderSide(
-              color: colorScheme.primary,
-              width: 2,
-            ),
-          ),
-          disabledBorder: standardInputBorder),
+        border: standardInputBorder,
+        enabledBorder: standardInputBorder,
+        focusedBorder: OutlineInputBorder(
+          borderRadius: standardInputBorder.borderRadius,
+          borderSide: BorderSide(color: colorScheme.primary, width: 2),
+        ),
+        disabledBorder: standardInputBorder,
+      ),
     );
   }
 }
@@ -127,15 +119,16 @@ class MainApp extends StatelessWidget {
 Widget authenticationProviderShell({required Widget child}) {
   final firebaseAuth = FirebaseAuth.instance;
   final googleSignIn = GoogleSignIn.instance;
-  final allowedEmails =
-      FirestoreAllowedEmails(firestore: FirebaseFirestore.instance);
+  final allowedEmails = FirestoreAllowedEmails(
+    firestore: FirebaseFirestore.instance,
+  );
 
   return ChangeNotifierProvider<AuthenticationProvider>(
     create: (BuildContext context) => AuthenticationProvider(
-        firebaseAuth: firebaseAuth,
-        googleSignIn: googleSignIn,
-        allowedEmails: allowedEmails)
-      ..initialize(),
+      firebaseAuth: firebaseAuth,
+      googleSignIn: googleSignIn,
+      allowedEmails: allowedEmails,
+    )..initialize(),
     child: child,
   );
 }

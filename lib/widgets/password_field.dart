@@ -35,9 +35,7 @@ class _UserPasswordFieldState extends State<UserPasswordField> {
         labelText: widget.labelText,
         prefixIcon: Icon(widget.prefixIcon),
         suffixIcon: IconButton(
-          icon: Icon(
-            _obscureText ? Icons.visibility : Icons.visibility_off,
-          ),
+          icon: Icon(_obscureText ? Icons.visibility : Icons.visibility_off),
           onPressed: widget.disabled
               ? null
               : () {

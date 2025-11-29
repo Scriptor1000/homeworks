@@ -62,16 +62,19 @@ class _UntisLoginState extends State<UntisLogin> {
       _isLoading = true;
     });
     CredentialProvider provider = context.read<CredentialProvider>();
-    await provider.setCredentials(credentials).then((_) {
-      if (mounted) {
-        context.pop();
-      }
-    }).onError((error, _) {
-      setState(() {
-        showSnackBar('Fehler: $error');
-        _isLoading = false;
-      });
-    });
+    await provider
+        .setCredentials(credentials)
+        .then((_) {
+          if (mounted) {
+            context.pop();
+          }
+        })
+        .onError((error, _) {
+          setState(() {
+            showSnackBar('Fehler: $error');
+            _isLoading = false;
+          });
+        });
 
     // TODO maybe straight to upload or import?
   }
@@ -79,9 +82,7 @@ class _UntisLoginState extends State<UntisLogin> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Login'),
-      ),
+      appBar: AppBar(title: const Text('Login')),
       body: Column(
         children: [
           OwnProgressIndicator(
@@ -107,11 +108,14 @@ class _UntisLoginState extends State<UntisLogin> {
                       serverController: _serverController,
                     ),
                     standardGap(),
-                    const InfoBox(paragraphs: [
-                      'Die Anmeldedaten werden lokal gespeichert und '
-                          'können später für die Synchronisation mit der '
-                          'Cloud verwendet werden.'
-                    ], title: 'Hinweis'),
+                    const InfoBox(
+                      paragraphs: [
+                        'Die Anmeldedaten werden lokal gespeichert und '
+                            'können später für die Synchronisation mit der '
+                            'Cloud verwendet werden.',
+                      ],
+                      title: 'Hinweis',
+                    ),
                   ],
                 ),
               ),
@@ -120,10 +124,11 @@ class _UntisLoginState extends State<UntisLogin> {
         ],
       ),
       floatingActionButton: ExtendedFAB(
-          onClick: submit,
-          active: !_isLoading,
-          icon: Icons.login,
-          label: 'Session erstellen und lokal speichern'),
+        onClick: submit,
+        active: !_isLoading,
+        icon: Icons.login,
+        label: 'Session erstellen und lokal speichern',
+      ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }

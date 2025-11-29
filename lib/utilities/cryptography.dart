@@ -26,7 +26,9 @@ class CredentialCryptography {
   /// Return the original data as a [String].
   /// Throws an exception if decryption fails or [userPassword] is incorrect.
   Future<String> databaseDecryption(
-      String userPassword, String encrypted) async {
+    String userPassword,
+    String encrypted,
+  ) async {
     final salt = await _hashAlgorithm.hash(utf8.encode(_uid));
     final secret = await _pbkdf2(userPassword, salt.bytes, 100000);
     final decrypted = await _decrypt(base64Decode(encrypted), secret);
@@ -34,13 +36,12 @@ class CredentialCryptography {
   }
 
   Future<List<int>> _decrypt(Uint8List data, SecretKey secretKey) async {
-    final secretBox = SecretBox.fromConcatenation(data,
-        nonceLength: _algorithm.nonceLength,
-        macLength: _algorithm.macAlgorithm.macLength);
-    final codeUnits = await _algorithm.decrypt(
-      secretBox,
-      secretKey: secretKey,
+    final secretBox = SecretBox.fromConcatenation(
+      data,
+      nonceLength: _algorithm.nonceLength,
+      macLength: _algorithm.macAlgorithm.macLength,
     );
+    final codeUnits = await _algorithm.decrypt(secretBox, secretKey: secretKey);
     return codeUnits;
   }
 
