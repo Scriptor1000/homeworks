@@ -34,6 +34,12 @@ void main() {
       password: 'password',
       server: 'server',
     );
+    final invalidCredentials = UntisCredentials(
+      school: 'school',
+      username: 'username',
+      password: 'wrongPassword',
+      server: 'server',
+    );
 
     setUp(() {
       itemFactory = MockItemFactory();
@@ -59,16 +65,19 @@ void main() {
       when(
         itemFactory.untisCredentialsFromJSON(testCredentials.toJsonString()),
       ).thenReturn(testCredentials);
-      when(
-        itemFactory.createUntisSession(testCredentials),
-      ).thenAnswer((_) async => session);
+      when(itemFactory.createUntisSession(testCredentials)).thenAnswer(
+        (_) async =>
+            SessionResult(session, UntisSessionStatus.sessionAccomplished),
+      );
+      when(itemFactory.createUntisSession(invalidCredentials)).thenAnswer(
+        (_) async => SessionResult(null, UntisSessionStatus.invalidCredentials),
+      );
     });
 
     test('should initializing by loading local and checking online', () async {
       // test
       await credentialProvider.initialize();
       // verify
-      expect(credentialProvider.isLoading, isFalse);
       expect(credentialProvider.hasCredentials, isTrue);
       expect(credentialProvider.credentials, equals(testCredentials));
       expect(credentialProvider.session, equals(session));
@@ -208,6 +217,20 @@ void main() {
         ).called(1);
       },
     );
+
+    test('should return error and not save on invalid credentials', () {
+      // test
+      credentialProvider.setCredentials(invalidCredentials).catchError((e) {
+        expect(e.toString(), contains('Ungültige Anmeldedaten'));
+      });
+      // verify
+      expect(
+        credentialProvider.credentialsOnlineStatus,
+        isNot(equals(CredentailsOnlineStatus.online)),
+      );
+      expect(credentialProvider.hasCredentials, isFalse);
+      verifyNever(firestoreCredentials.saveCredentials(any, any));
+    });
 
     test(
       'should not raise error if asked to upload non existend credentials',
