@@ -7,6 +7,7 @@ import '../../utilities/enums.dart';
 import '../../utilities/global_snackbar.dart';
 import '../../widgets/credential_form.dart';
 import '../../widgets/fab.dart';
+import '../../widgets/info_box.dart';
 import '../../widgets/own_progress_indicator.dart';
 import '../../widgets/password_field.dart';
 
@@ -65,7 +66,7 @@ class _LoadCredentialsState extends State<LoadCredentials> {
 
   @override
   Widget build(BuildContext context) {
-    var credentialProvider = context.read<CredentialProvider>();
+    final credentialProvider = context.watch<CredentialProvider>();
     return Scaffold(
       appBar: AppBar(
         title: const Text('Gespeicherte Anmeldedaten laden'),
@@ -73,15 +74,10 @@ class _LoadCredentialsState extends State<LoadCredentials> {
       body: SafeArea(
         child: Column(
           children: [
-            Consumer(builder:
-                (context, CredentialProvider credentialProvider, child) {
-              return OwnProgressIndicator(
-                active: _isLoading ||
-                    credentialProvider.sessionStatus ==
-                        UntisSessionStatus.loading,
-                backgroundColor: Theme.of(context).colorScheme.surface,
-              );
-            }),
+            OwnProgressIndicator(
+              active: _isLoading,
+              backgroundColor: Theme.of(context).colorScheme.surface,
+            ),
 
             // Hauptcontent mit ScrollView
             Expanded(
@@ -92,6 +88,20 @@ class _LoadCredentialsState extends State<LoadCredentials> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      if (credentialProvider.hasCredentials)
+                        InfoBox(
+                          title: 'Achtung!',
+                          paragraphs: [
+                            'Es sind bereits Anmeldedaten auf diesem Gerät gespeichert. Durch das Herunterladen der Clouddaten werden diese unwiderruflich überschrieben.',
+                            if (credentialProvider.sessionStatus ==
+                                UntisSessionStatus.sessionAccomplished)
+                              'Mit den lokalen Anmeldedaten wurde bereits erfolgreich eine Verbindung zu Untis hergestellt.'
+                          ],
+                          icon: Icons.warning,
+                          accentColor: Colors.orange,
+                        ),
+
+                      if (credentialProvider.hasCredentials) standardGap(),
                       // Erklärungstext
                       const Text(
                         'Gib dein Benutzerpasswort ein, um deine gespeicherten Untis-Anmeldedaten zu laden.',
@@ -130,7 +140,7 @@ class _LoadCredentialsState extends State<LoadCredentials> {
       ),
       floatingActionButton: ExtendedFAB(
         onClick: _loadCredentials,
-        active: false,
+        active: true,
         icon: Icons.sync,
         label: 'Anmeldedaten importieren',
       ),

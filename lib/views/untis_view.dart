@@ -90,13 +90,13 @@ class StatusCheck extends StatelessWidget {
     };
     final title = switch (sessionStatus) {
       UntisSessionStatus.sessionAccomplished =>
-        'Mit deinem Untis Konto verbunden.',
+        'Mit deinem Untis Konto verbunden',
       UntisSessionStatus.noCredentials =>
-        'Nicht mit deinem Untis Konto verbunden.',
-      UntisSessionStatus.loading => 'Verbindung wird hergestellt.',
+        'Nicht mit deinem Untis Konto verbunden',
+      UntisSessionStatus.loading => 'Verbindung wird hergestellt...',
       UntisSessionStatus.invalidCredentials =>
-        'Fehler bei der Verknüpfung mit Untis.',
-      UntisSessionStatus.error => 'Fehler bei der Verknüpfung mit Untis.',
+        'Fehler bei der Verknüpfung mit Untis',
+      UntisSessionStatus.error => 'Fehler bei der Verknüpfung mit Untis',
     };
     final icon = switch (sessionStatus) {
       UntisSessionStatus.sessionAccomplished =>
@@ -123,15 +123,16 @@ class StatusCheck extends StatelessWidget {
     final credentialsOnline = credentialProvider.credentialsOnlineStatus;
 
     final title = switch (credentialsOnline) {
-      CredentailsOnlineStatus.online => 'Cloudsyncronisation aktiv.',
-      CredentailsOnlineStatus.offline => 'Cloudsyncronisation deaktiviert.',
+      CredentailsOnlineStatus.online => 'Cloudsyncronisation aktiv',
+      CredentailsOnlineStatus.offline => 'Cloudsyncronisation deaktiviert',
       CredentailsOnlineStatus.loading => 'Syncronisieren...',
-      CredentailsOnlineStatus.error => 'Cloudsyncronisation fehlgeschlagen.',
+      CredentailsOnlineStatus.error => 'Cloudsyncronisation fehlgeschlagen',
       CredentailsOnlineStatus.changed => 'Andere Anmeldedaten',
     };
     final subtitle = switch (credentialsOnline) {
       CredentailsOnlineStatus.online =>
-        'Deine Anmeldedaten sind online verschlüsselt gespeichert und auf allen Geräten verfügbar.',
+        'Deine Anmeldedaten sind online verschlüsselt gespeichert und auf allen Geräten verfügbar.'
+            '${credentialProvider.hasCredentials ? "" : " Tippe hier, um sie herunterzuladen."}',
       CredentailsOnlineStatus.offline =>
         'Deine Anmeldedaten sind nicht online gespeichert.'
             '${sessionStatus == UntisSessionStatus.sessionAccomplished ? "Klicke hier, um das zu ändern" : ""}',

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../provider/credential_provider.dart';
@@ -33,22 +32,6 @@ class _UploadCredentialsState extends State<UploadCredentials> {
   bool _isLoading = false;
 
   @override
-  void initState() {
-    super.initState();
-    final credentials = context.read<CredentialProvider>().credentials;
-    if (credentials != null) {
-      setState(() {
-        _usernameController.text = credentials.username;
-        _passwordController.text = credentials.password;
-        _schoolController.text = credentials.school;
-        _serverController.text = credentials.server;
-      });
-    } else {
-      context.pop();
-    }
-  }
-
-  @override
   void dispose() {
     _secretController.dispose();
     _usernameController.dispose();
@@ -61,9 +44,19 @@ class _UploadCredentialsState extends State<UploadCredentials> {
   @override
   Widget build(BuildContext context) {
     // Prüfe, ob die Credentials bereits hochgeladen wurden
-    final untisProvider = Provider.of<CredentialProvider>(context);
-    final bool alreadyUploaded =
-        untisProvider.credentialsOnlineStatus == CredentailsOnlineStatus.online;
+    final credentialProvider = context.watch<CredentialProvider>();
+    final bool alreadyUploaded = [
+      CredentailsOnlineStatus.online,
+      CredentailsOnlineStatus.changed
+    ].contains(credentialProvider.credentialsOnlineStatus);
+
+    final credentials = credentialProvider.credentials;
+    if (credentials != null) {
+      _usernameController.text = credentials.username;
+      _passwordController.text = credentials.password;
+      _schoolController.text = credentials.school;
+      _serverController.text = credentials.server;
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -91,12 +84,13 @@ class _UploadCredentialsState extends State<UploadCredentials> {
                       // Zeige Info an, wenn die Daten bereits hochgeladen wurden
                       if (alreadyUploaded)
                         const InfoBox(
-                          title: 'Hinweis',
+                          title: 'Achtung!',
                           paragraphs: [
-                            'Deine Anmeldedaten wurden bereits erfolgreich online gespeichert. Eine erneute Speicherung überschreibt die bestehenden Daten.'
+                            'Es sind bereits Anmeldedaten in deiner Cloud gespeichert. Durch das Hochladen werden diese unwiderruflich überschrieben.',
+                            'Dein alter Schlüssel wird durch diesen Vorgang ungültig. Du kannst ausschließlich mit dem neuen Schlüssel auf deine Anmeldedaten zugreifen.'
                           ],
-                          icon: Icons.check_circle_outline,
-                          accentColor: Colors.green,
+                          icon: Icons.warning,
+                          accentColor: Colors.orange,
                         ),
 
                       if (alreadyUploaded) standardGap(),

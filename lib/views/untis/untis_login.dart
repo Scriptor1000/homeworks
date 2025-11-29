@@ -29,7 +29,6 @@ class _UntisLoginState extends State<UntisLogin> {
   final _serverController = TextEditingController();
 
   bool _isLoading = false;
-  bool _firstBuild = true;
 
   @override
   void dispose() {
@@ -42,8 +41,13 @@ class _UntisLoginState extends State<UntisLogin> {
 
   @override
   void initState() {
-    _schoolController.text = 'Albert Schweitzer';
-    _serverController.text = 'hektor.webuntis.com';
+    final provider = context.read<CredentialProvider>();
+    _usernameController.text = provider.credentials?.username ?? '';
+    _passwordController.text = provider.credentials?.password ?? '';
+    _schoolController.text =
+        provider.credentials?.school ?? 'Albert Schweitzer';
+    _serverController.text =
+        provider.credentials?.server ?? 'hektor.webuntis.com';
 
     super.initState();
   }
@@ -77,14 +81,6 @@ class _UntisLoginState extends State<UntisLogin> {
 
   @override
   Widget build(BuildContext context) {
-    final provider = context.read<CredentialProvider>();
-    if (_firstBuild) {
-      _usernameController.text = provider.credentials?.username ?? '';
-      _passwordController.text = provider.credentials?.password ?? '';
-      _schoolController.text = provider.credentials?.school ?? '';
-      _serverController.text = provider.credentials?.server ?? '';
-      _firstBuild = false;
-    }
     return Scaffold(
       appBar: AppBar(
         title: const Text('Untis Anmeldung'),
