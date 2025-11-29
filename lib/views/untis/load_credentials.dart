@@ -64,7 +64,7 @@ class _LoadCredentialsState extends State<LoadCredentials> {
 
   @override
   Widget build(BuildContext context) {
-    var credentialProvider = context.watch<CredentialProvider>();
+    var credentialProvider = context.read<CredentialProvider>();
     return Scaffold(
       appBar: AppBar(
         title: const Text('Gespeicherte Anmeldedaten laden'),
@@ -72,13 +72,15 @@ class _LoadCredentialsState extends State<LoadCredentials> {
       body: SafeArea(
         child: Column(
           children: [
-            // Ladeindikator
-            OwnProgressIndicator(
-              active: _isLoading ||
-                  credentialProvider.sessionStatus ==
-                      UntisSessionStatus.loading,
-              backgroundColor: Theme.of(context).colorScheme.surface,
-            ),
+            Consumer(builder:
+                (context, CredentialProvider credentialProvider, child) {
+              return OwnProgressIndicator(
+                active: _isLoading ||
+                    credentialProvider.sessionStatus ==
+                        UntisSessionStatus.loading,
+                backgroundColor: Theme.of(context).colorScheme.surface,
+              );
+            }),
 
             // Hauptcontent mit ScrollView
             Expanded(
@@ -125,19 +127,12 @@ class _LoadCredentialsState extends State<LoadCredentials> {
           ],
         ),
       ),
-      floatingActionButton:
-          credentialProvider.sessionStatus == UntisSessionStatus.loading
-              ? ExtendedFAB(
-                  onClick: () {},
-                  active: false,
-                  icon: Icons.sync,
-                  label: 'Verbinde mit Untis',
-                )
-              : ExtendedFAB(
-                  onClick: _loadCredentials,
-                  active: !_isLoading,
-                  icon: Icons.cloud_download_outlined,
-                  label: 'Anmeldedaten laden'),
+      floatingActionButton: ExtendedFAB(
+        onClick: _isLoading ? () {} : _loadCredentials,
+        active: false,
+        icon: Icons.sync,
+        label: 'Anmeldedaten importieren',
+      ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }

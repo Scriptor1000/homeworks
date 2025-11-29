@@ -64,75 +64,115 @@ class StatusCheck extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final credentialProvider = context.watch<CredentialProvider>();
-    final credentialsAvailable = credentialProvider.hasCredentials;
-    final credentialsOnline = credentialProvider.credentialsOnlineStatus;
 
     return Column(
       children: [
-        // TODO open edit
-        credentialsAvailable
-            ? const ListTile(
-                leading: Icon(Icons.check_circle, color: Colors.green),
-                title: Text('Mit deinem Untis Konto verknüpft.'),
-                subtitle: Text(
-                    'Deine Abgabezeiten orientieren sich an deinen Stundenplan.'),
-              )
-            : ListTile(
-                leading: const Icon(Icons.error, color: Colors.red),
-                title: const Text('Nicht mit deinem Untis Konto verknüpft.'),
-                subtitle: const Text('Klicke hier, um das zu ändern.'),
-                onTap: () => const EnterCredentialsRoute().go(context),
-              ),
+        buildLocalStatus(credentialProvider, context),
         littleGap(),
-        switch (credentialsOnline) {
-          CredentailsOnlineStatus.loading => const ListTile(
-              leading: SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(),
-              ),
-              title: Text('Anmeldedaten online gespeichert'),
-              subtitle: Text(
-                  'Es wird geprüft, ob deine Anmeldedaten online gespeichert sind.'),
-            ),
-          CredentailsOnlineStatus.online => credentialsAvailable
-              ? const ListTile(
-                  leading: Icon(Icons.check_circle, color: Colors.green),
-                  title: Text('Anmeldedaten online gespeichert.'),
-                  subtitle: Text(
-                      'Deine Anmeldedaten sind online verschlüsselt gespeichert und auf allen Geräten verfügbar.'),
-                )
-              : ListTile(
-                  leading: const Icon(Icons.check_circle, color: Colors.yellow),
-                  title: const Text('Anmeldedaten online gespeichert.'),
-                  subtitle: const Text(
-                      'Deine Anmeldedaten sind online gespeichert, aber nicht auf diesem Gerät.'),
-                  onTap: () => const DownloadCredentialsRoute().go(context),
-                ),
-          CredentailsOnlineStatus.offline => ListTile(
-              leading: const Icon(Icons.close, color: Colors.red),
-              title: const Text('Anmeldedaten nicht online gespeichert.'),
-              subtitle: Text('Deine Anmeldedaten sind nicht online gespeichert.'
-                  "${credentialsAvailable ? "Klicke hier, um das zu ändern" : ""}"),
-              onTap: credentialsAvailable
-                  ? () => const UploadCredentialsRoute().go(context)
-                  : null,
-            ),
-          CredentailsOnlineStatus.error => const ListTile(
-              leading: Icon(Icons.error, color: Colors.red),
-              title: Text('Anmeldedaten online gespeichert.'),
-              subtitle: Text(
-                  'Bei der Abfrage ist ein Fehler aufgetreten. Bitte überprüfe deine Internetverbindung.'),
-            ),
-          CredentailsOnlineStatus.changed => const ListTile(
-              leading: Icon(Icons.change_circle, color: Colors.yellow),
-              title: Text('Andere Anmeldedaten online gespeichert.'),
-              subtitle: Text(
-                  'Deine Anmeldedaten sind online gespeichert, stimmen aber nicht mit denen auf diesem Gerät überein.'),
-            ),
-        },
+        buildOnlineStatus(credentialProvider, context),
       ],
     );
+  }
+
+  ListTile buildLocalStatus(
+      CredentialProvider credentialProvider, BuildContext context) {
+    final sessionStatus = credentialProvider.sessionStatus;
+
+    return switch (sessionStatus) {
+      UntisSessionStatus.sessionAccomplished => ListTile(
+          leading: Icon(Icons.check_circle, color: Colors.green),
+          title: Text('Mit deinem Untis Konto verknüpft.'),
+          subtitle: Text(
+              'Deine Abgabezeiten orientieren sich an deinen Stundenplan.'),
+          onTap: () => const EnterCredentialsRoute().go(context),
+        ),
+      UntisSessionStatus.noCredentials => ListTile(
+          leading: const Icon(Icons.error, color: Colors.red),
+          title: const Text('Nicht mit deinem Untis Konto verknüpft.'),
+          subtitle: const Text('Klicke hier, um das zu ändern.'),
+          onTap: () => const EnterCredentialsRoute().go(context),
+        ),
+      UntisSessionStatus.loading => ListTile(
+          leading: SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(),
+          ),
+          title: Text('Verknüpfung mit Untis.'),
+          subtitle:
+              Text('Die Verknüpfung mit deinem Untis Konto wird hergestellt.'),
+        ),
+      UntisSessionStatus.invalidCredentials => ListTile(
+          leading: const Icon(Icons.error, color: Colors.red),
+          title: const Text('Fehler bei der Verknüpfung mit Untis.'),
+          subtitle: const Text(
+              'Deine angegebenen Anmeldedaten scheinen ungültig zu sein. '
+              'Klicke hier, um sie zu ändern.'),
+          onTap: () => const EnterCredentialsRoute().go(context),
+        ),
+      UntisSessionStatus.error => ListTile(
+          leading: const Icon(Icons.error, color: Colors.red),
+          title: const Text('Fehler bei der Verknüpfung mit Untis.'),
+          subtitle: const Text(
+              'Bei der Abfrage deines Stundenplans ist ein Fehler aufgetreten.'
+              'Hier kannst du deine Anmeldedaten ändern.'),
+          onTap: () => const EnterCredentialsRoute().go(context),
+        ),
+    };
+  }
+
+  ListTile buildOnlineStatus(
+      CredentialProvider credentialProvider, BuildContext context) {
+    final sessionStatus = credentialProvider.sessionStatus;
+    final credentialsOnline = credentialProvider.credentialsOnlineStatus;
+
+    return switch (credentialsOnline) {
+      CredentailsOnlineStatus.loading => const ListTile(
+          leading: SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(),
+          ),
+          title: Text('Anmeldedaten online gespeichert'),
+          subtitle: Text(
+              'Es wird geprüft, ob deine Anmeldedaten online gespeichert sind.'),
+        ),
+      CredentailsOnlineStatus.online => credentialProvider.hasCredentials
+          ? const ListTile(
+              leading: Icon(Icons.check_circle, color: Colors.green),
+              title: Text('Anmeldedaten online gespeichert.'),
+              subtitle: Text(
+                  'Deine Anmeldedaten sind online verschlüsselt gespeichert und auf allen Geräten verfügbar.'),
+            )
+          : ListTile(
+              leading: const Icon(Icons.check_circle, color: Colors.yellow),
+              title: const Text('Anmeldedaten online gespeichert.'),
+              subtitle: const Text(
+                  'Deine Anmeldedaten sind online gespeichert, aber nicht auf diesem Gerät.'),
+              onTap: () => const DownloadCredentialsRoute().go(context),
+            ),
+      CredentailsOnlineStatus.offline => ListTile(
+          leading: const Icon(Icons.close, color: Colors.red),
+          title: const Text('Anmeldedaten nicht online gespeichert.'),
+          subtitle: Text('Deine Anmeldedaten sind nicht online gespeichert.'
+              "${sessionStatus == UntisSessionStatus.sessionAccomplished ? "Klicke hier, um das zu ändern" : ""}"),
+          onTap: sessionStatus == UntisSessionStatus.sessionAccomplished
+              ? () => const UploadCredentialsRoute().go(context)
+              : null,
+        ),
+      CredentailsOnlineStatus.error => const ListTile(
+          leading: Icon(Icons.error, color: Colors.red),
+          title: Text('Anmeldedaten online gespeichert.'),
+          subtitle: Text(
+              'Bei der Abfrage ist ein Fehler aufgetreten. Bitte überprüfe deine Internetverbindung.'),
+        ),
+      CredentailsOnlineStatus.changed => const ListTile(
+          leading: Icon(Icons.change_circle, color: Colors.yellow),
+          title: Text('Andere Anmeldedaten online gespeichert.'),
+          subtitle: Text(
+              'Deine Anmeldedaten sind online gespeichert, stimmen aber nicht mit denen auf diesem Gerät überein.'),
+        ),
+    };
   }
 }
 

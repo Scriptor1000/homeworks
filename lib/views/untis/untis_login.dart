@@ -61,7 +61,7 @@ class _UntisLoginState extends State<UntisLogin> {
     setState(() {
       _isLoading = true;
     });
-    CredentialProvider provider = context.read<CredentialProvider>();
+    final provider = context.read<CredentialProvider>();
     await provider.setCredentials(credentials).then((_) {
       if (mounted) {
         context.pop();
@@ -78,9 +78,15 @@ class _UntisLoginState extends State<UntisLogin> {
 
   @override
   Widget build(BuildContext context) {
+    final provider = context.read<CredentialProvider>();
+    _usernameController.text = provider.credentials?.username ?? '';
+    _passwordController.text = provider.credentials?.password ?? '';
+    _schoolController.text = provider.credentials?.school ?? '';
+    _serverController.text = provider.credentials?.server ?? '';
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Login'),
+        title: const Text('Untis Anmeldung'),
       ),
       body: Column(
         children: [
@@ -125,7 +131,7 @@ class _UntisLoginState extends State<UntisLogin> {
           onClick: submit,
           active: !_isLoading,
           icon: Icons.login,
-          label: 'Session erstellen und lokal speichern'),
+          label: 'Anmelden & lokal speichern'),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
