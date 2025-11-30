@@ -50,18 +50,18 @@ class _LoadCredentialsState extends State<LoadCredentials> {
   /// 3. Ask [CredentialProvider] to load + decrypt credentials
   /// 4. Stop loading or show error
   Future<void> _loadCredentials() async {
-    // User forgot password
+    /// User forgot password
     if (_userPasswordController.text.isEmpty) {
       showSnackBar('Bitte gib dein Benutzerpasswort ein');
       return;
     }
 
-    // UI: show loading
+    /// UI: show loading
     setState(() {
       _isLoading = true;
     });
 
-    // Ask provider to load + decrypt credentials
+    /// Ask provider to load + decrypt credentials
     context
         .read<CredentialProvider>()
         .loadCredentialsOnline(_userPasswordController.text)
@@ -79,7 +79,7 @@ class _LoadCredentialsState extends State<LoadCredentials> {
 
   @override
   Widget build(BuildContext context) {
-    // Subscribe to provider updates
+    /// Subscribe to provider updates
     var credentialProvider = context.watch<CredentialProvider>();
     return Scaffold(
       appBar: AppBar(

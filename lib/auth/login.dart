@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
-
+import 'package:firebase_auth/firebase_auth.dart';
 import '../web_authentication/web_authentication.dart' as web;
 import '../provider/authentication_provider.dart';
 import '../utilities/enums.dart';
+import 'forgot_pw_page.dart';
 
 /// A simple authentication screen that allows users to log in with email/password or Google.
 class Authentication extends StatefulWidget {
@@ -42,6 +43,33 @@ class _AuthenticationState extends State<Authentication> {
     await authProvider.loginWithEmail(
       _emailController.text.trim(),
       _passwordController.text.trim(),
+    );
+    if (mounted) {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future <void> _register() async {
+    String nachricht = "Registrierung erfolgreich.";
+    setState(() => _isLoading = true);
+    try {
+      await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'weak-password') {
+        nachricht = "Das Passwort ist zu schwach.";
+      } else if (e.code == 'email-already-in-use') {
+        nachricht = "Die E-Mail-Adresse wird bereits verwendet.";
+      }else {
+        nachricht = "Bitte gib eine gültige E-Mail-Adresse und ein Passwort ein.";
+      }
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(nachricht),
+      ),
     );
     if (mounted) {
       setState(() => _isLoading = false);
@@ -155,6 +183,30 @@ class _AuthenticationState extends State<Authentication> {
                             // Login button
                             buildLoginButton(colorScheme),
                             const SizedBox(height: 20),
+                            buildRegisterButton(colorScheme),
+                            const SizedBox(height: 20),
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context){
+                                      return ForgotPasswordPage();
+
+                                    },
+                                  ),
+                                );
+                              },
+                              child: Text(
+                                "Passwort vergessen?",
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: colorScheme.primary,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ) ,
 
                             // Divider with "ODER"
                             buildDivider(),
@@ -283,6 +335,37 @@ class _AuthenticationState extends State<Authentication> {
     );
   }
 
+
+  ElevatedButton buildRegisterButton(ColorScheme colorScheme) {
+    return ElevatedButton(
+      onPressed: _isLoading ? null : _register,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: colorScheme.primary,
+        foregroundColor: colorScheme.onPrimary,
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        elevation: 2,
+      ),
+      child: _isLoading
+          ? const SizedBox(
+        height: 20,
+        width: 20,
+        child: CircularProgressIndicator(
+          strokeWidth: 2,
+          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+        ),
+      )
+          : const Text(
+        'Registrieren',
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
   /// Builds the Google sign-in button based on the platform/state.
   Widget buildGoogleSignInButton(GoogleSignInState supported) {
     return switch (supported) {
@@ -377,4 +460,5 @@ class _AuthenticationState extends State<Authentication> {
       ),
     };
   }
+
 }

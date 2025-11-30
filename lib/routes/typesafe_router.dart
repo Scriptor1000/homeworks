@@ -36,6 +36,7 @@ String get _accountLocation => const AccountRoute().location;
 String get _authLocation => const AuthRoute().location;
 
 /// Main app router using GoRouter
+
 final appRouter = GoRouter(
   // Initial location depends on whether user is logged in
   initialLocation:
@@ -61,6 +62,10 @@ final appRouter = GoRouter(
       router.go(_authLocation);
     }
   },
+  observers: [
+    SentryNavigatorObserver(),
+    FirebaseAnalyticsObserver(analytics: FirebaseAnalytics.instance),
+  ],
   routes: $appRoutes, // generated typed routes
 );
 

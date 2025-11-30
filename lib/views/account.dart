@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../widgets/user_container.dart';
 
 /// A widget for displaying the account actions and information.
-/// Later this can be extended with settings and other options wich doesn't have to do with the account manegment.
+/// Later this can be extended with settings and other options which doesn't have to do with the account management.
 class AccountView extends StatelessWidget {
   const AccountView({super.key});
 

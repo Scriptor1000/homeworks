@@ -25,14 +25,13 @@ void main() async {
   /// even if it was pushed. Standard behavior is that the URL only shows routes you [go] to.
   /// GoRouter.optionURLReflectsImperativeAPIs = true;
 
-  WidgetsFlutterBinding.ensureInitialized(); // initialize every binding to prevent errors
+  SentryWidgetsFlutterBinding.ensureInitialized(); // initialize every binding to prevent errors
   usePathUrlStrategy(); // no hash in url
 
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform, // connect project with Firebase
   );
 
-  runApp(const MainApp()); // start the app and display MainApp as the root of the widget tree
   FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(kReleaseMode);
 
   if (kDebugMode) {

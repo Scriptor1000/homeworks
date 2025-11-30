@@ -182,7 +182,7 @@ class _CreateHomeworkState extends State<CreateHomework> {
     });
   }
 
-  /// Reads next lesson from subject if available
+  /// Retrieves the next lesson date/time for the selected subject if available.
   ///
   /// Returns:
   /// - DateTime of next lesson
