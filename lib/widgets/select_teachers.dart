@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../provider/untis_provider.dart';
+import '../routes/typesafe_router.dart';
 import 'search_screen.dart';
 
 class FindTeacherTile extends StatelessWidget {
@@ -31,9 +32,8 @@ class FindTeacherTile extends StatelessWidget {
           ),
         );
 
-    if (selectedTeacher != null) {
-      // Handle the selected teacher
-      print('Ausgewählter Lehrer: ${selectedTeacher.fullName}');
+    if (selectedTeacher != null && context.mounted) {
+      FindTeacherRoute(selectedTeacher.id.id).go(context);
     }
   }
 }
