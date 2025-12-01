@@ -123,7 +123,9 @@ class UntisProvider extends ChangeNotifier {
 
       // Load user date to ensure teachers are available
       await _session!.getUserData();
-      _untisTeachers = await _session!.teachers;
+      _untisTeachers = (await _session!.teachers)
+          .where((t) => t.exitDate == null)
+          .toList();
 
       // the periods today are loaded extra to find the current subject simpler
       _todayPeriods = await _session!

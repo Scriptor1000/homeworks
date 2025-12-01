@@ -29,6 +29,7 @@ class _UntisViewState extends State<UntisView> {
 
   @override
   Widget build(BuildContext context) {
+    final CredentialProvider credentialProvider = context.watch();
     return Scaffold(
       appBar: AppBar(title: const Text('Untis Verknüpfung')),
       body: SingleChildScrollView(
@@ -38,8 +39,10 @@ class _UntisViewState extends State<UntisView> {
             children: [
               const Divider(),
               const StatusCheck(),
-              const Divider(),
-              const FindTeacherTile(),
+              if (credentialProvider.sessionState == .accomplished) ...[
+                const Divider(),
+                const FindTeacherTile(),
+              ],
               const Divider(),
               Consumer(
                 builder: (_, SubjectProvider provider, __) {
