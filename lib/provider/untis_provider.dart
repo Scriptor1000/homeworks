@@ -20,6 +20,7 @@ class UntisProvider extends ChangeNotifier {
 
   List<UntisPeriod> _todayPeriods = [];
   List<Subject> _untisSubjects = [];
+  List<UntisTeacher> _untisTeachers = [];
   UntisSubjectStatus _untisSubjectStatus = UntisSubjectStatus.untisUnavailable;
 
   final Duration _range;
@@ -28,6 +29,8 @@ class UntisProvider extends ChangeNotifier {
 
   /// The List of Subjects from Untis in the next 30 days.
   List<Subject> get untisSubjects => _untisSubjects;
+
+  List<UntisTeacher> get untisTeachers => _untisTeachers;
 
   /// The date until the timetable is loaded.
   DateTime get endDate => DateTime.now().add(_range);
@@ -118,6 +121,10 @@ class UntisProvider extends ChangeNotifier {
       DateTime startDate = DateTime.now();
       DateTime endDate = startDate.add(_range);
 
+      // Load user date to ensure teachers are available
+      await _session!.getUserData();
+      _untisTeachers = await _session!.teachers;
+
       // the periods today are loaded extra to find the current subject simpler
       _todayPeriods = await _session!
           .getTimetable(startDate: startDate, endDate: startDate)
@@ -178,6 +185,37 @@ class UntisProvider extends ChangeNotifier {
     }
   }
 
+  Stream<TeacherSearchResult>? findTeacher(
+    UntisElementDescriptor teacher,
+  ) async* {
+    if (teacher.type != .teacher || _session == null) {
+      yield TeacherSearchResult(periods: [], isDone: true);
+    }
+
+    final classes = await _session!.classes;
+    final now = DateTime.now();
+    List<UntisPeriod> foundPeriods = [];
+    for (var schoolClass in classes) {
+      yield TeacherSearchResult(
+        currentClass: schoolClass.name,
+        periods: foundPeriods,
+        isDone: false,
+      );
+      final classTimetable = await _session!.getTimetable(
+        startDate: now,
+        endDate: now.add(const Duration(days: 7)),
+        id: schoolClass.id,
+      );
+      final periods = classTimetable.periods
+          .where((period) => period.teachers.any((t) => t.id == teacher))
+          .toList();
+      if (periods.isNotEmpty) {
+        foundPeriods.addAll(periods);
+      }
+    }
+    yield TeacherSearchResult(periods: foundPeriods, isDone: true);
+  }
+
   Future<DateTime?> deepNextLessonSearch(
     Subject subject,
     StreamController<DateTime> stream,
@@ -235,4 +273,16 @@ class UntisProvider extends ChangeNotifier {
     //   endDate: DateTime.now().add(const Duration(days: 30)),
     // ));
   }
+}
+
+class TeacherSearchResult {
+  final String? currentClass;
+  final List<UntisPeriod> periods;
+  final bool isDone;
+
+  TeacherSearchResult({
+    this.currentClass,
+    required this.periods,
+    required this.isDone,
+  });
 }
