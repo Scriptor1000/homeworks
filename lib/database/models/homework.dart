@@ -5,7 +5,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../utilities/enums.dart';
 
-/// A Homework wich can be saved to Firestore.
+/// A Homework which can be saved to Firestore.
 class Homework {
   final String id;
   final String title;
@@ -18,7 +18,7 @@ class Homework {
   final HomeworkType type;
   bool isCompleted;
 
-  // dueDate can be null, but only if toNextLesson is true wich can only be if the subject is from Untis.
+  // dueDate can be null, but only if toNextLesson is true which can only be if the subject is from Untis.
   DateTime? dueDate;
 
   Homework({
@@ -37,7 +37,7 @@ class Homework {
     if (toNextLesson) {
       assert(
         subjectDocId.startsWith("untis"),
-        'Homework with toNextLesson must be assoziated with a Subject from Untis.',
+        'Homework with toNextLesson must be associated with a Subject from Untis.',
       );
     }
     if (dueDate == null) {

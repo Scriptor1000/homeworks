@@ -52,11 +52,11 @@ class HomeworkTile extends StatelessWidget {
     } else if (dayDifference == 0) {
       text = 'Heute';
       if (homework.type == HomeworkType.appointment) {
-        if (timeDifference.inHours < 1) {
-          text += ', in ${timeDifference.inMinutes} Minuten';
-        } else if (timeDifference.inMinutes > 0) {
-          text = ', in ${timeDifference.inHours}h und '
+        if (timeDifference.inHours > 0) {
+          text += ', in ${timeDifference.inHours}h und '
               '${timeDifference.inMinutes.remainder(60)}min';
+        } else if (timeDifference.inMinutes > 0) {
+          text += ', in ${timeDifference.inMinutes} Minuten';
         }
       } else {
         text += ', bis ${dueDateTime.hour.toString().padLeft(2, '0')}:'

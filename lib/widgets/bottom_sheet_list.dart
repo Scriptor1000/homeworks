@@ -67,7 +67,6 @@ class _SubjectBottomSheetContentState extends State<SubjectBottomSheetContent> {
     SubjectProvider provider =
         Provider.of<SubjectProvider>(context, listen: false);
     await provider.toggleSubjectVisibility(subject.documentId);
-    // _subjects[index].visible = !_subjects[index].visible;
 
     if (mounted) {
       setState(() {

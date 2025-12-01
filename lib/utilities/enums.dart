@@ -18,14 +18,19 @@ enum CredentailsOnlineStatus {
 
 /// The type of an entry
 enum HomeworkType {
+  /// A regular homework assignment.
   homework,
+
+  /// An exam or test, which cannot be marked as completed.
   exam,
+
+  /// A general appointment or event, which shows time and date.
   appointment,
 }
 
 /// The status of the subjects wich are loaded from Untis.
 enum UntisSubjectStatus {
-  /// There are no Untis credentials wich could be used to get Subjects from Untis.
+  /// There are no Untis credentials which could be used to get Subjects from Untis.
   untisUnavailable,
 
   /// The subjects are currently being fetched from Untis.

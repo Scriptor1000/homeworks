@@ -180,10 +180,11 @@ class _CreateHomeworkState extends State<CreateHomework> {
         dueDate = picked.add(toNextLesson
             ? const Duration(hours: 18)
             : Duration(
+                // keep the time on date change
                 hours: dueDate.hour,
                 minutes: dueDate.minute,
               ));
-        toNextLesson = false; // Automatik deaktivieren wenn manuell gesetzt
+        toNextLesson = false;
       });
     }
   }
