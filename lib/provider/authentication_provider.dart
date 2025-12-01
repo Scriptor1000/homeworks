@@ -100,6 +100,47 @@ class AuthenticationProvider extends ChangeNotifier {
     _googleSupported.complete(false);
   }
 
+  /// Sends a password reset email.
+  ///
+  /// Shows a snackbar with success or error messages.
+  Future<void> sendPasswordReset(String email) async {
+    try {
+      await _firebaseAuth.sendPasswordResetEmail(
+        email: email.trim(),
+      );
+
+      showSnackBar("Eine E-Mail zum Zurücksetzen wurde gesendet.");
+    } on FirebaseAuthException catch (e) {
+      showSnackBar(
+        "${_getErrorMessage(e)}",
+      );
+    } catch (e) {
+      showSnackBar("$e");
+    }
+  }
+
+  /// Registers a new user with email & password.
+  ///
+  /// Does NOT automatically log in — Firebase does this implicitly.
+  /// Returns `null` if successful, or an error message on failure.
+  Future<String?> registerWithEmail(
+      String email,
+      String password,
+      ) async {
+    try {
+      await _firebaseAuth.createUserWithEmailAndPassword(
+        email: email.trim(),
+        password: password.trim(),
+      );
+
+      return null; // success
+    } on FirebaseAuthException catch (e) {
+      return _getErrorMessage(e);
+    } catch (e) {
+      return "$e";
+    }
+  }
+
   /// Begins Google sign-in flow.
   ///
   /// If supported, attempts to authenticate via Google credentials.
