@@ -12,7 +12,6 @@ import 'package:sentry_flutter/sentry_flutter.dart';
 import '../auth/login.dart';
 import '../database/models/subject.dart';
 import '../database/user.dart';
-import '../errors/authentication_error.dart';
 import '../views/account.dart';
 import '../views/home.dart';
 import '../views/home/create_homework.dart';
@@ -60,9 +59,7 @@ final appRouter = GoRouter(
     return null;
   },
   onException: (context, state, router) {
-    if (state.error is UnauthorizedException) {
-      router.go(_authLocation);
-    }
+    router.go(_authLocation);
   },
   routes: $appRoutes,
 );
@@ -104,7 +101,7 @@ class AuthRoute extends GoRouteData with $AuthRoute {
         TypedGoRoute<EnterCredentialsRoute>(path: 'enterCredentials'),
         TypedGoRoute<UploadCredentialsRoute>(path: 'uploadCredentials'),
         TypedGoRoute<DownloadCredentialsRoute>(path: 'downloadCredentials'),
-        TypedGoRoute<FindTeacherRoute>(path: 'findTeacher'),
+        TypedGoRoute<FindTeacherRoute>(path: 'findTeacher/:id'),
       ],
     ),
     TypedGoRoute<AccountRoute>(path: '/account'),
