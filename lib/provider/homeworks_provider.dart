@@ -171,7 +171,8 @@ class HomeworksProvider extends ChangeNotifier {
               : null,
           isCompleted: homework.isCompleted);
     } else {
-      Sentry.logger.error('Homework with id $homeworkID not found for deleting.'
+      Sentry.logger.error(
+          'Homework with id $homeworkID not found for deleting. '
           'Current homeworks ID: ${_homeworks.map((hw) => hw.id).join(', ')}');
     }
   }
@@ -192,7 +193,7 @@ class HomeworksProvider extends ChangeNotifier {
       _analyticsService.reviveHomework(type: homework.type);
     } else {
       Sentry.logger.error(
-          'Homework with id $homeworkID not found for new due date.'
+          'Homework with id $homeworkID not found for new due date. '
           'Current homeworks ID: ${_homeworks.map((hw) => hw.id).join(', ')}');
     }
   }
@@ -212,7 +213,7 @@ class HomeworksProvider extends ChangeNotifier {
       }
     } else {
       Sentry.logger.error(
-          'Homework with id $homeworkID not found for changing status.'
+          'Homework with id $homeworkID not found for changing status. '
           'Current homeworks ID: ${_homeworks.map((hw) => hw.id).join(', ')}');
       return Future.value();
     }

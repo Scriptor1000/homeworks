@@ -36,7 +36,7 @@ class Homework {
         id = id ?? const Uuid().v4() {
     if (toNextLesson) {
       assert(
-        subjectDocId.startsWith("untis"),
+        subjectDocId.startsWith('untis'),
         'Homework with toNextLesson must be associated with a Subject from Untis.',
       );
     }

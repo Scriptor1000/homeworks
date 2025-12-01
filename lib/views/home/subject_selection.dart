@@ -63,8 +63,9 @@ class _SubjectSelectionState extends State<SubjectSelection> {
   Widget buildEmpty() {
     return Center(
       child: Text('Keine Fächer vorhanden. \n'
-          'Um Fächer hinzuzufügen, MUSST du Untis verknüpfen.\n'
-          'Ansonsten kannst du KEINE Hausaufgaben einfügen.'),
+          'Um Fächer hinzuzufügen, musst du dein Untis Konto verbinden.\n'
+          'Weil jede Hausaufgabe einem Fach zugeordnet sein muss, '
+          'kannst du ohne diese Verbindung keine Hausaufgaben erstellen.'),
     );
   }
 

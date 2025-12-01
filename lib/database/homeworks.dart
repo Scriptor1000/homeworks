@@ -49,9 +49,9 @@ class FirestoreHomeworks {
         .where('done', isEqualTo: true)
         .where('dueDate', isLessThan: now)
         .get();
-    snapshot.docs.forEach((doc) async {
+    for (var doc in snapshot.docs) {
       await doc.reference.delete();
-    });
+    }
   }
 
   /// Deletes a homework from Firestore.

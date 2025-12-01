@@ -96,7 +96,7 @@ class SubjectProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Toggles the visibility flag of a subject in Firestore and [_firestoreSubjects]..
+  /// Toggles the visibility flag of a subject in Firestore and [_firestoreSubjects].
   Future<void> toggleSubjectVisibility(String subjectDocId) async {
     final subject = _firestoreSubjects
         .firstWhereOrNull((subject) => subject.documentId == subjectDocId);
