@@ -121,6 +121,22 @@ class _LoadCredentialsState extends State<LoadCredentials> {
                           return null;
                         },
                       ),
+                      Row(
+                        mainAxisAlignment: .start,
+                        mainAxisSize: .min,
+                        children: [
+                          TextButton.icon(
+                            onPressed: buildForgotPasswordDialog,
+                            icon: const Icon(Icons.help_outline),
+                            label: const Text('Passwort vergessen?'),
+                            style: TextButton.styleFrom(
+                              foregroundColor: Theme.of(
+                                context,
+                              ).colorScheme.onSurface,
+                            ),
+                          ),
+                        ],
+                      ),
                       standardGap(),
 
                       Padding(
@@ -146,6 +162,32 @@ class _LoadCredentialsState extends State<LoadCredentials> {
         label: 'Anmeldedaten importieren',
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+    );
+  }
+
+  Future<void> buildForgotPasswordDialog() async {
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Passwort vergessen'),
+          content: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 400),
+            child: const Text(
+              'Wenn du dein Benutzerpasswort vergessen hast, können wir deine gespeicherten Anmeldedaten aufgrund der Verschlüsselung nicht wiederherstellen.\n'
+              'Deine einzige Möglichkeit besteht darin, deine Anmeldedaten nochmal manuell einzugeben und anschließend erneut in die Cloud hochzuladen.',
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Schließen'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 }

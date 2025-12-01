@@ -173,7 +173,7 @@ class StatusCheck extends StatelessWidget {
     final onTap = switch (credentialsOnline) {
       CredentailsOnlineStatus.online =>
         credentialProvider.hasCredentials
-            ? null
+            ? () => const UploadCredentialsRoute().go(context)
             : () => const DownloadCredentialsRoute().go(context),
       CredentailsOnlineStatus.offline =>
         sessionStatus == UntisSessionStatus.sessionAccomplished
