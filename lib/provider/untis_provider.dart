@@ -189,31 +189,33 @@ class UntisProvider extends ChangeNotifier {
     UntisElementDescriptor teacher,
   ) async* {
     if (teacher.type != .teacher || _session == null) {
-      yield TeacherSearchResult(periods: [], isDone: true);
+      yield TeacherSearchResult(periods: {});
     }
 
     final classes = await _session!.classes;
     final now = DateTime.now();
-    List<UntisPeriod> foundPeriods = [];
+    Set<UntisPeriod> foundPeriods = {};
     for (var schoolClass in classes) {
       yield TeacherSearchResult(
         currentClass: schoolClass.name,
         periods: foundPeriods,
-        isDone: false,
       );
       final classTimetable = await _session!.getTimetable(
         startDate: now,
-        endDate: now.add(const Duration(days: 7)),
         id: schoolClass.id,
       );
       final periods = classTimetable.periods
           .where((period) => period.teachers.any((t) => t.id == teacher))
           .toList();
       if (periods.isNotEmpty) {
-        foundPeriods.addAll(periods);
+        for (var period in periods) {
+          if (foundPeriods.none((p) => p.id == period.id)) {
+            foundPeriods.add(period);
+          }
+        }
       }
     }
-    yield TeacherSearchResult(periods: foundPeriods, isDone: true);
+    yield TeacherSearchResult(periods: foundPeriods);
   }
 
   Future<DateTime?> deepNextLessonSearch(
@@ -277,12 +279,7 @@ class UntisProvider extends ChangeNotifier {
 
 class TeacherSearchResult {
   final String? currentClass;
-  final List<UntisPeriod> periods;
-  final bool isDone;
+  final Set<UntisPeriod> periods;
 
-  TeacherSearchResult({
-    this.currentClass,
-    required this.periods,
-    required this.isDone,
-  });
+  TeacherSearchResult({this.currentClass, required this.periods});
 }
