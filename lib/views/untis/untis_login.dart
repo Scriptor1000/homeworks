@@ -86,6 +86,7 @@ class _UntisLoginState extends State<UntisLogin> {
 
   @override
   Widget build(BuildContext context) {
+    final provider = context.watch<CredentialProvider>();
     return Scaffold(
       appBar: AppBar(title: const Text('Untis Anmeldung')),
       body: Column(
@@ -100,6 +101,18 @@ class _UntisLoginState extends State<UntisLogin> {
               child: SingleChildScrollView(
                 child: Column(
                   children: [
+                    if (provider.sessionStatus == .sessionAccomplished)
+                      InfoBox(
+                        paragraphs: [
+                          'Du bist bereits sda angemeldet.',
+                          'Wenn du fortfährst, werden deine vorhanden Anmeldedaten unwiderruflich überschrieben.',
+                        ],
+                        title: 'Achtung',
+                        icon: Icons.warning,
+                        accentColor: Colors.orange,
+                      ),
+                    if (provider.sessionStatus == .sessionAccomplished)
+                      standardGap(),
                     const Text(
                       'Gebe deine Anmeldedaten für Untis ein.',
                       style: TextStyle(fontSize: 16),
