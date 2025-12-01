@@ -182,7 +182,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                                 Navigator.pop(context);
                               },
                               child: Text(
-                                "Zurück zur Anmeldung",
+                                "Zurück",
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   fontSize: 14,

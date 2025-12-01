@@ -5,24 +5,24 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../web_authentication/web_authentication.dart' as web;
 import '../provider/authentication_provider.dart';
 import '../utilities/enums.dart';
-import 'forgot_pw_page.dart';
-import 'registrierung.dart';
 
-/// A simple authentication screen that allows users to log in with email/password or Google.
-class Authentication extends StatefulWidget {
-  const Authentication({super.key});
+/// A simple registration screen that allows users to log in with email/password or Google.
+class Registration extends StatefulWidget {
+  const Registration({super.key});
 
   @override
-  State<Authentication> createState() => _AuthenticationState();
+  State<Registration> createState() => _RegistrationState();
 }
 
-class _AuthenticationState extends State<Authentication> {
+class _RegistrationState extends State<Registration> {
   /// Controller for the email input field.
   final TextEditingController _emailController = TextEditingController();
 
   /// Controller for the password input field.
   final TextEditingController _passwordController = TextEditingController();
 
+  /// Controller for the second password input field.
+  final TextEditingController _passwordController2 = TextEditingController();
   /// Controls whether the password is obscured (hidden) or visible.
   bool _obscurePassword = true;
 
@@ -38,25 +38,35 @@ class _AuthenticationState extends State<Authentication> {
   }
 
   /// Handles the login process with email and password.
-  void _emailLogin() async {
-    setState(() => _isLoading = true);
-    final authProvider = context.read<AuthenticationProvider>();
-    await authProvider.loginWithEmail(
-      _emailController.text.trim(),
-      _passwordController.text.trim(),
-    );
-    if (mounted) {
-      setState(() => _isLoading = false);
-    }
-  }
+
 
   Future <void> _register() async {
+    String nachricht = "Registrierung erfolgreich.";
     setState(() => _isLoading = true);
-    // Navigate to Register page
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => Registration(),
+    if (_passwordController.text != _passwordController2.text) {
+      setState(() => _isLoading = false); // Reset loading
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Die Passwörter stimmen nicht überein.")),
+      );
+      return;
+    }
+    try {
+        await FirebaseAuth.instance.createUserWithEmailAndPassword(
+          email: _emailController.text.trim(),
+          password: _passwordController.text.trim(),
+        );
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'weak-password') {
+        nachricht = "Das Passwort ist zu schwach.";
+      } else if (e.code == 'email-already-in-use') {
+        nachricht = "Die E-Mail-Adresse wird bereits verwendet.";
+      }else {
+        nachricht = "Bitte gib eine gültige E-Mail-Adresse und ein Passwort ein.";
+      }
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(nachricht),
       ),
     );
     if (mounted) {
@@ -64,15 +74,6 @@ class _AuthenticationState extends State<Authentication> {
     }
   }
 
-  /// Handles the Google login process.
-  void _googleLogin() async {
-    setState(() => _isLoading = true);
-    final authProvider = context.read<AuthenticationProvider>();
-    await authProvider.authenticateWithGoogle();
-    if (mounted) {
-      setState(() => _isLoading = false);
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -150,7 +151,7 @@ class _AuthenticationState extends State<Authentication> {
                           children: [
                             // Login title
                             Text(
-                              'Anmeldung',
+                              'Registrierung',
                               style: TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
@@ -165,67 +166,34 @@ class _AuthenticationState extends State<Authentication> {
                             const SizedBox(height: 16),
 
                             // Password input field
-                            buildPasswordField(colorScheme),
+                            buildPasswordField(colorScheme, _passwordController, "Passwort"),
                             const SizedBox(height: 24),
 
-                            // Login button
-                            buildLoginButton(colorScheme),
+                            // second Password input field
+                            buildPasswordField(colorScheme, _passwordController2, "Passwort bestätigen"),
+                            const SizedBox(height: 24),
+
+                            // Register button
+                            buildRegisterButton(colorScheme),
                             const SizedBox(height: 20),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                // Konto erstellen button
-                                Expanded(
-                                  child: GestureDetector(
-                                    onTap: _isLoading ? null : _register,
-                                    child: Text(
-                                      "Konto erstellen",
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: colorScheme.primary,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.pop(context);
+                              },
+                              child: Text(
+                                "Zurück",
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: colorScheme.primary,
+                                  fontWeight: FontWeight.bold,
                                 ),
-
-                                const SizedBox(width: 12),
-
-                                // Icon between buttons
-                                Icon(Icons.swap_horiz, color: colorScheme.primary, size: 28),
-
-                                const SizedBox(width: 12),
-
-                                // Passwort ändern button
-                                Expanded(
-                                  child: GestureDetector(
-                                    onTap: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(builder: (context) => ForgotPasswordPage()),
-                                      );
-                                    },
-                                    child: Text(
-                                      "Passwort vergessen?",
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: colorScheme.primary,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
+                              ),
+                            ) ,
 
                             // Divider with "ODER"
                             buildDivider(),
                             const SizedBox(height: 20),
-
-                            // Google Sign-in button (or web button if needed)
-                            buildGoogleSignInButton(authProvider.googleSignInState),
                           ],
                         ),
                       ),
@@ -284,11 +252,11 @@ class _AuthenticationState extends State<Authentication> {
   }
 
   /// Builds the password input field with visibility toggle.
-  TextFormField buildPasswordField(ColorScheme colorScheme) {
+  TextFormField buildPasswordField(ColorScheme colorScheme, TextEditingController controller,String txt) {
     return TextFormField(
-      controller: _passwordController,
+      controller: controller,
       decoration: InputDecoration(
-        labelText: 'Passwort',
+        labelText: txt,
         prefixIcon: const Icon(Icons.lock_outline),
         suffixIcon: IconButton(
           icon: Icon(
@@ -308,17 +276,17 @@ class _AuthenticationState extends State<Authentication> {
       ),
       obscureText: _obscurePassword,
       textInputAction: TextInputAction.done,
-      onFieldSubmitted: (_) => _emailLogin(),
       validator: (value) => value == null || value.isEmpty
           ? 'Bitte gib dein Passwort ein.'
           : null,
     );
   }
 
-  /// Builds the login button with loading indicator.
-  ElevatedButton buildLoginButton(ColorScheme colorScheme) {
+
+
+  ElevatedButton buildRegisterButton(ColorScheme colorScheme) {
     return ElevatedButton(
-      onPressed: _isLoading ? null : _emailLogin,
+      onPressed: _isLoading ? null : _register,
       style: ElevatedButton.styleFrom(
         backgroundColor: colorScheme.primary,
         foregroundColor: colorScheme.onPrimary,
@@ -338,7 +306,7 @@ class _AuthenticationState extends State<Authentication> {
         ),
       )
           : const Text(
-        'Anmelden',
+        'Registrieren',
         style: TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.bold,
@@ -346,103 +314,7 @@ class _AuthenticationState extends State<Authentication> {
       ),
     );
   }
-
-
-
-
   /// Builds the Google sign-in button based on the platform/state.
-  Widget buildGoogleSignInButton(GoogleSignInState supported) {
-    return switch (supported) {
-    // Google sign-in available
-      GoogleSignInState.supported => OutlinedButton.icon(
-        onPressed: _isLoading ? null : _googleLogin,
-        icon: const FaIcon(
-          FontAwesomeIcons.google,
-          size: 18,
-        ),
-        label: const Text(
-          'Mit Google anmelden',
-          style: TextStyle(
-            fontWeight: FontWeight.w500,
-            fontSize: 16,
-          ),
-        ),
-        style: OutlinedButton.styleFrom(
-          side: BorderSide(color: Colors.grey.shade300),
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      ),
 
-    // Google sign-in not available
-      GoogleSignInState.notSupported => OutlinedButton.icon(
-        onPressed: null,
-        icon: const FaIcon(
-          FontAwesomeIcons.triangleExclamation,
-          color: Colors.red,
-          size: 18,
-        ),
-        label: const Text(
-          'Google Anmeldung nicht verfügbar',
-          style: TextStyle(color: Colors.red),
-        ),
-        style: OutlinedButton.styleFrom(
-          side: BorderSide(color: Colors.grey.shade300),
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      ),
-
-    // Web button required for Google sign-in
-      GoogleSignInState.needWebButton =>
-          SizedBox(height: 40, child: web.renderButton()),
-
-    // Error state
-      GoogleSignInState.error => OutlinedButton.icon(
-        onPressed: null,
-        icon: const FaIcon(
-          FontAwesomeIcons.triangleExclamation,
-          color: Colors.red,
-          size: 18,
-        ),
-        label: const Text(
-          'Fehler',
-          style: TextStyle(color: Colors.red),
-        ),
-        style: OutlinedButton.styleFrom(
-          side: BorderSide(color: Colors.grey.shade300),
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      ),
-
-    // Loading state
-      GoogleSignInState.loading => OutlinedButton.icon(
-        onPressed: null,
-        icon: const SizedBox(
-          height: 18,
-          width: 18,
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            valueColor: AlwaysStoppedAnimation<Color>(Colors.grey),
-          ),
-        ),
-        label: const Text('Mit Google anmelden'),
-        style: OutlinedButton.styleFrom(
-          side: BorderSide(color: Colors.grey.shade300),
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      ),
-    };
-  }
 
 }
