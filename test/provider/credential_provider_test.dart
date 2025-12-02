@@ -87,7 +87,7 @@ void main() {
       );
       expect(
         credentialProvider.credentialsOnlineStatus,
-        equals(CredentailsOnlineStatus.offline),
+        equals(CredentialsOnlineStatus.offline),
       );
 
       verify(storage.read(key: CredentialProvider.credentialsKey)).called(1);
@@ -210,7 +210,7 @@ void main() {
         // verify
         expect(
           credentialProvider.credentialsOnlineStatus,
-          equals(CredentailsOnlineStatus.online),
+          equals(CredentialsOnlineStatus.online),
         );
         verify(
           firestoreCredentials.saveCredentials(testCredentials, userPassword),
@@ -218,15 +218,18 @@ void main() {
       },
     );
 
-    test('should return error and not save on invalid credentials', () {
+    test('should return error and not save on invalid credentials', () async {
       // test
-      credentialProvider.setCredentials(invalidCredentials).catchError((e) {
-        expect(e.toString(), contains('Ungültige Anmeldedaten'));
-      });
+      await expectLater(
+        credentialProvider.setCredentials(invalidCredentials),
+        throwsA(
+          predicate((e) => e.toString().contains('Ungültige Anmeldedaten')),
+        ),
+      );
       // verify
       expect(
         credentialProvider.credentialsOnlineStatus,
-        isNot(equals(CredentailsOnlineStatus.online)),
+        isNot(equals(CredentialsOnlineStatus.online)),
       );
       expect(credentialProvider.hasCredentials, isFalse);
       verifyNever(firestoreCredentials.saveCredentials(any, any));
@@ -240,7 +243,7 @@ void main() {
         // verify
         expect(
           credentialProvider.credentialsOnlineStatus,
-          isNot(equals(CredentailsOnlineStatus.online)),
+          isNot(equals(CredentialsOnlineStatus.online)),
         );
         verifyNever(firestoreCredentials.saveCredentials(any, any));
       },

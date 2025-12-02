@@ -82,7 +82,7 @@ class StatusCheck extends StatelessWidget {
     final sessionStatus = credentialProvider.sessionStatus;
     final subtitle = switch (sessionStatus) {
       UntisSessionStatus.sessionAccomplished =>
-        'Deine Stundenplan steht zur Verfügung, um dir unnötige Arbeit zu ersparen.',
+        'Dein Stundenplan steht zur Verfügung, um dir unnötige Arbeit zu ersparen.',
       UntisSessionStatus.noCredentials => 'Klicke hier, um das zu ändern.',
       UntisSessionStatus.loading =>
         'Dein Stundenplan wird von Untis geladen...',
@@ -102,7 +102,7 @@ class StatusCheck extends StatelessWidget {
       UntisSessionStatus.error => 'Fehler bei der Verknüpfung mit Untis',
     };
     final icon = switch (sessionStatus) {
-      UntisSessionStatus.sessionAccomplished => Icon(
+      UntisSessionStatus.sessionAccomplished => const Icon(
         Icons.check_circle,
         color: Colors.green,
       ),
@@ -111,7 +111,7 @@ class StatusCheck extends StatelessWidget {
         height: 20,
         child: CircularProgressIndicator(),
       ),
-      _ => Icon(Icons.error, color: Colors.red),
+      _ => const Icon(Icons.error, color: Colors.red),
     };
     final onTap = sessionStatus != UntisSessionStatus.loading
         ? () => const EnterCredentialsRoute().go(context)
@@ -133,53 +133,53 @@ class StatusCheck extends StatelessWidget {
     final credentialsOnline = credentialProvider.credentialsOnlineStatus;
 
     final title = switch (credentialsOnline) {
-      CredentailsOnlineStatus.online => 'Cloudsyncronisation aktiv',
-      CredentailsOnlineStatus.offline => 'Cloudsyncronisation deaktiviert',
-      CredentailsOnlineStatus.loading => 'Syncronisieren...',
-      CredentailsOnlineStatus.error => 'Cloudsyncronisation fehlgeschlagen',
-      CredentailsOnlineStatus.changed => 'Andere Anmeldedaten',
+      CredentialsOnlineStatus.online => 'Cloud Synchronisation aktiv',
+      CredentialsOnlineStatus.offline => 'Cloud Synchronisation deaktiviert',
+      CredentialsOnlineStatus.loading => 'Synchronisieren...',
+      CredentialsOnlineStatus.error => 'Cloud Synchronisation fehlgeschlagen',
+      CredentialsOnlineStatus.changed => 'Andere Anmeldedaten',
     };
     final subtitle = switch (credentialsOnline) {
-      CredentailsOnlineStatus.online =>
+      CredentialsOnlineStatus.online =>
         'Deine Anmeldedaten sind online verschlüsselt gespeichert und auf allen Geräten verfügbar.'
             '${credentialProvider.hasCredentials ? "" : " Tippe hier, um sie herunterzuladen."}',
-      CredentailsOnlineStatus.offline =>
+      CredentialsOnlineStatus.offline =>
         'Deine Anmeldedaten sind nicht online gespeichert.'
             '${sessionStatus == UntisSessionStatus.sessionAccomplished ? "Klicke hier, um das zu ändern" : ""}',
-      CredentailsOnlineStatus.loading =>
+      CredentialsOnlineStatus.loading =>
         'Es wird geprüft, ob deine Anmeldedaten online gespeichert sind.',
-      CredentailsOnlineStatus.error =>
+      CredentialsOnlineStatus.error =>
         'Bei der Abfrage ist ein Fehler aufgetreten. Bitte überprüfe deine Internetverbindung.',
-      CredentailsOnlineStatus.changed =>
+      CredentialsOnlineStatus.changed =>
         'Es sind in der Cloud andere Anmeldedaten gespeichert als auf diesem Gerät. '
             'Tippe hier, um den Konflikt zu lösen.',
     };
     final icon = switch (credentialsOnline) {
-      CredentailsOnlineStatus.online => Icon(
+      CredentialsOnlineStatus.online => const Icon(
         Icons.check_circle,
         color: Colors.green,
       ),
-      CredentailsOnlineStatus.loading => const SizedBox(
+      CredentialsOnlineStatus.loading => const SizedBox(
         width: 20,
         height: 20,
         child: CircularProgressIndicator(),
       ),
-      CredentailsOnlineStatus.changed => Icon(
+      CredentialsOnlineStatus.changed => const Icon(
         Icons.change_circle,
         color: Colors.yellow,
       ),
-      _ => Icon(Icons.close, color: Colors.red),
+      _ => const Icon(Icons.close, color: Colors.red),
     };
     final onTap = switch (credentialsOnline) {
-      CredentailsOnlineStatus.online =>
+      CredentialsOnlineStatus.online =>
         credentialProvider.hasCredentials
             ? () => const UploadCredentialsRoute().go(context)
             : () => const DownloadCredentialsRoute().go(context),
-      CredentailsOnlineStatus.offline =>
+      CredentialsOnlineStatus.offline =>
         sessionStatus == UntisSessionStatus.sessionAccomplished
             ? () => const UploadCredentialsRoute().go(context)
             : null,
-      CredentailsOnlineStatus.changed => () => showChangeDialog(
+      CredentialsOnlineStatus.changed => () => showChangeDialog(
         credentialProvider.sessionStatus ==
             UntisSessionStatus.sessionAccomplished,
         context,
@@ -200,9 +200,11 @@ class StatusCheck extends StatelessWidget {
     BuildContext context,
   ) async {
     final colorScheme = Theme.of(context).colorScheme;
-    final preferedStyle = ButtonStyle(
+    final preferredStyle = ButtonStyle(
       backgroundColor: WidgetStatePropertyAll(colorScheme.primaryContainer),
-      textStyle: WidgetStatePropertyAll(TextStyle(fontWeight: FontWeight.bold)),
+      textStyle: const WidgetStatePropertyAll(
+        TextStyle(fontWeight: FontWeight.bold),
+      ),
     );
     return showDialog(
       context: context,
@@ -227,7 +229,7 @@ class StatusCheck extends StatelessWidget {
                 context.pop();
                 const UploadCredentialsRoute().go(context);
               },
-              style: localeCredentialsFunctional ? preferedStyle : null,
+              style: localeCredentialsFunctional ? preferredStyle : null,
               child: const Text('Lokale Anmeldedaten hochladen'),
             ),
             TextButton(
@@ -235,7 +237,7 @@ class StatusCheck extends StatelessWidget {
                 context.pop();
                 const DownloadCredentialsRoute().go(context);
               },
-              style: !localeCredentialsFunctional ? preferedStyle : null,
+              style: !localeCredentialsFunctional ? preferredStyle : null,
               child: const Text('Online Anmeldedaten laden'),
             ),
           ],

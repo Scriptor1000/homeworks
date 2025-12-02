@@ -46,8 +46,8 @@ class _UploadCredentialsState extends State<UploadCredentials> {
     // Prüfe, ob die Credentials bereits hochgeladen wurden
     final credentialProvider = context.watch<CredentialProvider>();
     final bool alreadyUploaded = [
-      CredentailsOnlineStatus.online,
-      CredentailsOnlineStatus.changed,
+      CredentialsOnlineStatus.online,
+      CredentialsOnlineStatus.changed,
     ].contains(credentialProvider.credentialsOnlineStatus);
 
     final credentials = credentialProvider.credentials;

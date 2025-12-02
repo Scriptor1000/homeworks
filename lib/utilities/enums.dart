@@ -1,5 +1,5 @@
 /// The status of the credentials online check.
-enum CredentailsOnlineStatus {
+enum CredentialsOnlineStatus {
   /// The credentials are online and match the local credentials.
   online,
 

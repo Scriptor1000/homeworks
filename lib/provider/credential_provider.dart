@@ -25,8 +25,8 @@ class CredentialProvider extends ChangeNotifier {
   UntisSession? _session;
   UntisSessionStatus _sessionStatus = UntisSessionStatus.noCredentials;
 
-  CredentailsOnlineStatus _credentialsOnlineStatus =
-      CredentailsOnlineStatus.loading;
+  CredentialsOnlineStatus _credentialsOnlineStatus =
+      CredentialsOnlineStatus.loading;
 
   CredentialProvider({
     required FirestoreCredentials firestoreCredentials,
@@ -40,7 +40,7 @@ class CredentialProvider extends ChangeNotifier {
   bool get hasCredentials => _credentials != null;
 
   /// The current online status of the credentials.
-  CredentailsOnlineStatus get credentialsOnlineStatus =>
+  CredentialsOnlineStatus get credentialsOnlineStatus =>
       _credentialsOnlineStatus;
 
   UntisSession? get session => _session;
@@ -134,33 +134,33 @@ class CredentialProvider extends ChangeNotifier {
   Future<void> uploadCredentialsOnline(String password) async {
     if (_credentials == null) return;
     await _firestoreCredentials.saveCredentials(_credentials!, password);
-    _credentialsOnlineStatus = CredentailsOnlineStatus.online;
+    _credentialsOnlineStatus = CredentialsOnlineStatus.online;
 
     notifyListeners();
   }
 
   Future<void> _loadOnlineStatus() async {
-    _credentialsOnlineStatus = CredentailsOnlineStatus.loading;
+    _credentialsOnlineStatus = CredentialsOnlineStatus.loading;
     notifyListeners();
     try {
       final storedHash = await _firestoreCredentials.checkCredentialsOnline();
 
       if (storedHash == null) {
-        _credentialsOnlineStatus = CredentailsOnlineStatus.offline;
+        _credentialsOnlineStatus = CredentialsOnlineStatus.offline;
       } else {
         if (_credentials == null) {
-          _credentialsOnlineStatus = CredentailsOnlineStatus.online;
+          _credentialsOnlineStatus = CredentialsOnlineStatus.online;
         } else {
           final localHash = await _credentials!.calculateHash();
           if (localHash == storedHash) {
-            _credentialsOnlineStatus = CredentailsOnlineStatus.online;
+            _credentialsOnlineStatus = CredentialsOnlineStatus.online;
           } else {
-            _credentialsOnlineStatus = CredentailsOnlineStatus.changed;
+            _credentialsOnlineStatus = CredentialsOnlineStatus.changed;
           }
         }
       }
     } catch (error, stackTrace) {
-      _credentialsOnlineStatus = CredentailsOnlineStatus.error;
+      _credentialsOnlineStatus = CredentialsOnlineStatus.error;
       print('Error checking credentials online status: $error');
       Sentry.captureException(error, stackTrace: stackTrace);
     } finally {

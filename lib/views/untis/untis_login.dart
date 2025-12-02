@@ -104,8 +104,8 @@ class _UntisLoginState extends State<UntisLogin> {
                     if (provider.sessionStatus == .sessionAccomplished)
                       InfoBox(
                         paragraphs: [
-                          'Du bist bereits sda angemeldet.',
-                          'Wenn du fortfährst, werden deine vorhanden Anmeldedaten unwiderruflich überschrieben.',
+                          'Du hast bereits gültige Anmeldedaten für Untis angegeben.',
+                          'Wenn du fortfährst, werden deine vorhandenen Anmeldedaten unwiderruflich überschrieben.',
                         ],
                         title: 'Achtung',
                         icon: Icons.warning,
