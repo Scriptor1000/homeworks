@@ -28,7 +28,7 @@ class ItemFactory {
       );
       return SessionResult(session, UntisSessionStatus.sessionAccomplished);
     } catch (e) {
-      if (e.hashCode == 635849374) {
+      if (e.toString().toLowerCase().contains('authentication failed')) {
         // This specific hashCode corresponds to an invalid credentials error.
         // It is not ideal to rely on hashCodes for error handling, but the underlying
         // library does not provide specific exception types.
