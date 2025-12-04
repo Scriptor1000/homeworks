@@ -14,7 +14,7 @@ import 'package:gap/gap.dart';
 /// The search is NOT case-sensitive, both user query and item query will be converted to lower case by this widget.
 ///
 /// Information: The callback provided to [buildTile] simply calls the provided [onSelected] with the item.
-/// The [onSelected] Method must be provided be it can also be called if the user submits a query with only one matching item.
+/// The [onSelected] Method must be provided because it can also be called if the user submits a query with only one matching item.
 class SearchScreen<T> extends StatefulWidget {
   final List<T> searchableItems;
   final String searchHint;

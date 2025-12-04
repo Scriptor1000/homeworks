@@ -94,7 +94,7 @@ class _FindTeacherState extends State<FindTeacher> {
 
     return ListView(
       padding: const EdgeInsets.all(16),
-      children: [...widgets, Divider(), _buildInfo(result)],
+      children: [...widgets, const Divider(), _buildInfo(result)],
     );
   }
 
@@ -111,7 +111,7 @@ class _FindTeacherState extends State<FindTeacher> {
             ),
           ),
         ),
-        Expanded(child: Divider()),
+        const Expanded(child: Divider()),
       ],
     );
   }

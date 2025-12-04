@@ -26,8 +26,7 @@ class SubjectSelection extends StatelessWidget {
       body: SearchScreen<Subject>(
         searchableItems: subjects,
         searchHint: 'Fach suchen...',
-        getQueryString: (subject) =>
-            '${subject.name.toLowerCase()} ${subject.shortName.toLowerCase()}',
+        getQueryString: (subject) => '${subject.name} ${subject.shortName}',
         buildTile: _buildSubjectTile,
         onSelected: (s) {
           onSubjectSelected?.call(s);

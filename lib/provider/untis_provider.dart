@@ -212,6 +212,7 @@ class UntisProvider extends ChangeNotifier {
     final searchPlaces = await getSearchPlaces();
     final now = DateTime.now();
     Set<UntisPeriod> foundPeriods = previousResults;
+    Set<int> foundIDs = previousResults.map((p) => p.id).toSet();
     for (var (searchId, searchPlace) in searchPlaces) {
       yield TeacherSearchResult(
         currentSearchingPlace: searchPlace,
@@ -223,8 +224,11 @@ class UntisProvider extends ChangeNotifier {
       );
       classTimetable.periods
           .where((period) => period.teachers.any((t) => t.id == teacher))
-          .where((period) => !foundPeriods.any((p) => p.id == period.id))
-          .forEach((period) => foundPeriods.add(period));
+          .where((period) => !foundIDs.contains(period.id))
+          .forEach((period) {
+            foundPeriods.add(period);
+            foundIDs.add(period.id);
+          });
     }
     yield TeacherSearchResult(periods: foundPeriods);
   }

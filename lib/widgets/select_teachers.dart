@@ -48,8 +48,8 @@ class TeacherSelection extends StatelessWidget {
     );
     return SearchScreen<UntisTeacher>(
       searchableItems: teachers,
-      searchHint: 'Lehrer Suchen...',
-      getQueryString: (teacher) => teacher.fullName.toLowerCase(),
+      searchHint: 'Lehrer suchen...',
+      getQueryString: (teacher) => teacher.fullName,
       buildTile: _buildTeacherTile,
       onSelected: (t) => Navigator.pop(context, t),
     );
