@@ -45,9 +45,9 @@ class _UntisLoginState extends State<UntisLogin> {
     _usernameController.text = provider.credentials?.username ?? '';
     _passwordController.text = provider.credentials?.password ?? '';
     _schoolController.text =
-        provider.credentials?.school ?? 'Albert Schweitzer';
+        provider.credentials?.school ?? 'albert-schweitzer';
     _serverController.text =
-        provider.credentials?.server ?? 'hektor.webuntis.com';
+        provider.credentials?.server ?? 'albert-schweitzer.webuntis.com';
 
     super.initState();
   }
