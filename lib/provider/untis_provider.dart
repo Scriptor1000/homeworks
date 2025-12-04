@@ -188,30 +188,40 @@ class UntisProvider extends ChangeNotifier {
   }
 
   Stream<TeacherSearchResult>? findTeacher(
-    UntisElementDescriptor teacher,
-  ) async* {
+    UntisElementDescriptor teacher, {
+    bool searchInRoom = false,
+    Set<UntisPeriod> previousResults = const {},
+  }) async* {
     if (teacher.type != .teacher || _session == null) {
       yield TeacherSearchResult(periods: {});
     }
 
-    final classes = await _session!.classes;
+    List<(UntisElementDescriptor, String)> searchPlaces;
+    if (searchInRoom) {
+      final rooms = await _session!.rooms;
+      searchPlaces = rooms.map((r) => (r.id, r.name)).toList();
+    } else {
+      final classes = await _session!.classes;
+      searchPlaces = classes.map((c) => (c.id, c.name)).toList();
+    }
     final now = DateTime.now();
     Set<UntisPeriod> foundPeriods = {};
-    for (var schoolClass in classes) {
+    for (var (searchId, searchPlace) in searchPlaces) {
       yield TeacherSearchResult(
-        currentClass: schoolClass.name,
+        currentClass: searchPlace,
         periods: foundPeriods,
       );
       final classTimetable = await _session!.getTimetable(
         startDate: now,
-        id: schoolClass.id,
+        id: searchId,
       );
       final periods = classTimetable.periods
           .where((period) => period.teachers.any((t) => t.id == teacher))
           .toList();
       if (periods.isNotEmpty) {
         for (var period in periods) {
-          if (foundPeriods.none((p) => p.id == period.id)) {
+          if (foundPeriods.none((p) => p.id == period.id) &&
+              previousResults.none((p) => p.id == period.id)) {
             foundPeriods.add(period);
           }
         }

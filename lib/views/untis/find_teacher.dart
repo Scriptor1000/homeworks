@@ -1,6 +1,5 @@
 import 'package:collection/collection.dart';
-import 'package:dart_untis_mobile/src/objects.dart';
-import 'package:dart_untis_mobile/src/timetable_objects.dart';
+import 'package:dart_untis_mobile/dart_untis_mobile.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
@@ -16,13 +15,40 @@ class FindTeacher extends StatefulWidget {
 }
 
 class _FindTeacherState extends State<FindTeacher> {
-  @override
-  Widget build(BuildContext context) {
+  Stream<TeacherSearchResult>? _stream;
+  UntisTeacher? _teacher;
+  bool _lookingInRooms = false;
+  Set<UntisPeriod> _previousResults = {};
+
+  void initStream() {
+    if (_teacher != null) return;
     final UntisProvider provider = context.watch();
-    final teacher = provider.untisTeachers.firstWhereOrNull(
+    _teacher = provider.untisTeachers.firstWhereOrNull(
       (t) => t.id == widget.teacher,
     );
-    if (teacher == null) {
+    if (_teacher != null) {
+      _stream = provider.findTeacher(widget.teacher);
+    }
+  }
+
+  void lookAtRooms(Set<UntisPeriod> previousResults) {
+    if (_teacher == null) return;
+    final UntisProvider provider = context.read();
+    setState(() {
+      _previousResults = previousResults;
+      _lookingInRooms = true;
+      _stream = provider.findTeacher(
+        _teacher!.id,
+        searchInRoom: true,
+        previousResults: previousResults,
+      );
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    initStream();
+    if (_teacher == null) {
       // TODO switch status
       return Scaffold(
         appBar: AppBar(title: Text('Fehler')),
@@ -31,11 +57,10 @@ class _FindTeacherState extends State<FindTeacher> {
         ),
       );
     }
-    final stream = provider.findTeacher(widget.teacher);
     return Scaffold(
-      appBar: AppBar(title: Text(teacher.fullName)),
+      appBar: AppBar(title: Text('Stundenplan von ${_teacher!.fullName}')),
       body: StreamBuilder<TeacherSearchResult>(
-        stream: stream,
+        stream: _stream,
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             Sentry.captureException(
@@ -56,52 +81,61 @@ class _FindTeacherState extends State<FindTeacher> {
 
   ListView _buildResult(TeacherSearchResult result) {
     final periods = result.periods.toList()
+      ..addAll(_previousResults.toList())
       ..sort((a, b) => a.startDateTime.compareTo(b.startDateTime));
-    List<Widget> widgets = [
-      Padding(
-        padding: const EdgeInsets.only(bottom: 8.0),
-        child: Text(
-          'Stunden in den nächsten 7 Tagen:',
-          style: Theme.of(context).textTheme.titleLarge,
-        ),
-      ),
-    ];
+    List<Widget> widgets = [];
 
     for (var index = 0; index < periods.length; index++) {
       if (index == 0 ||
           periods[index].startDateTime.day !=
               periods[index - 1].startDateTime.day) {
-        widgets.add(
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8.0),
-            child: _formatDate(periods[index]),
-          ),
-        );
+        widgets.add(_formatDate(periods[index]));
       }
       widgets.add(_buildTile(periods[index]));
     }
 
     return ListView(
       padding: const EdgeInsets.all(16),
-      children: [...widgets, _buildInfo(result)],
+      children: [...widgets, Divider(), _buildInfo(result)],
     );
   }
 
-  Text _formatDate(UntisPeriod period) {
-    return Text(
-      '${period.startDateTime.day.toString().padLeft(2, '0')}.${period.startDateTime.month.toString().padLeft(2, '0')}.${period.startDateTime.year}',
-      style: Theme.of(context).textTheme.titleMedium,
+  Widget _formatDate(UntisPeriod period) {
+    return Row(
+      children: [
+        SizedBox(width: 30, child: Divider()),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          child: Text(
+            '${period.startDateTime.day.toString().padLeft(2, '0')}.${period.startDateTime.month.toString().padLeft(2, '0')}.${period.startDateTime.year}',
+            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+        Expanded(child: Divider()),
+      ],
     );
   }
 
   Widget _buildInfo(TeacherSearchResult result) {
     if (result.currentClass == null) {
-      return result.periods.isEmpty
-          ? const Center(child: Text('Es wurden keine Einträge gefunden'))
-          : const Center(child: Text('Keine weiteren Einträge gefunden'));
+      return Column(
+        children: [
+          result.periods.isEmpty
+              ? const Center(child: Text('Es wurden keine Einträge gefunden'))
+              : const Center(child: Text('Keine weiteren Einträge gefunden')),
+          if (!_lookingInRooms)
+            TextButton(
+              onPressed: () => lookAtRooms(result.periods),
+              child: Text('Auch Raumpläne durchsuchen'),
+            ),
+        ],
+      );
     } else {
+      final article = _lookingInRooms ? 'von' : 'der';
       return Center(
-        child: Text('Schaue im Stundenplan der ${result.currentClass}'),
+        child: Text('Schaue im Stundenplan $article ${result.currentClass}'),
       );
     }
   }
@@ -111,23 +145,32 @@ class _FindTeacherState extends State<FindTeacher> {
     if (rooms.isEmpty) {
       rooms = 'Kein Raum angegeben';
     }
+    String? subtitle = period.subject?.longName;
+    final String classes = period.classes.map((c) => c.name).join(', ');
+    if (classes.isNotEmpty) {
+      subtitle = '${subtitle ?? ''} bei $classes';
+    }
+    final canceledStyle = TextStyle(
+      decoration: TextDecoration.lineThrough,
+      decorationColor: Theme.of(context).colorScheme.onError,
+      decorationThickness: 4,
+      color: Theme.of(context).colorScheme.error,
+    );
+    final isCanceled = period.isCancelled;
     return ListTile(
-      title: Text(rooms),
-      subtitle: Text(period.subject?.longName ?? 'Ohne Fach'),
-      trailing: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          _formatTime(period.startDateTime),
-          const Text('–'),
-          _formatTime(period.endDateTime),
-        ],
+      title: Text(rooms, style: isCanceled ? canceledStyle : null),
+      subtitle: Text(
+        subtitle?.trim() ?? 'Ohne Fach oder Klasse',
+        style: isCanceled ? canceledStyle : null,
+      ),
+      trailing: Text(
+        '${_formatTime(period.startDateTime)} - ${_formatTime(period.endDateTime)}',
+        style: Theme.of(context).textTheme.bodySmall,
       ),
     );
   }
 
-  Text _formatTime(DateTime time) {
-    return Text(
-      '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}',
-    );
+  String _formatTime(DateTime time) {
+    return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
   }
 }
