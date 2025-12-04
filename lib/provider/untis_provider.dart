@@ -30,7 +30,7 @@ class UntisProvider extends ChangeNotifier {
   /// The List of Subjects from Untis in the next 30 days.
   List<Subject> get untisSubjects => _untisSubjects;
 
-  List<UntisTeacher> get untisTeachers => _untisTeachers;
+  List<UntisTeacher> get teachers => _untisTeachers;
 
   /// The date until the timetable is loaded.
   DateTime get endDate => DateTime.now().add(_range);
@@ -187,45 +187,44 @@ class UntisProvider extends ChangeNotifier {
     }
   }
 
+  /// Finds the timetable periods for a given teacher.
+  ///
+  /// This method searches for periods associated with the specified [teacher] across all classes or rooms,
+  /// depending on the [searchInRoom] flag. It yields a [TeacherSearchResult] stream containing the found periods
+  /// and information about the current class or room which is being loaded.
+  /// The [previousResults] parameter allows passing in previously found periods will be included in the result.
   Stream<TeacherSearchResult>? findTeacher(
     UntisElementDescriptor teacher, {
     bool searchInRoom = false,
     Set<UntisPeriod> previousResults = const {},
   }) async* {
-    if (teacher.type != .teacher || _session == null) {
-      yield TeacherSearchResult(periods: {});
+    Future<List<(UntisElementDescriptor, String)>> getSearchPlaces() async {
+      return searchInRoom
+          ? (await _session!.rooms).map((r) => (r.id, r.name)).toList()
+          : (await _session!.classes).map((c) => (c.id, c.name)).toList();
     }
 
-    List<(UntisElementDescriptor, String)> searchPlaces;
-    if (searchInRoom) {
-      final rooms = await _session!.rooms;
-      searchPlaces = rooms.map((r) => (r.id, r.name)).toList();
-    } else {
-      final classes = await _session!.classes;
-      searchPlaces = classes.map((c) => (c.id, c.name)).toList();
+    if (teacher.type != .teacher || _session == null) {
+      yield TeacherSearchResult(periods: {});
+      return;
     }
+
+    final searchPlaces = await getSearchPlaces();
     final now = DateTime.now();
-    Set<UntisPeriod> foundPeriods = {};
+    Set<UntisPeriod> foundPeriods = previousResults;
     for (var (searchId, searchPlace) in searchPlaces) {
       yield TeacherSearchResult(
-        currentClass: searchPlace,
+        currentSearchingPlace: searchPlace,
         periods: foundPeriods,
       );
       final classTimetable = await _session!.getTimetable(
         startDate: now,
         id: searchId,
       );
-      final periods = classTimetable.periods
+      classTimetable.periods
           .where((period) => period.teachers.any((t) => t.id == teacher))
-          .toList();
-      if (periods.isNotEmpty) {
-        for (var period in periods) {
-          if (foundPeriods.none((p) => p.id == period.id) &&
-              previousResults.none((p) => p.id == period.id)) {
-            foundPeriods.add(period);
-          }
-        }
-      }
+          .where((period) => !foundPeriods.any((p) => p.id == period.id))
+          .forEach((period) => foundPeriods.add(period));
     }
     yield TeacherSearchResult(periods: foundPeriods);
   }
@@ -289,9 +288,10 @@ class UntisProvider extends ChangeNotifier {
   }
 }
 
+/// Result of a teacher search containing found periods and current searching place.
 class TeacherSearchResult {
-  final String? currentClass;
+  final String? currentSearchingPlace;
   final Set<UntisPeriod> periods;
 
-  TeacherSearchResult({this.currentClass, required this.periods});
+  TeacherSearchResult({this.currentSearchingPlace, required this.periods});
 }

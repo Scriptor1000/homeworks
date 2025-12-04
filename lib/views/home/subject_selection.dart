@@ -24,7 +24,7 @@ class SubjectSelection extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Fach auswählen')),
       body: SearchScreen<Subject>(
-        things: subjects,
+        searchableItems: subjects,
         searchHint: 'Fach suchen...',
         getQueryString: (subject) =>
             '${subject.name.toLowerCase()} ${subject.shortName.toLowerCase()}',
@@ -37,7 +37,11 @@ class SubjectSelection extends StatelessWidget {
     );
   }
 
-  Widget _buildSubjectTile(BuildContext context, Subject subject, onTap) {
-    return SubjectTile(subject: subject, onTap: () => onTap(subject));
+  Widget _buildSubjectTile(
+    BuildContext context,
+    Subject subject,
+    VoidCallback onTap,
+  ) {
+    return SubjectTile(subject: subject, onTap: () => onTap());
   }
 }

@@ -6,6 +6,7 @@ import 'package:sentry_flutter/sentry_flutter.dart';
 
 import '../../provider/untis_provider.dart';
 
+/// Screen to view the timetable of a teacher.
 class FindTeacher extends StatefulWidget {
   final UntisElementDescriptor teacher;
   const FindTeacher({super.key, required this.teacher});
@@ -18,12 +19,11 @@ class _FindTeacherState extends State<FindTeacher> {
   Stream<TeacherSearchResult>? _stream;
   UntisTeacher? _teacher;
   bool _lookingInRooms = false;
-  Set<UntisPeriod> _previousResults = {};
 
   void initStream() {
     if (_teacher != null) return;
     final UntisProvider provider = context.watch();
-    _teacher = provider.untisTeachers.firstWhereOrNull(
+    _teacher = provider.teachers.firstWhereOrNull(
       (t) => t.id == widget.teacher,
     );
     if (_teacher != null) {
@@ -35,7 +35,6 @@ class _FindTeacherState extends State<FindTeacher> {
     if (_teacher == null) return;
     final UntisProvider provider = context.read();
     setState(() {
-      _previousResults = previousResults;
       _lookingInRooms = true;
       _stream = provider.findTeacher(
         _teacher!.id,
@@ -81,7 +80,6 @@ class _FindTeacherState extends State<FindTeacher> {
 
   ListView _buildResult(TeacherSearchResult result) {
     final periods = result.periods.toList()
-      ..addAll(_previousResults.toList())
       ..sort((a, b) => a.startDateTime.compareTo(b.startDateTime));
     List<Widget> widgets = [];
 
@@ -119,7 +117,7 @@ class _FindTeacherState extends State<FindTeacher> {
   }
 
   Widget _buildInfo(TeacherSearchResult result) {
-    if (result.currentClass == null) {
+    if (result.currentSearchingPlace == null) {
       return Column(
         children: [
           result.periods.isEmpty
@@ -135,7 +133,9 @@ class _FindTeacherState extends State<FindTeacher> {
     } else {
       final article = _lookingInRooms ? 'von' : 'der';
       return Center(
-        child: Text('Schaue im Stundenplan $article ${result.currentClass}'),
+        child: Text(
+          'Schaue im Stundenplan $article ${result.currentSearchingPlace}',
+        ),
       );
     }
   }
