@@ -5,7 +5,7 @@ import 'package:homeworks/database/credentials.dart';
 import 'package:homeworks/database/models/credentials.dart';
 import 'package:homeworks/database/models/factory.dart';
 import 'package:homeworks/provider/credential_provider.dart';
-import 'package:homeworks/utilities/enums.dart' hide test;
+import 'package:homeworks/utilities/enums.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
@@ -34,6 +34,12 @@ void main() {
       password: 'password',
       server: 'server',
     );
+    final invalidCredentials = UntisCredentials(
+      school: 'school',
+      username: 'username',
+      password: 'wrongPassword',
+      server: 'server',
+    );
 
     setUp(() {
       itemFactory = MockItemFactory();
@@ -59,26 +65,29 @@ void main() {
       when(
         itemFactory.untisCredentialsFromJSON(testCredentials.toJsonString()),
       ).thenReturn(testCredentials);
-      when(
-        itemFactory.createUntisSession(testCredentials),
-      ).thenAnswer((_) async => session);
+      when(itemFactory.createUntisSession(testCredentials)).thenAnswer(
+        (_) async =>
+            SessionResult(session, UntisSessionStatus.sessionAccomplished),
+      );
+      when(itemFactory.createUntisSession(invalidCredentials)).thenAnswer(
+        (_) async => SessionResult(null, UntisSessionStatus.invalidCredentials),
+      );
     });
 
     test('should initializing by loading local and checking online', () async {
       // test
       await credentialProvider.initialize();
       // verify
-      expect(credentialProvider.isLoading, isFalse);
       expect(credentialProvider.hasCredentials, isTrue);
       expect(credentialProvider.credentials, equals(testCredentials));
       expect(credentialProvider.session, equals(session));
       expect(
-        credentialProvider.sessionState,
-        equals(UntisSessionState.accomplished),
+        credentialProvider.sessionStatus,
+        equals(UntisSessionStatus.sessionAccomplished),
       );
       expect(
         credentialProvider.credentialsOnlineStatus,
-        equals(CredentailsOnlineStatus.offline),
+        equals(CredentialsOnlineStatus.offline),
       );
 
       verify(storage.read(key: CredentialProvider.credentialsKey)).called(1);
@@ -121,8 +130,8 @@ void main() {
       expect(credentialProvider.credentials, isNull);
       expect(credentialProvider.session, isNull);
       expect(
-        credentialProvider.sessionState,
-        equals(UntisSessionState.noCredentials),
+        credentialProvider.sessionStatus,
+        equals(UntisSessionStatus.noCredentials),
       );
       verify(storage.delete(key: CredentialProvider.credentialsKey)).called(1);
     });
@@ -201,13 +210,30 @@ void main() {
         // verify
         expect(
           credentialProvider.credentialsOnlineStatus,
-          equals(CredentailsOnlineStatus.online),
+          equals(CredentialsOnlineStatus.online),
         );
         verify(
           firestoreCredentials.saveCredentials(testCredentials, userPassword),
         ).called(1);
       },
     );
+
+    test('should return error and not save on invalid credentials', () async {
+      // test
+      await expectLater(
+        credentialProvider.setCredentials(invalidCredentials),
+        throwsA(
+          predicate((e) => e.toString().contains('Ungültige Anmeldedaten')),
+        ),
+      );
+      // verify
+      expect(
+        credentialProvider.credentialsOnlineStatus,
+        isNot(equals(CredentialsOnlineStatus.online)),
+      );
+      expect(credentialProvider.hasCredentials, isFalse);
+      verifyNever(firestoreCredentials.saveCredentials(any, any));
+    });
 
     test(
       'should not raise error if asked to upload non existend credentials',
@@ -217,7 +243,7 @@ void main() {
         // verify
         expect(
           credentialProvider.credentialsOnlineStatus,
-          isNot(equals(CredentailsOnlineStatus.online)),
+          isNot(equals(CredentialsOnlineStatus.online)),
         );
         verifyNever(firestoreCredentials.saveCredentials(any, any));
       },

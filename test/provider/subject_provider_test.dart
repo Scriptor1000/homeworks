@@ -1,13 +1,25 @@
+import 'package:dart_untis_mobile/dart_untis_mobile.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:homeworks/database/models/subject.dart';
 import 'package:homeworks/database/subjects.dart';
 import 'package:homeworks/provider/subject_provider.dart';
 import 'package:homeworks/provider/untis_provider.dart';
-import 'package:homeworks/utilities/enums.dart' hide test;
+import 'package:homeworks/utilities/enums.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
 import 'subject_provider_test.mocks.dart';
+
+Subject createMockSubject(int id, bool fromUntis, bool withNextLesson) {
+  return Subject.fromDocument({
+    'id': id,
+    'fromUntis': fromUntis,
+    'visible': true,
+    'name': 'Subject $id',
+    if (withNextLesson)
+      'nextLesson': DateTime.now().add(Duration(days: id)).toIso8601String(),
+  });
+}
 
 @GenerateNiceMocks([
   MockSpec<Subject>(),
@@ -20,19 +32,10 @@ void main() {
     late MockUntisProvider mockUntisProvider;
     late SubjectProvider subjectProvider;
 
-    final firestoreSubjects = List.generate(6, (i) {
-      final mockSubject = MockSubject();
-      when(mockSubject.documentId).thenReturn('subject_$i');
-      return mockSubject;
-    }).toList();
-    final untisSubjects = List.generate(8, (i) {
-      final mockSubject = MockSubject();
-      when(mockSubject.documentId).thenReturn('subject_$i');
-      when(
-        mockSubject.nextLesson,
-      ).thenReturn(DateTime.now().add(Duration(days: i + 1)));
-      return mockSubject;
-    }).toList();
+    late List<Subject> firestoreSubjects;
+    late List<Subject> untisSubjects;
+
+    const int indexTillUntisSubjects = 4;
 
     setUp(() {
       mockFirestoreSubjects = MockFirestoreSubjects();
@@ -41,6 +44,15 @@ void main() {
       subjectProvider = SubjectProvider(
         firestoreSubjects: mockFirestoreSubjects,
       );
+
+      firestoreSubjects = List.generate(
+        6,
+        (i) => createMockSubject(i, i < indexTillUntisSubjects, false),
+      ).toList();
+      untisSubjects = List.generate(
+        8,
+        (i) => createMockSubject(i, true, true),
+      ).toList();
 
       when(
         mockFirestoreSubjects.loadAllUntisSubjects(),
@@ -121,10 +133,18 @@ void main() {
         // test
         subjectProvider.updateUntisSubjects(mockUntisProvider);
         // verify
-        for (int index = 0; index < firestoreSubjects.length; index++) {
-          final firestoreSubject = firestoreSubjects[index];
+        for (int index = 0; index < indexTillUntisSubjects; index++) {
+          final firestoreSubject = subjectProvider.subjects[index];
           final untisSubject = untisSubjects[index];
           expect(firestoreSubject.nextLesson, equals(untisSubject.nextLesson));
+        }
+        for (
+          int index = indexTillUntisSubjects;
+          index < firestoreSubjects.length;
+          index++
+        ) {
+          final firestoreSubject = firestoreSubjects[index];
+          expect(firestoreSubject.nextLesson, isNull);
         }
       },
     );
@@ -151,6 +171,60 @@ void main() {
         subjectProvider.untisSubjectStatus,
         equals(UntisSubjectStatus.error),
       );
+    });
+
+    test('should only get firestore subject by untis id', () async {
+      // setup
+      await subjectProvider.initialize();
+      when(
+        mockUntisProvider.untisSubjectStatus,
+      ).thenReturn(UntisSubjectStatus.loaded);
+      when(mockUntisProvider.untisSubjectsLoaded).thenReturn(true);
+      subjectProvider.updateUntisSubjects(mockUntisProvider);
+      final untisId = UntisElementDescriptor(UntisElementType.subject, 7);
+      // test
+      final subject = subjectProvider.getSubjectByUntisId(untisId);
+      // verify
+      expect(subject, isNull);
+    });
+
+    test('should toggle visibility correctly on call', () async {
+      // setup
+      await subjectProvider.initialize();
+      final subjectToToggle = firestoreSubjects[0];
+      // verify setup
+      expect(subjectProvider.subjects, equals(firestoreSubjects));
+      // test
+      await subjectProvider.toggleSubjectVisibility(subjectToToggle.documentId);
+      // verify
+      verify(mockFirestoreSubjects.saveSubject(subjectToToggle)).called(1);
+      expect(subjectToToggle.visible, false);
+    });
+
+    test('get correct subject by untis id', () async {
+      // setup
+      await subjectProvider.initialize();
+      final untisId = UntisElementDescriptor(UntisElementType.subject, 2);
+      // test
+      final subject = subjectProvider.getSubjectByUntisId(untisId);
+      // verify
+      expect(subject, isNotNull);
+      expect(subject?.id, equals(2));
+      expect(subject?.fromUntis, isTrue);
+      expect(subject?.nextLesson, isNull);
+    });
+
+    test('should only get subjects from untis by untis id', () async {
+      // setup
+      await subjectProvider.initialize();
+      final untisId = UntisElementDescriptor(
+        UntisElementType.subject,
+        indexTillUntisSubjects + 1,
+      );
+      // test
+      final subject = subjectProvider.getSubjectByUntisId(untisId);
+      // verify
+      expect(subject, isNull);
     });
   });
 }

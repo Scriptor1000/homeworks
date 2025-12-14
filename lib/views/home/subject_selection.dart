@@ -18,20 +18,38 @@ class SubjectSelection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final subjects = context.select(
-      (SubjectProvider provider) => provider.subjects,
-    );
+    final subjects = context
+        .watch<SubjectProvider>()
+        .subjects
+        .where((subject) => subject.visible)
+        .toList();
+
     return Scaffold(
       appBar: AppBar(title: const Text('Fach auswählen')),
-      body: SearchScreen<Subject>(
-        searchableItems: subjects,
-        searchHint: 'Fach suchen...',
-        getQueryString: (subject) => '${subject.name} ${subject.shortName}',
-        buildTile: _buildSubjectTile,
-        onSelected: (s) {
-          onSubjectSelected?.call(s);
-          Navigator.pop(context, s);
-        },
+      body: subjects.isEmpty
+          ? buildEmpty()
+          : SearchScreen<Subject>(
+              searchableItems: subjects,
+              searchHint: 'Fach suchen...',
+              getQueryString: (subject) =>
+                  '${subject.name} ${subject.shortName}',
+              buildTile: _buildSubjectTile,
+              onSelected: (s) {
+                onSubjectSelected?.call(s);
+                Navigator.pop(context, s);
+              },
+            ),
+    );
+  }
+
+  Widget buildEmpty() {
+    return Center(
+      child: Text(
+        'Keine Fächer vorhanden. \n'
+        'Um Fächer hinzuzufügen, musst du dein Untis Konto verbinden.\n'
+        'Weil jede Hausaufgabe einem Fach zugeordnet sein muss, '
+        'kannst du ohne diese Verbindung keine Hausaufgaben erstellen.'
+        'Falls du dies bereits getan hast, kann es sein dass alle Fächer ausgeblendet sind. ',
       ),
     );
   }
