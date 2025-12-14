@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 
+import '../../provider/credential_provider.dart';
 import '../../provider/untis_provider.dart';
+import '../../utilities/enums.dart';
 
 /// Screen to view the timetable of a teacher.
 class FindTeacher extends StatefulWidget {
@@ -48,13 +50,32 @@ class _FindTeacherState extends State<FindTeacher> {
   Widget build(BuildContext context) {
     initStream();
     if (_teacher == null) {
-      // TODO switch status
-      return Scaffold(
-        appBar: AppBar(title: Text('Fehler')),
-        body: Center(
-          child: Text('Kein Lehrer mit ID: ${widget.teacher.id} gefunden'),
+      final CredentialProvider credentialProvider = context.watch();
+      return switch (credentialProvider.sessionStatus) {
+        .loading => Scaffold(
+          appBar: AppBar(title: Text('Untis wird geladen')),
+          body: Center(child: CircularProgressIndicator()),
         ),
-      );
+        .sessionAccomplished => Scaffold(
+          appBar: AppBar(title: Text('Nicht gefunden')),
+          body: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('404', style: Theme.of(context).textTheme.headlineLarge),
+                SizedBox(height: 16),
+                Text(
+                  'Es wurde kein Lehrer mit der ID ${widget.teacher.id} gefunden.',
+                ),
+              ],
+            ),
+          ),
+        ),
+        _ => Scaffold(
+          appBar: AppBar(title: Text('Fehler')),
+          body: Center(child: Text('Es besteht keine Verbindung zu Untis. ')),
+        ),
+      };
     }
     return Scaffold(
       appBar: AppBar(title: Text('Stundenplan von ${_teacher!.fullName}')),

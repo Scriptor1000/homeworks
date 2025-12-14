@@ -206,7 +206,7 @@ class UntisProvider extends ChangeNotifier {
 
     final searchPlaces = await getSearchPlaces();
     final now = DateTime.now();
-    Set<UntisPeriod> foundPeriods = previousResults;
+    Set<UntisPeriod> foundPeriods = Set.from(previousResults);
     Set<int> foundIDs = previousResults.map((p) => p.id).toSet();
     for (var (searchId, searchPlace) in searchPlaces) {
       yield TeacherSearchResult(

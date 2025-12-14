@@ -40,7 +40,7 @@ class _UntisViewState extends State<UntisView> {
             children: [
               const Divider(),
               const StatusCheck(),
-              if (credentialProvider.sessionState == .accomplished) ...[
+              if (credentialProvider.sessionStatus == .sessionAccomplished) ...[
                 const Divider(),
                 const FindTeacherTile(),
               ],
