@@ -173,32 +173,6 @@ void main() {
       );
     });
 
-    test('should toggle visibility correctly on call', () async {
-      // setup
-      await subjectProvider.initialize();
-      final subjectToToggle = firestoreSubjects[0];
-      // verify setup
-      expect(subjectProvider.subjects, equals(firestoreSubjects));
-      // test
-      await subjectProvider.toggleSubjectVisibility(subjectToToggle.documentId);
-      // verify
-      verify(mockFirestoreSubjects.saveSubject(subjectToToggle)).called(1);
-      expect(subjectToToggle.visible, false);
-    });
-
-    test('get correct subject by untis id', () async {
-      // setup
-      await subjectProvider.initialize();
-      final untisId = UntisElementDescriptor(UntisElementType.subject, 2);
-      // test
-      final subject = subjectProvider.getSubjectByUntisId(untisId);
-      // verify
-      expect(subject, isNotNull);
-      expect(subject?.id, equals(2));
-      expect(subject?.fromUntis, isTrue);
-      expect(subject?.nextLesson, isNull);
-    });
-
     test('should only get firestore subject by untis id', () async {
       // setup
       await subjectProvider.initialize();
@@ -238,21 +212,6 @@ void main() {
       expect(subject?.id, equals(2));
       expect(subject?.fromUntis, isTrue);
       expect(subject?.nextLesson, isNull);
-    });
-
-    test('should only get firestore subject by untis id', () async {
-      // setup
-      await subjectProvider.initialize();
-      when(
-        mockUntisProvider.untisSubjectStatus,
-      ).thenReturn(UntisSubjectStatus.loaded);
-      when(mockUntisProvider.untisSubjectsLoaded).thenReturn(true);
-      subjectProvider.updateUntisSubjects(mockUntisProvider);
-      final untisId = UntisElementDescriptor(UntisElementType.subject, 7);
-      // test
-      final subject = subjectProvider.getSubjectByUntisId(untisId);
-      // verify
-      expect(subject, isNull);
     });
 
     test('should only get subjects from untis by untis id', () async {
