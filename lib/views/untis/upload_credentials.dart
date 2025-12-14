@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../provider/credential_provider.dart';
@@ -30,24 +29,7 @@ class _UploadCredentialsState extends State<UploadCredentials> {
   final TextEditingController _serverController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
-  bool loading = false;
-  bool completed = false;
-
-  @override
-  void initState() {
-    super.initState();
-    final credentials = context.read<CredentialProvider>().credentials;
-    if (credentials != null) {
-      setState(() {
-        _usernameController.text = credentials.username;
-        _passwordController.text = credentials.password;
-        _schoolController.text = credentials.school;
-        _serverController.text = credentials.server;
-      });
-    } else {
-      context.pop();
-    }
-  }
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -62,9 +44,19 @@ class _UploadCredentialsState extends State<UploadCredentials> {
   @override
   Widget build(BuildContext context) {
     // Prüfe, ob die Credentials bereits hochgeladen wurden
-    final untisProvider = Provider.of<CredentialProvider>(context);
-    final bool alreadyUploaded =
-        untisProvider.credentialsOnlineStatus == CredentailsOnlineStatus.online;
+    final credentialProvider = context.watch<CredentialProvider>();
+    final bool alreadyUploaded = [
+      CredentialsOnlineStatus.online,
+      CredentialsOnlineStatus.changed,
+    ].contains(credentialProvider.credentialsOnlineStatus);
+
+    final credentials = credentialProvider.credentials;
+    if (credentials != null) {
+      _usernameController.text = credentials.username;
+      _passwordController.text = credentials.password;
+      _schoolController.text = credentials.school;
+      _serverController.text = credentials.server;
+    }
 
     return Scaffold(
       appBar: AppBar(title: const Text('Anmeldedaten online speichern')),
@@ -76,7 +68,7 @@ class _UploadCredentialsState extends State<UploadCredentials> {
           child: Column(
             children: [
               OwnProgressIndicator(
-                active: loading,
+                active: _isLoading,
                 backgroundColor: Theme.of(context).colorScheme.surface,
               ),
               // Hauptinhalt mit ScrollView im Expanded
@@ -90,12 +82,13 @@ class _UploadCredentialsState extends State<UploadCredentials> {
                       // Zeige Info an, wenn die Daten bereits hochgeladen wurden
                       if (alreadyUploaded)
                         const InfoBox(
-                          title: 'Hinweis',
+                          title: 'Achtung!',
                           paragraphs: [
-                            'Deine Anmeldedaten wurden bereits erfolgreich online gespeichert. Eine erneute Speicherung überschreibt die bestehenden Daten.',
+                            'Es sind bereits Anmeldedaten in deiner Cloud gespeichert. Durch das Hochladen werden diese unwiderruflich überschrieben.',
+                            'Dein alter Schlüssel wird durch diesen Vorgang ungültig. Du kannst ausschließlich mit dem neuen Schlüssel auf deine Anmeldedaten zugreifen.',
                           ],
-                          icon: Icons.check_circle_outline,
-                          accentColor: Colors.green,
+                          icon: Icons.warning,
+                          accentColor: Colors.orange,
                         ),
 
                       if (alreadyUploaded) standardGap(),
@@ -155,7 +148,7 @@ class _UploadCredentialsState extends State<UploadCredentials> {
       ),
       floatingActionButton: ExtendedFAB(
         onClick: save,
-        active: !loading,
+        active: !_isLoading,
         icon: Icons.cloud_upload,
         label: 'Hochladen',
       ),
@@ -164,39 +157,44 @@ class _UploadCredentialsState extends State<UploadCredentials> {
   }
 
   void save() async {
-    if (loading || completed) return;
+    if (_isLoading) return;
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
     setState(() {
-      loading = true;
+      _isLoading = true;
     });
 
     final secret = _secretController.text;
-    final credentialProvider = Provider.of<CredentialProvider>(
-      context,
-      listen: false,
-    );
+    final credentialProvider = context.read<CredentialProvider>();
 
-    await credentialProvider.uploadCredentialsOnline(secret).onError((
-      error,
-      _,
-    ) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Fehler beim Hochladen der Anmeldedaten'),
-            backgroundColor: Colors.red,
-          ),
+    await credentialProvider
+        .uploadCredentialsOnline(secret)
+        .then(
+          (_) => {
+            if (mounted)
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Anmeldedaten erfolgreich hochgeladen'),
+                ),
+              ),
+            setState(() {
+              _isLoading = false;
+            }),
+          },
+          onError: (error, _) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Fehler beim Hochladen der Anmeldedaten'),
+                ),
+              );
+              setState(() {
+                _isLoading = false;
+              });
+            }
+          },
         );
-      }
-    });
-
-    if (mounted) {
-      setState(() {
-        loading = false;
-      });
-    }
   }
 }

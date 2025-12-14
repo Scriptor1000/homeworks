@@ -1,7 +1,7 @@
 import 'package:dart_untis_mobile/dart_untis_mobile.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:homeworks/provider/untis_provider.dart';
-import 'package:homeworks/utilities/enums.dart' hide test;
+import 'package:homeworks/utilities/enums.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 

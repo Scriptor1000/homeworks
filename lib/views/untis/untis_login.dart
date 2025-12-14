@@ -41,8 +41,13 @@ class _UntisLoginState extends State<UntisLogin> {
 
   @override
   void initState() {
-    _schoolController.text = 'Albert Schweitzer';
-    _serverController.text = 'hektor.webuntis.com';
+    final provider = context.read<CredentialProvider>();
+    _usernameController.text = provider.credentials?.username ?? '';
+    _passwordController.text = provider.credentials?.password ?? '';
+    _schoolController.text =
+        provider.credentials?.school ?? 'albert-schweitzer';
+    _serverController.text =
+        provider.credentials?.server ?? 'albert-schweitzer.webuntis.com';
 
     super.initState();
   }
@@ -61,28 +66,29 @@ class _UntisLoginState extends State<UntisLogin> {
     setState(() {
       _isLoading = true;
     });
-    CredentialProvider provider = context.read<CredentialProvider>();
+    final provider = context.read<CredentialProvider>();
     await provider
         .setCredentials(credentials)
-        .then((_) {
-          if (mounted) {
-            context.pop();
-          }
-        })
-        .onError((error, _) {
-          setState(() {
-            showSnackBar('Fehler: $error');
-            _isLoading = false;
-          });
-        });
-
-    // TODO maybe straight to upload or import?
+        .then(
+          (_) {
+            if (mounted) {
+              context.pop();
+            }
+          },
+          onError: (error, _) {
+            setState(() {
+              showSnackBar('Fehler: $error');
+              _isLoading = false;
+            });
+          },
+        );
   }
 
   @override
   Widget build(BuildContext context) {
+    final provider = context.watch<CredentialProvider>();
     return Scaffold(
-      appBar: AppBar(title: const Text('Login')),
+      appBar: AppBar(title: const Text('Untis Anmeldung')),
       body: Column(
         children: [
           OwnProgressIndicator(
@@ -95,6 +101,18 @@ class _UntisLoginState extends State<UntisLogin> {
               child: SingleChildScrollView(
                 child: Column(
                   children: [
+                    if (provider.sessionStatus == .sessionAccomplished)
+                      InfoBox(
+                        paragraphs: [
+                          'Du hast bereits gültige Anmeldedaten für Untis angegeben.',
+                          'Wenn du fortfährst, werden deine vorhandenen Anmeldedaten unwiderruflich überschrieben.',
+                        ],
+                        title: 'Achtung',
+                        icon: Icons.warning,
+                        accentColor: Colors.orange,
+                      ),
+                    if (provider.sessionStatus == .sessionAccomplished)
+                      standardGap(),
                     const Text(
                       'Gebe deine Anmeldedaten für Untis ein.',
                       style: TextStyle(fontSize: 16),
@@ -127,7 +145,7 @@ class _UntisLoginState extends State<UntisLogin> {
         onClick: submit,
         active: !_isLoading,
         icon: Icons.login,
-        label: 'Session erstellen und lokal speichern',
+        label: 'Anmelden & lokal speichern',
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );

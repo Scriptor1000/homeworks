@@ -1,5 +1,5 @@
 /// The status of the credentials online check.
-enum CredentailsOnlineStatus {
+enum CredentialsOnlineStatus {
   /// The credentials are online and match the local credentials.
   online,
 
@@ -16,7 +16,13 @@ enum CredentailsOnlineStatus {
   error,
 }
 
-var test = CredentailsOnlineStatus.offline;
+enum UntisSessionStatus {
+  noCredentials,
+  loading,
+  sessionAccomplished,
+  invalidCredentials,
+  error,
+}
 
 /// The status of the subjects wich are loaded from Untis.
 enum UntisSubjectStatus {
@@ -71,5 +77,3 @@ enum GoogleSignInState {
   error,
   loading,
 }
-
-enum UntisSessionState { noCredentials, loading, accomplished, error }
