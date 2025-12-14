@@ -58,8 +58,6 @@ class FirestoreSubjects {
   ///
   /// Entfernt das Dokument von [subject] aus der [subjectCollection] von Firestore.
   Future<void> deleteSubject(Subject subject) async {
-    print('Deleting subject: ${subject.documentId}');
-
     await _subjectCollectionRef.doc(subject.documentId).delete();
   }
 

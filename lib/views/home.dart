@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 
 import '../database/models/homework.dart';
 import '../database/models/subject.dart';
 import '../provider/homeworks_provider.dart';
+import '../provider/subject_provider.dart';
 import '../provider/untis_provider.dart';
 import '../routes/typesafe_router.dart';
 import '../utilities/constants.dart';
@@ -99,8 +101,8 @@ class _HomeState extends State<Home> {
     );
   }
 
-  void onCompleted(int index) {
-    print('Homework at index $index completed');
+  void statusChange(int index) {
+    // this is just for possible future animations, etc.
   }
 
   Widget buildUrgentHomeworks(BuildContext context, Homeworks urgentHomeworks) {
@@ -185,8 +187,8 @@ class _HomeState extends State<Home> {
           padding: const EdgeInsets.symmetric(vertical: 6),
           child: HomeworkTile(
             homework: homework,
-            onCompleted: () {
-              onCompleted(index);
+            statusChange: () {
+              statusChange(index);
             },
           ),
         );
@@ -244,19 +246,35 @@ class _HomeState extends State<Home> {
 
   Future<void> fastCreate() async {
     final untisProvider = context.read<UntisProvider>();
-    var currentSubject = untisProvider.getCurrentSubject();
+    final currentSubjectID = untisProvider.getCurrentSubject();
 
-    if (currentSubject == null) {
-      // This is pushed because it should not be showed in the URL
+    if (currentSubjectID == null) {
+      // This is pushed because it should not be shown in the URL
       // and it should always navigate back to this page.
       SubjectSelectionRoute($extra: onSubjectForFastCreate).push(context);
     } else {
+      final subjectProvider = context.read<SubjectProvider>();
       final homeworkProvider = context.read<HomeworksProvider>();
-      await homeworkProvider.fastCreateHomework(
-        _textController.text,
-        currentSubject,
+      final currentSubject = subjectProvider.getSubjectByUntisId(
+        currentSubjectID,
       );
-      _textController.clear();
+      if (currentSubject == null) {
+        Sentry.logger.warn(
+          'No subject found for current subject ID: ${currentSubjectID.id}',
+        );
+        SubjectSelectionRoute($extra: onSubjectForFastCreate).push(context);
+      } else {
+        if (currentSubject.visible == false) {
+          showSnackBar(
+            'Das erkannte aktuelle Fach ist ausgeblendet, es wurde trotzdem verwendet.',
+          );
+        }
+        await homeworkProvider.fastCreateHomework(
+          _textController.text,
+          currentSubject,
+        );
+        _textController.clear();
+      }
     }
   }
 

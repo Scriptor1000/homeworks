@@ -267,10 +267,10 @@ class SubjectOverview extends StatelessWidget {
                  -1,
            )
            .toList(),
-       remainingSubjects = untisSubjects
+       remainingSubjects = firestoreSubjects
            .where(
-             (untisElement) =>
-                 firestoreSubjects.indexWhere((e) => e.id == untisElement.id) !=
+             (firestoreElement) =>
+                 untisSubjects.indexWhere((e) => e.id == firestoreElement.id) !=
                  -1,
            )
            .toList();

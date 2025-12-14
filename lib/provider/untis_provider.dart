@@ -68,7 +68,7 @@ class UntisProvider extends ChangeNotifier {
   /// The current subject is determined as the last period which started before now and ended in the last 30 minutes.
   /// This uses [lastWhereOrNull] to ensure that if multiple periods match, the most recent one (closest to now) is selected,
   /// which is important for single periods without a pause between.
-  Subject? getCurrentSubject() {
+  UntisElementDescriptor? getCurrentSubject() {
     final now = DateTime.now();
     final currentPeriod = _todayPeriods.lastWhereOrNull(
       (period) =>
@@ -81,12 +81,7 @@ class UntisProvider extends ChangeNotifier {
     if (currentPeriod == null) {
       return null;
     }
-    Subject currentSubject = Subject.fromUntisSubject(currentPeriod.subject!);
-    final nextLessonDates = getNextLessonDates();
-    if (nextLessonDates.containsKey(currentSubject.documentId)) {
-      currentSubject.nextLesson = nextLessonDates[currentSubject.documentId];
-    }
-    return currentSubject;
+    return currentPeriod.subject?.id;
   }
 
   /// Updates the Untis credentials and loads the timetable if the credentials has changed.

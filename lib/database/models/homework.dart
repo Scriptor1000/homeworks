@@ -3,19 +3,22 @@ import 'dart:core';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:uuid/uuid.dart';
 
-/// A Homework wich can be saved to Firestore.
+import '../../utilities/enums.dart';
+
+/// A Homework which can be saved to Firestore.
 class Homework {
   final String id;
   final String title;
   final String description;
   final String subjectDocId;
   final bool toNextLesson;
-  final bool isExam;
   final bool fromUntis;
   final DateTime createdAt;
+
+  final HomeworkType type;
   bool isCompleted;
 
-  // dueDate can be null, but only if toNextLesson is true wich can only be if the subject is from Untis.
+  // dueDate can be null, but only if toNextLesson is true which can only be if the subject is from Untis.
   DateTime? dueDate;
 
   Homework({
@@ -27,14 +30,14 @@ class Homework {
     required this.isCompleted,
     required this.fromUntis,
     this.dueDate,
-    this.isExam = false, // TODO remove --> own Exam class
+    this.type = HomeworkType.homework,
     DateTime? createdAt,
   }) : createdAt = createdAt ?? DateTime.now(),
        id = id ?? const Uuid().v4() {
     if (toNextLesson) {
       assert(
-        subjectDocId.startsWith("untis"),
-        'Homework with toNextLesson must be assoziated with a Subject from Untis.',
+        subjectDocId.startsWith('untis'),
+        'Homework with toNextLesson must be associated with a Subject from Untis.',
       );
     }
     if (dueDate == null) {
@@ -46,6 +49,11 @@ class Homework {
   }
 
   factory Homework.fromDocument(Map<String, dynamic> json) {
+    if (!json.containsKey('homeworkType')) {
+      json['homeworkType'] = json['isExam'] == true
+          ? HomeworkType.exam.index
+          : HomeworkType.homework.index;
+    }
     return Homework(
       id: json['id'] as String,
       title: json['title'] as String,
@@ -53,7 +61,7 @@ class Homework {
       subjectDocId: json['subjectDocId'] as String,
       toNextLesson: json['toNextLesson'] as bool,
       isCompleted: json['isCompleted'] as bool,
-      isExam: json['isExam'] as bool? ?? false,
+      type: HomeworkType.values[json['homeworkType'] as int],
       fromUntis: json['fromUntis'] as bool,
       dueDate: json.containsKey('dueDate')
           ? (json['dueDate'] as Timestamp).toDate()
@@ -70,7 +78,7 @@ class Homework {
       'toNextLesson': toNextLesson,
       'isCompleted': isCompleted,
       'fromUntis': fromUntis,
-      'isExam': isExam,
+      'homeworkType': type.index,
       'subjectDocId': subjectDocId,
       if (dueDate != null) 'dueDate': Timestamp.fromDate(dueDate!),
       'createdAt': Timestamp.fromDate(createdAt),
@@ -88,5 +96,5 @@ class Homework {
             dueDate!.month,
             dueDate!.day,
           ).difference(DateTime.now()).inDays <
-          (isExam ? 3 : 1);
+          (type == HomeworkType.exam ? 3 : 1);
 }

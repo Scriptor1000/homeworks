@@ -16,17 +16,39 @@ enum CredentialsOnlineStatus {
   error,
 }
 
+/// The type of an entry
+enum HomeworkType {
+  /// A regular homework assignment.
+  homework,
+
+  /// An exam or test, which cannot be marked as completed.
+  exam,
+
+  /// A general appointment or event, which shows time and date.
+  appointment,
+}
+
+/// The status of the Untis session.
 enum UntisSessionStatus {
+  /// There are no Untis credentials available / given by the user.
   noCredentials,
+
+  /// The credentials or the session is being validated / created.
   loading,
+
+  /// The Untis session is valid and can be used to fetch data.
   sessionAccomplished,
+
+  /// The credentials given are invalid.
   invalidCredentials,
+
+  /// An error occurred while creating or validating the session.
   error,
 }
 
-/// The status of the subjects wich are loaded from Untis.
+/// The status of the subjects which are loaded from Untis.
 enum UntisSubjectStatus {
-  /// There are no Untis credentials wich could be used to get Subjects from Untis.
+  /// There are no Untis credentials which could be used to get Subjects from Untis.
   untisUnavailable,
 
   /// The subjects are currently being fetched from Untis.
