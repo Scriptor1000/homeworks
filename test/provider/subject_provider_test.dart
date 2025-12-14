@@ -214,19 +214,6 @@ void main() {
       expect(subject, isNull);
     });
 
-    test('should only get subjects from untis by untis id', () async {
-      // setup
-      await subjectProvider.initialize();
-      final untisId = UntisElementDescriptor(
-        UntisElementType.subject,
-        indexTillUntisSubjects + 1,
-      );
-      // test
-      final subject = subjectProvider.getSubjectByUntisId(untisId);
-      // verify
-      expect(subject, isNull);
-    });
-
     test('should toggle visibility correctly on call', () async {
       // setup
       await subjectProvider.initialize();

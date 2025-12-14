@@ -137,26 +137,28 @@ class HomeworksProvider extends ChangeNotifier {
       fromUntis: false,
       type: type,
     );
-    _homeworks.add(homework);
-    await _firestoreHomeworks.saveHomework(homework);
-    notifyListeners();
-
-    _analyticsService.createHomework(
-      type: type,
-      isToNextLesson: true,
-      isCreatedFast: true,
+    return _mutateState(
+      mutateLocalState: () => _homeworks.add(homework),
+      mutateRemoteState: () async =>
+          await _firestoreHomeworks.saveHomework(homework),
+      logAnalytics: () => _analyticsService.createHomework(
+        type: homework.type,
+        isToNextLesson: homework.toNextLesson,
+        isCreatedFast: true,
+      ),
     );
   }
 
   Future<void> createHomework(Homework homework) async {
-    _homeworks.add(homework);
-    await _firestoreHomeworks.saveHomework(homework);
-    notifyListeners();
-
-    _analyticsService.createHomework(
-      type: homework.type,
-      isToNextLesson: homework.toNextLesson,
-      isCreatedFast: false,
+    return _mutateState(
+      mutateLocalState: () => _homeworks.add(homework),
+      mutateRemoteState: () async =>
+          await _firestoreHomeworks.saveHomework(homework),
+      logAnalytics: () => _analyticsService.createHomework(
+        type: homework.type,
+        isToNextLesson: homework.toNextLesson,
+        isCreatedFast: false,
+      ),
     );
   }
 
@@ -168,16 +170,17 @@ class HomeworksProvider extends ChangeNotifier {
   Future<void> deleteHomework(String homeworkID) async {
     final homework = _homeworks.firstWhereOrNull((hw) => hw.id == homeworkID);
     if (homework != null) {
-      await _firestoreHomeworks.deleteHomework(homework.documentId);
-      _homeworks.remove(homework);
-      notifyListeners();
-
-      _analyticsService.deleteHomework(
-        type: homework.type,
-        isPastDueBy: homework.dueDate != null
-            ? DateTime.now().difference(homework.dueDate!)
-            : null,
-        isCompleted: homework.isCompleted,
+      return _mutateState(
+        mutateLocalState: () => _homeworks.remove(homework),
+        mutateRemoteState: () async =>
+            await _firestoreHomeworks.deleteHomework(homework.documentId),
+        logAnalytics: () => _analyticsService.deleteHomework(
+          type: homework.type,
+          isPastDueBy: homework.dueDate != null
+              ? DateTime.now().difference(homework.dueDate!)
+              : null,
+          isCompleted: homework.isCompleted,
+        ),
       );
     } else {
       Sentry.logger.error(
@@ -195,12 +198,13 @@ class HomeworksProvider extends ChangeNotifier {
   Future<void> newDueDate(String homeworkID, DateTime dueDate) async {
     final homework = _homeworks.firstWhereOrNull((hw) => hw.id == homeworkID);
     if (homework != null) {
-      homework.dueDate = dueDate;
-      await _firestoreHomeworks.saveHomework(homework);
-      notifyListeners();
-
-      // because this functions is only called when a homework is revived
-      _analyticsService.reviveHomework(type: homework.type);
+      return _mutateState(
+        mutateLocalState: () => homework.dueDate = dueDate,
+        mutateRemoteState: () async =>
+            await _firestoreHomeworks.saveHomework(homework),
+        logAnalytics: () =>
+            _analyticsService.reviveHomework(type: homework.type),
+      );
     } else {
       Sentry.logger.error(
         'Homework with id $homeworkID not found for new due date. '
@@ -234,36 +238,50 @@ class HomeworksProvider extends ChangeNotifier {
   Future<void> _completeHomework(Homework homework) async {
     if (homework.dueDate != null &&
         homework.dueDate!.isBefore(DateTime.now())) {
-      _homeworks.remove(homework);
-      await _firestoreHomeworks.deleteHomework(homework.documentId);
-      notifyListeners();
-
-      _analyticsService.completeAndDeleteHomework(
-        type: homework.type,
-        isPastDueBy: DateTime.now().difference(homework.dueDate!),
+      return _mutateState(
+        mutateLocalState: () => _homeworks.remove(homework),
+        mutateRemoteState: () async =>
+            await _firestoreHomeworks.deleteHomework(homework.documentId),
+        logAnalytics: () => _analyticsService.completeAndDeleteHomework(
+          type: homework.type,
+          isPastDueBy: DateTime.now().difference(homework.dueDate!),
+        ),
       );
     } else {
-      homework.isCompleted = true;
-      await _firestoreHomeworks.saveHomework(homework);
-      notifyListeners();
-
-      _analyticsService.completeHomework(
-        type: homework.type,
-        isPastDueBy: homework.dueDate != null
-            ? DateTime.now().difference(homework.dueDate!)
-            : null,
+      return _mutateState(
+        mutateLocalState: () => homework.isCompleted = true,
+        mutateRemoteState: () async =>
+            await _firestoreHomeworks.saveHomework(homework),
+        logAnalytics: () => _analyticsService.completeHomework(
+          type: homework.type,
+          isPastDueBy: homework.dueDate != null
+              ? DateTime.now().difference(homework.dueDate!)
+              : null,
+        ),
       );
     }
   }
 
   Future<void> _uncompleteHomework(Homework homework) async {
-    homework.isCompleted = false;
-    await _firestoreHomeworks.saveHomework(homework);
-    notifyListeners();
-
-    _analyticsService.uncompleteHomework(
-      type: homework.type,
-      isDueIn: homework.dueDate?.difference(DateTime.now()),
+    return _mutateState(
+      mutateLocalState: () => homework.isCompleted = false,
+      mutateRemoteState: () async =>
+          await _firestoreHomeworks.saveHomework(homework),
+      logAnalytics: () => _analyticsService.uncompleteHomework(
+        type: homework.type,
+        isDueIn: homework.dueDate?.difference(DateTime.now()),
+      ),
     );
+  }
+
+  Future<void> _mutateState({
+    required VoidCallback mutateLocalState,
+    required Future<void> Function() mutateRemoteState,
+    required VoidCallback logAnalytics,
+  }) async {
+    mutateLocalState();
+    await mutateRemoteState();
+    notifyListeners();
+    logAnalytics();
   }
 }

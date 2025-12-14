@@ -47,10 +47,11 @@ class AnalyticsService {
   }) async {
     await _analytics.logEvent(
       name: 'complete_homework',
-      parameters: {
-        'type': type.name,
-        if (isPastDueBy != null) 'isPastDueByMin': isPastDueBy.inMinutes,
-      },
+      parameters: _buildParameter(
+        minutesName: 'isPastDueByMin',
+        minutes: isPastDueBy,
+        type: type,
+      ),
     );
   }
 
@@ -61,10 +62,11 @@ class AnalyticsService {
   void uncompleteHomework({required HomeworkType type, Duration? isDueIn}) {
     _analytics.logEvent(
       name: 'uncomplete_homework',
-      parameters: {
-        'type': type.name,
-        if (isDueIn != null) 'isDueInMin': isDueIn.inMinutes,
-      },
+      parameters: _buildParameter(
+        minutesName: 'isDueInMin',
+        minutes: isDueIn,
+        type: type,
+      ),
     );
   }
 
@@ -79,7 +81,11 @@ class AnalyticsService {
   }) async {
     await _analytics.logEvent(
       name: 'complete_and_delete_homework',
-      parameters: {'type': type.name, 'isPastDueByMin': isPastDueBy.inMinutes},
+      parameters: _buildParameter(
+        minutesName: 'isPastDueByMin',
+        minutes: isPastDueBy,
+        type: type,
+      ),
     );
   }
 
@@ -96,9 +102,12 @@ class AnalyticsService {
     await _analytics.logEvent(
       name: 'delete_homework',
       parameters: {
-        'type': type.name,
+        ..._buildParameter(
+          minutesName: 'isPastDueByMin',
+          minutes: isPastDueBy,
+          type: type,
+        ),
         'status': isCompleted ? 'completed' : 'not completed',
-        if (isPastDueBy != null) 'isPastDueByMin': isPastDueBy.inMinutes,
       },
     );
   }
@@ -111,5 +120,16 @@ class AnalyticsService {
       name: 'revive_homework',
       parameters: {'type': type.name},
     );
+  }
+
+  Map<String, Object> _buildParameter({
+    required String minutesName,
+    required Duration? minutes,
+    required HomeworkType type,
+  }) {
+    return {
+      'type': type.name,
+      if (minutes != null) minutesName: minutes.inMinutes,
+    };
   }
 }
