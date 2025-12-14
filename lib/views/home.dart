@@ -244,7 +244,7 @@ class _HomeState extends State<Home> {
     final currentSubjectID = untisProvider.getCurrentSubject();
 
     if (currentSubjectID == null) {
-      // This is pushed because it should not be showed in the URL
+      // This is pushed because it should not be shown in the URL
       // and it should always navigate back to this page.
       SubjectSelectionRoute($extra: onSubjectForFastCreate).push(context);
     } else {

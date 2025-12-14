@@ -28,7 +28,7 @@ enum HomeworkType {
   appointment,
 }
 
-/// The status of the subjects wich are loaded from Untis.
+/// The status of the subjects which are loaded from Untis.
 enum UntisSubjectStatus {
   /// There are no Untis credentials which could be used to get Subjects from Untis.
   untisUnavailable,

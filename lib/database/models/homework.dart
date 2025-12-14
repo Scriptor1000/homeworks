@@ -79,7 +79,6 @@ class Homework {
       'isCompleted': isCompleted,
       'fromUntis': fromUntis,
       'homeworkType': type.index,
-      'isExam': type == HomeworkType.exam,
       'subjectDocId': subjectDocId,
       if (dueDate != null) 'dueDate': Timestamp.fromDate(dueDate!),
       'createdAt': Timestamp.fromDate(createdAt),

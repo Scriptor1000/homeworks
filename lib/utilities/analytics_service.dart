@@ -18,7 +18,7 @@ class AnalyticsService {
 
   /// Logs the event of creating a new homework.
   ///
-  /// The parameter [type] indicates the Type of the Homework as [HomeworkType] .
+  /// The parameter [type] indicates the type of the homework as [HomeworkType].
   /// The parameter [isToNextLesson] indicates whether the due date is to be set to the next lesson.
   /// The parameter [isCreatedFast] indicates whether the homework was created using the fast create option.
   Future<void> createHomework(
@@ -33,7 +33,7 @@ class AnalyticsService {
 
   /// Logs the event of completing a homework.
   ///
-  /// The parameter [type] indicates the Type of the Homework as [HomeworkType] .
+  /// The parameter [type] indicates the type of the homework as [HomeworkType].
   /// The Parameter [isPastDueBy] is optional and indicates by how much time the homework was past due when completed.
   Future<void> completeHomework(
       {required HomeworkType type, Duration? isPastDueBy}) async {
@@ -45,7 +45,7 @@ class AnalyticsService {
 
   /// Logs the event of uncompleting a homework.
   ///
-  /// The parameter [type] indicates the Type of the Homework as [HomeworkType].
+  /// The parameter [type] indicates the type of the homework as [HomeworkType].
   /// The parameter [isDueIn] is optional and indicates in how much time the homework is due.
   void uncompleteHomework({required HomeworkType type, Duration? isDueIn}) {
     _analytics.logEvent(name: 'uncomplete_homework', parameters: {
@@ -56,7 +56,7 @@ class AnalyticsService {
 
   /// Logs the event of completing a homework which is then deleted.
   ///
-  /// The parameter [type] indicates the Type of the Homework as [HomeworkType] .
+  /// The parameter [type] indicates the type of the homework as [HomeworkType].
   /// The Parameter [isPastDueBy] is here required because a homework is deleted if it is
   /// completed and past due, so this information is always available.
   Future<void> completeAndDeleteHomework(
@@ -70,7 +70,7 @@ class AnalyticsService {
 
   /// Logs the event of manually deleting a homework.
   ///
-  /// The parameter [type] indicates the Type of the Homework as [HomeworkType] .
+  /// The parameter [type] indicates the type of the homework as [HomeworkType].
   /// The parameter [isCompleted] indicates whether the homework was completed before deletion.
   /// The parameter [isPastDueBy] is optional and indicates by how much time the homework was past due when deleted.
   Future<void> deleteHomework({
@@ -87,7 +87,7 @@ class AnalyticsService {
 
   /// Logs the event of reviving a homework.
   ///
-  /// The parameter [type] indicates the Type of the Homework as [HomeworkType] .
+  /// The parameter [type] indicates the type of the homework as [HomeworkType].
   Future<void> reviveHomework({required HomeworkType type}) async {
     await _analytics
         .logEvent(name: 'revive_homework', parameters: {'type': type.name});

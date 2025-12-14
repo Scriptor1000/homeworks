@@ -39,9 +39,9 @@ class SubjectProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// The Subject associated with the given [UntisElementDescriptor].
+  /// The subject associated with the given [UntisElementDescriptor].
   ///
-  /// Returns null if no such Subject exists within [_firestoreSubjects].
+  /// Returns null if no such subject exists within [_firestoreSubjects].
   Subject? getSubjectByUntisId(UntisElementDescriptor untisId) {
     if (untisId.type != UntisElementType.subject) {
       return null;
