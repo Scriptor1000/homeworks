@@ -10,6 +10,7 @@ import '../routes/typesafe_router.dart';
 import '../utilities/enums.dart';
 import '../widgets/bottom_sheet_list.dart';
 import '../widgets/fab.dart';
+import '../widgets/select_teachers.dart';
 import '../widgets/info_box.dart';
 
 /// A view for managing the Untis integration.
@@ -29,6 +30,7 @@ class _UntisViewState extends State<UntisView> {
 
   @override
   Widget build(BuildContext context) {
+    final CredentialProvider credentialProvider = context.watch();
     return Scaffold(
       appBar: AppBar(title: const Text('Untis Verknüpfung')),
       body: SingleChildScrollView(
@@ -38,6 +40,10 @@ class _UntisViewState extends State<UntisView> {
             children: [
               const Divider(),
               const StatusCheck(),
+              if (credentialProvider.sessionStatus == .sessionAccomplished) ...[
+                const Divider(),
+                const FindTeacherTile(),
+              ],
               const Divider(),
               Consumer(
                 builder: (_, SubjectProvider provider, _) {

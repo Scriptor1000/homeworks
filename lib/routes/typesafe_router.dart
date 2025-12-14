@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:animations/animations.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:dart_untis_mobile/dart_untis_mobile.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -11,11 +12,11 @@ import 'package:sentry_flutter/sentry_flutter.dart';
 import '../auth/login.dart';
 import '../database/models/subject.dart';
 import '../database/user.dart';
-import '../errors/authentication_error.dart';
 import '../views/account.dart';
 import '../views/home.dart';
 import '../views/home/create_homework.dart';
 import '../views/home/subject_selection.dart';
+import '../views/untis/find_teacher.dart';
 import '../views/untis/load_credentials.dart';
 import '../views/untis/untis_login.dart';
 import '../views/untis/upload_credentials.dart';
@@ -58,9 +59,7 @@ final appRouter = GoRouter(
     return null;
   },
   onException: (context, state, router) {
-    if (state.error is UnauthorizedException) {
-      router.go(_authLocation);
-    }
+    router.go(_authLocation);
   },
   routes: $appRoutes,
 );
@@ -102,6 +101,7 @@ class AuthRoute extends GoRouteData with $AuthRoute {
         TypedGoRoute<EnterCredentialsRoute>(path: 'enterCredentials'),
         TypedGoRoute<UploadCredentialsRoute>(path: 'uploadCredentials'),
         TypedGoRoute<DownloadCredentialsRoute>(path: 'downloadCredentials'),
+        TypedGoRoute<FindTeacherRoute>(path: 'findTeacher/:id'),
       ],
     ),
     TypedGoRoute<AccountRoute>(path: '/account'),
@@ -229,6 +229,17 @@ class DownloadCredentialsRoute extends GoRouteData
   @override
   Widget build(BuildContext context, GoRouterState state) {
     return const LoadCredentials();
+  }
+}
+
+class FindTeacherRoute extends GoRouteData with $FindTeacherRoute {
+  final int id;
+  const FindTeacherRoute(this.id);
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    final descriptor = UntisElementDescriptor(.teacher, id);
+    return FindTeacher(teacher: descriptor);
   }
 }
 
