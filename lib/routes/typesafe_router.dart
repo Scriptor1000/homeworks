@@ -7,6 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
+import 'package:provider/provider.dart';
 
 import '../auth/login.dart';
 import '../database/models/subject.dart';
@@ -22,7 +23,9 @@ import '../views/untis/upload_credentials.dart';
 import '../views/untis_view.dart';
 import 'navigation_shell.dart';
 import 'provider_shell.dart';
-
+import '../utilities/homeworks_list.dart';
+import '../database/models/homework.dart';
+import '../provider/homeworks_provider.dart';
 part 'typesafe_router.g.dart';
 
 /// Stream that triggers GoRouter refresh when FirebaseAuth state changes
@@ -99,6 +102,7 @@ class AuthRoute extends GoRouteData with $AuthRoute {
       path: '/home',
       routes: <TypedRoute<RouteData>>[
         TypedGoRoute<CreateHomeworkRoute>(path: 'createHomework'),
+        TypedGoRoute<EditHomeworkRoute>(path: 'editHomework'),
         TypedGoRoute<SubjectSelectionRoute>(path: 'subjectSelection'),
       ],
     ),
@@ -182,6 +186,29 @@ class CreateHomeworkRoute extends GoRouteData with $CreateHomeworkRoute {
     return const CreateHomework();
   }
 }
+
+class EditHomeworkRoute extends GoRouteData with $EditHomeworkRoute {
+  const EditHomeworkRoute({required this.homeworkId});
+
+  final String homeworkId;
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    // Fetch the Homework object from your provider
+    final homework = context.read<HomeworksProvider>().getById(homeworkId);
+
+    if (homework == null) {
+      return Scaffold(
+        body: Center(
+          child: Text('Homework not found'),
+        ),
+      );
+    }
+
+    return CreateHomework(existingHomework: homework);
+  }
+}
+
 
 class SubjectSelectionRoute extends GoRouteData with $SubjectSelectionRoute {
   /// Callback wich is called when a subject is selected.

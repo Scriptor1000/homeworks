@@ -12,6 +12,7 @@ import '../../routes/typesafe_router.dart';
 import '../../utilities/global_snackbar.dart';
 import '../../widgets/fab.dart';
 import '../../widgets/subject_tile.dart';
+import '../../provider/subject_provider.dart';
 
 /// Defines the type of homework created.
 /// [homework] → normal task
@@ -28,7 +29,8 @@ enum HomeworkType { homework, exam }
 ///
 /// Created Homework is stored using [HomeworksProvider].
 class CreateHomework extends StatefulWidget {
-  const CreateHomework({super.key});
+  final Homework? existingHomework;
+  const CreateHomework({super.key, this.existingHomework});
 
   @override
   State<CreateHomework> createState() => _CreateHomeworkState();
@@ -60,6 +62,26 @@ class _CreateHomeworkState extends State<CreateHomework> {
   DateTime dueDate = DateTime.now().add(const Duration(days: 1));
 
   @override
+  void initState() {
+    super.initState();
+
+    if (widget.existingHomework != null) {
+      final hw = widget.existingHomework!;
+      _titleController.text = hw.title;
+      _descriptionController.text = hw.description ?? '';
+      selected = hw.isExam ? HomeworkType.exam : HomeworkType.homework;
+      toNextLesson = hw.toNextLesson;
+      dueDate = hw.dueDate ?? DateTime.now().add(const Duration(days: 1));
+
+      // Most inefficient way to find the Subject object from the provider
+      final subjects = context.read<SubjectProvider>().subjects;
+      selectedSubject = subjects.firstWhere(
+            (s) => s.documentId == hw.subjectDocId,
+//orElse: () => subjects.isNotEmpty ? subjects.first : null,
+      );
+    }
+  }
+
   void dispose() {
     _titleController.dispose();
     _descriptionController.dispose();
@@ -122,7 +144,7 @@ class _CreateHomeworkState extends State<CreateHomework> {
       /// Save button
       floatingActionButton: ExtendedFAB(
         icon: Icons.save,
-        label: 'Hausaufgabe hinzufügen',
+        label: widget.existingHomework == null ? 'Hausaufgabe hinzufügen' : 'Änderungen Speichern',
         onClick: _submit,
         active: true,
       ),
@@ -132,29 +154,41 @@ class _CreateHomeworkState extends State<CreateHomework> {
   /// Validates UI → Creates a [Homework] → Saves via [HomeworksProvider]
   void _submit() {
     if (_formKey.currentState!.validate()) {
-      // Subject required
       if (selectedSubject == null) {
         showSnackBar('Bitte wähle ein Fach aus');
         return;
       }
 
-      /// Construct homework object
-      Homework homework = Homework(
-        title: _titleController.text,
-        description: _descriptionController.text,
-        subjectDocId: selectedSubject!.documentId,
-        toNextLesson: toNextLesson,
-        isCompleted: false,
-        dueDate: dueDate,
-        fromUntis: false,
-        isExam: selected == HomeworkType.exam,
-      );
+      Homework homework;
 
-      // Save the homework
-      context.read<HomeworksProvider>().createHomework(homework);
+      if (widget.existingHomework != null) {
+        homework = widget.existingHomework!;
+        // Update existing homework
+        homework.title = _titleController.text;
+        homework.description = _descriptionController.text;
+        homework.subjectDocId = selectedSubject!.documentId;
+        homework.toNextLesson = toNextLesson;
+        homework.dueDate = dueDate;
+        homework.isExam = selected == HomeworkType.exam;
+
+      } else {
+        // Create new homework
+        homework = Homework(
+          title: _titleController.text,
+          description: _descriptionController.text,
+          subjectDocId: selectedSubject!.documentId,
+          toNextLesson: toNextLesson,
+          isCompleted: false,
+          dueDate: dueDate,
+          fromUntis: false,
+          isExam: selected == HomeworkType.exam,
+        );
+        context.read<HomeworksProvider>().createHomework(homework);
+      }
       context.pop();
     }
   }
+
 
   /// Set new selected subject and update due date
   void _updateSubject(Subject subject) {

@@ -10,28 +10,28 @@ import 'package:uuid/uuid.dart';
 /// from Untis.
 class Homework {
   /// Unique identifier for the homework. Generated automatically if not provided.
-  final String id;
+   String id;
 
   /// Title of the homework.
-  final String title;
+   String title;
 
   /// Detailed description of the homework.
-  final String description;
+   String description;
 
   /// Document ID of the subject this homework belongs to.
-  final String subjectDocId;
+   String subjectDocId;
 
   /// If true, the due date is determined by the next lesson of the subject.
-  final bool toNextLesson;
+   bool toNextLesson;
 
   /// Marks if the homework is an exam.
-  final bool isExam;
+   bool isExam;
 
   /// Indicates if the homework was imported from Untis.
-  final bool fromUntis;
+   bool fromUntis;
 
   /// Timestamp when the homework was created.
-  final DateTime createdAt;
+   DateTime createdAt;
 
   /// Indicates if the homework has been completed.
   bool isCompleted;

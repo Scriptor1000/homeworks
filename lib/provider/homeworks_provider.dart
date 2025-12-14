@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:collection/collection.dart';
 
 import '../database/homeworks.dart';
 import '../database/models/homework.dart';
@@ -187,7 +188,10 @@ class HomeworksProvider extends ChangeNotifier {
       print('Current homeworks: ${_homeworks.map((hw) => hw.id).join(', ')}');
     }
   }
-
+  // Get a homework by its ID
+  Homework? getById(String id) {
+    return _homeworks.firstWhereOrNull((h) => h.documentId == id);
+  }
   /// Updates an existing homework in Firestore and [_homeworks].
   ///
   /// It finds the homework by its [homework.id] in the [_homeworks] list and updates its due date.

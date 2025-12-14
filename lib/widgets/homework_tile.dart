@@ -10,6 +10,9 @@ import '../provider/subject_provider.dart';
 import '../utilities/constants.dart';
 import '../utilities/global_snackbar.dart';
 import 'subject_avatar.dart';
+import '../routes/typesafe_router.dart';
+import 'package:go_router/go_router.dart';
+
 
 /// A [ListTile] widget that displays homework information and allows marking it as completed.
 ///
@@ -91,6 +94,16 @@ class HomeworkTile extends StatelessWidget {
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
+          IconButton(
+            icon: const Icon(Icons.edit, color: Colors.grey),
+            onPressed: () async {
+              GoRouter.of(context).go(
+                EditHomeworkRoute(homeworkId: homework.id).location,
+              );
+
+            },
+          ),
+
           if (homework.dueDate != null &&
               homework.dueDate!.isBefore(DateTime.now()) &&
               !homework.isCompleted &&
