@@ -14,22 +14,22 @@ class Subject {
   DateTime? nextLesson;
 
   Subject.fromUntisSubject(UntisSubject untisSubject)
-      : backColor = Color(untisSubject.backColorValue ?? 0),
-        foreColor = Color(untisSubject.foreColorValue ?? 0xFFFFFFFF),
-        id = untisSubject.id.id,
-        name = untisSubject.longName,
-        fromUntis = true,
-        visible = true,
-        shortName = untisSubject.name;
+    : backColor = Color(untisSubject.backColorValue ?? 0),
+      foreColor = Color(untisSubject.foreColorValue ?? 0xFFFFFFFF),
+      id = untisSubject.id.id,
+      name = untisSubject.longName,
+      fromUntis = true,
+      visible = true,
+      shortName = untisSubject.name;
 
   Subject.fromDocument(Map<String, dynamic> doc)
-      : backColor = Color(doc['backColor'] ?? 0),
-        foreColor = Color(doc['foreColor'] ?? 0xFFFFFFFF),
-        id = doc['id'] ?? -1,
-        fromUntis = doc['fromUntis'] ?? false,
-        name = doc['name'] ?? '<Kein Name gespeichert>',
-        shortName = doc['shortName'] ?? '<0>',
-        visible = doc['visible'] ?? true;
+    : backColor = Color(doc['backColor'] ?? 0),
+      foreColor = Color(doc['foreColor'] ?? 0xFFFFFFFF),
+      id = doc['id'] ?? -1,
+      fromUntis = doc['fromUntis'] ?? false,
+      name = doc['name'] ?? '<Kein Name gespeichert>',
+      shortName = doc['shortName'] ?? '<0>',
+      visible = doc['visible'] ?? true;
 
   Map<String, dynamic> toDocument() {
     return {

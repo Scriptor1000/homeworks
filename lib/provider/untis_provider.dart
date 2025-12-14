@@ -34,9 +34,10 @@ class UntisProvider extends ChangeNotifier {
 
   /// Only the next Lesson Dates
   Map<String, DateTime> getNextLessonDates() => Map.fromEntries(
-        _untisSubjects.where((subject) => subject.nextLesson != null).map(
-            (subject) => MapEntry(subject.documentId, subject.nextLesson!)),
-      );
+    _untisSubjects
+        .where((subject) => subject.nextLesson != null)
+        .map((subject) => MapEntry(subject.documentId, subject.nextLesson!)),
+  );
 
   /// The current status of the Untis subjects.
   ///
@@ -49,10 +50,12 @@ class UntisProvider extends ChangeNotifier {
 
   /// All subjects which happen today.
   List<Subject> get todaySubjects => _todayPeriods
-      .where((period) =>
-          !period.isCancelled &&
-          period.subject != null &&
-          period.teacher != null)
+      .where(
+        (period) =>
+            !period.isCancelled &&
+            period.subject != null &&
+            period.teacher != null,
+      )
       .map((period) => Subject.fromUntisSubject(period.subject!))
       .toList();
 
@@ -112,14 +115,13 @@ class UntisProvider extends ChangeNotifier {
 
       // the periods today are loaded extra to find the current subject simpler
       _todayPeriods = await _session!
-          .getTimetable(
-            startDate: startDate,
-            endDate: startDate,
-          )
+          .getTimetable(startDate: startDate, endDate: startDate)
           .then((timetable) => timetable.periods);
 
-      final timetable =
-          await _session!.getTimetable(startDate: startDate, endDate: endDate);
+      final timetable = await _session!.getTimetable(
+        startDate: startDate,
+        endDate: endDate,
+      );
 
       for (var period in timetable.periods) {
         _parsePeriod(period);
@@ -129,10 +131,7 @@ class UntisProvider extends ChangeNotifier {
     } catch (error, stackTrace) {
       _untisSubjectStatus = UntisSubjectStatus.error;
       print('Error loading timetable: $error');
-      Sentry.captureException(
-        error,
-        stackTrace: stackTrace,
-      );
+      Sentry.captureException(error, stackTrace: stackTrace);
     } finally {
       notifyListeners();
     }
@@ -148,8 +147,9 @@ class UntisProvider extends ChangeNotifier {
     final isCancelled = period.isCancelled || period.teacher == null;
 
     // this is the subject from the list, if the subject is already in the list
-    final listedSubject =
-        _untisSubjects.firstWhereOrNull((s) => s.id == period.subject!.id.id);
+    final listedSubject = _untisSubjects.firstWhereOrNull(
+      (s) => s.id == period.subject!.id.id,
+    );
 
     // if not, it is added with a next lesson date (if it is not cancelled and after today)
     if (listedSubject == null) {
@@ -173,8 +173,11 @@ class UntisProvider extends ChangeNotifier {
     }
   }
 
-  Future<DateTime?> deepNextLessonSearch(Subject subject,
-      StreamController<DateTime> stream, Completer<void> abort) async {
+  Future<DateTime?> deepNextLessonSearch(
+    Subject subject,
+    StreamController<DateTime> stream,
+    Completer<void> abort,
+  ) async {
     if (_session == null) {
       return null;
     }
@@ -190,9 +193,7 @@ class UntisProvider extends ChangeNotifier {
 
     while (!isAborted) {
       stream.add(startDate);
-      final timetable = await _session!.getTimetable(
-        startDate: startDate,
-      );
+      final timetable = await _session!.getTimetable(startDate: startDate);
       final nextLesson = timetable.periods.firstWhereOrNull(
         (period) =>
             period.subject?.id.id == subject.id &&

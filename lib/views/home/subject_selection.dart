@@ -38,9 +38,7 @@ class _SubjectSelectionState extends State<SubjectSelection> {
     }).toList();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Fach auswählen'),
-      ),
+      appBar: AppBar(title: const Text('Fach auswählen')),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Stack(
@@ -49,11 +47,11 @@ class _SubjectSelectionState extends State<SubjectSelection> {
                 ? Column(
                     children: [
                       // TODO Todays subjects
-                      buildListView(filteredSubjects)
+                      buildListView(filteredSubjects),
                     ],
                   )
                 : buildEmpty(),
-            buildSearchBar(filteredSubjects, context)
+            buildSearchBar(filteredSubjects, context),
           ],
         ),
       ),
@@ -62,16 +60,20 @@ class _SubjectSelectionState extends State<SubjectSelection> {
 
   Widget buildEmpty() {
     return Center(
-      child: Text('Keine Fächer vorhanden. \n'
-          'Um Fächer hinzuzufügen, musst du dein Untis Konto verbinden.\n'
-          'Weil jede Hausaufgabe einem Fach zugeordnet sein muss, '
-          'kannst du ohne diese Verbindung keine Hausaufgaben erstellen.'
-          'Falls du dies bereits getan hast, kann es sein dass alle Fächer ausgeblendet sind. '),
+      child: Text(
+        'Keine Fächer vorhanden. \n'
+        'Um Fächer hinzuzufügen, musst du dein Untis Konto verbinden.\n'
+        'Weil jede Hausaufgabe einem Fach zugeordnet sein muss, '
+        'kannst du ohne diese Verbindung keine Hausaufgaben erstellen.'
+        'Falls du dies bereits getan hast, kann es sein dass alle Fächer ausgeblendet sind. ',
+      ),
     );
   }
 
   Container buildSearchBar(
-      List<Subject> filteredSubjects, BuildContext context) {
+    List<Subject> filteredSubjects,
+    BuildContext context,
+  ) {
     return Container(
       alignment: Alignment.bottomCenter,
       margin: const EdgeInsets.only(bottom: 16),

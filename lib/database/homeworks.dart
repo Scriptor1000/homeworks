@@ -14,8 +14,8 @@ class FirestoreHomeworks {
   FirestoreHomeworks({
     required FirestoreUser firestoreUser,
     required ItemFactory itemFactory,
-  })  : _firestoreUser = firestoreUser,
-        _itemFactory = itemFactory;
+  }) : _firestoreUser = firestoreUser,
+       _itemFactory = itemFactory;
 
   CollectionReference<Map<String, dynamic>> get _homeworksCollectionsRef =>
       _firestoreUser.userDocument.collection(homeworksCollections);
@@ -38,7 +38,7 @@ class FirestoreHomeworks {
     final snapshot = await _homeworksCollectionsRef.get();
     return [
       for (var doc in snapshot.docs)
-        _itemFactory.homeworkFromDocument(doc.data())
+        _itemFactory.homeworkFromDocument(doc.data()),
     ];
   }
 

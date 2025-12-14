@@ -18,11 +18,11 @@ class HomeworksProvider extends ChangeNotifier {
   final FirestoreHomeworks _firestoreHomeworks;
   final AnalyticsService _analyticsService;
 
-  HomeworksProvider(
-      {required FirestoreHomeworks firestoreHomeworks,
-      required AnalyticsService analyticsService})
-      : _firestoreHomeworks = firestoreHomeworks,
-        _analyticsService = analyticsService;
+  HomeworksProvider({
+    required FirestoreHomeworks firestoreHomeworks,
+    required AnalyticsService analyticsService,
+  }) : _firestoreHomeworks = firestoreHomeworks,
+       _analyticsService = analyticsService;
 
   /// The list of homeworks which have a due date.
   ///
@@ -47,18 +47,22 @@ class HomeworksProvider extends ChangeNotifier {
     final now = DateTime.now();
     // TODO there is a better place for deleting old homeworks
     final toDelete = _homeworks
-        .where((homework) =>
-            homework.dueDate != null &&
-            homework.dueDate!.isBefore(now) &&
-            homework.isCompleted)
+        .where(
+          (homework) =>
+              homework.dueDate != null &&
+              homework.dueDate!.isBefore(now) &&
+              homework.isCompleted,
+        )
         .toList();
     for (var homework in toDelete) {
       await _firestoreHomeworks.deleteHomework(homework.id);
     }
-    _homeworks.removeWhere((homework) =>
-        homework.dueDate != null &&
-        homework.dueDate!.isBefore(now) &&
-        homework.isCompleted);
+    _homeworks.removeWhere(
+      (homework) =>
+          homework.dueDate != null &&
+          homework.dueDate!.isBefore(now) &&
+          homework.isCompleted,
+    );
     _homeworksLoaded = true;
     notifyListeners();
   }
@@ -138,7 +142,10 @@ class HomeworksProvider extends ChangeNotifier {
     notifyListeners();
 
     _analyticsService.createHomework(
-        type: type, isToNextLesson: true, isCreatedFast: true);
+      type: type,
+      isToNextLesson: true,
+      isCreatedFast: true,
+    );
   }
 
   Future<void> createHomework(Homework homework) async {
@@ -147,9 +154,10 @@ class HomeworksProvider extends ChangeNotifier {
     notifyListeners();
 
     _analyticsService.createHomework(
-        type: homework.type,
-        isToNextLesson: homework.toNextLesson,
-        isCreatedFast: false);
+      type: homework.type,
+      isToNextLesson: homework.toNextLesson,
+      isCreatedFast: false,
+    );
   }
 
   /// Deletes a homework from Firestore and [_homeworks].
@@ -165,15 +173,17 @@ class HomeworksProvider extends ChangeNotifier {
       notifyListeners();
 
       _analyticsService.deleteHomework(
-          type: homework.type,
-          isPastDueBy: homework.dueDate != null
-              ? DateTime.now().difference(homework.dueDate!)
-              : null,
-          isCompleted: homework.isCompleted);
+        type: homework.type,
+        isPastDueBy: homework.dueDate != null
+            ? DateTime.now().difference(homework.dueDate!)
+            : null,
+        isCompleted: homework.isCompleted,
+      );
     } else {
       Sentry.logger.error(
-          'Homework with id $homeworkID not found for deleting. '
-          'Current homeworks ID: ${_homeworks.map((hw) => hw.id).join(', ')}');
+        'Homework with id $homeworkID not found for deleting. '
+        'Current homeworks ID: ${_homeworks.map((hw) => hw.id).join(', ')}',
+      );
     }
   }
 
@@ -193,8 +203,9 @@ class HomeworksProvider extends ChangeNotifier {
       _analyticsService.reviveHomework(type: homework.type);
     } else {
       Sentry.logger.error(
-          'Homework with id $homeworkID not found for new due date. '
-          'Current homeworks ID: ${_homeworks.map((hw) => hw.id).join(', ')}');
+        'Homework with id $homeworkID not found for new due date. '
+        'Current homeworks ID: ${_homeworks.map((hw) => hw.id).join(', ')}',
+      );
     }
   }
 
@@ -213,8 +224,9 @@ class HomeworksProvider extends ChangeNotifier {
       }
     } else {
       Sentry.logger.error(
-          'Homework with id $homeworkID not found for changing status. '
-          'Current homeworks ID: ${_homeworks.map((hw) => hw.id).join(', ')}');
+        'Homework with id $homeworkID not found for changing status. '
+        'Current homeworks ID: ${_homeworks.map((hw) => hw.id).join(', ')}',
+      );
       return Future.value();
     }
   }
@@ -227,18 +239,20 @@ class HomeworksProvider extends ChangeNotifier {
       notifyListeners();
 
       _analyticsService.completeAndDeleteHomework(
-          type: homework.type,
-          isPastDueBy: DateTime.now().difference(homework.dueDate!));
+        type: homework.type,
+        isPastDueBy: DateTime.now().difference(homework.dueDate!),
+      );
     } else {
       homework.isCompleted = true;
       await _firestoreHomeworks.saveHomework(homework);
       notifyListeners();
 
       _analyticsService.completeHomework(
-          type: homework.type,
-          isPastDueBy: homework.dueDate != null
-              ? DateTime.now().difference(homework.dueDate!)
-              : null);
+        type: homework.type,
+        isPastDueBy: homework.dueDate != null
+            ? DateTime.now().difference(homework.dueDate!)
+            : null,
+      );
     }
   }
 
@@ -248,7 +262,8 @@ class HomeworksProvider extends ChangeNotifier {
     notifyListeners();
 
     _analyticsService.uncompleteHomework(
-        type: homework.type,
-        isDueIn: homework.dueDate?.difference(DateTime.now()));
+      type: homework.type,
+      isDueIn: homework.dueDate?.difference(DateTime.now()),
+    );
   }
 }

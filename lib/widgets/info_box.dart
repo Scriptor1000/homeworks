@@ -31,8 +31,9 @@ class InfoBox extends StatelessWidget {
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceVariant.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(BorderRadiusConstants.infoBox),
-        border:
-            Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.3)),
+        border: Border.all(
+          color: theme.colorScheme.outline.withValues(alpha: 0.3),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -41,11 +42,7 @@ class InfoBox extends StatelessWidget {
           if (title != null)
             Row(
               children: [
-                Icon(
-                  icon,
-                  color: iconAndTitleColor,
-                  size: 20,
-                ),
+                Icon(icon, color: iconAndTitleColor, size: 20),
                 const SizedBox(width: 8),
                 Text(
                   title!,
@@ -70,10 +67,7 @@ class InfoBox extends StatelessWidget {
               children: [
                 if (index > 0)
                   const SizedBox(height: 4), // Abstand zwischen Absätzen
-                Text(
-                  paragraph,
-                  style: const TextStyle(fontSize: 13),
-                ),
+                Text(paragraph, style: const TextStyle(fontSize: 13)),
               ],
             );
           }),

@@ -16,8 +16,11 @@ import 'subject_avatar.dart';
 ///
 /// When the homework is completed or uncompleted, the [statusChange] callback is triggered.
 class HomeworkTile extends StatelessWidget {
-  const HomeworkTile(
-      {super.key, required this.homework, required this.statusChange});
+  const HomeworkTile({
+    super.key,
+    required this.homework,
+    required this.statusChange,
+  });
 
   final Homework homework;
   final VoidCallback statusChange;
@@ -27,8 +30,11 @@ class HomeworkTile extends StatelessWidget {
     // Formatierung des Datums für bessere Lesbarkeit
     final now = DateTime.now();
     final nowDate = DateTime(now.year, now.month, now.day);
-    final dueDay =
-        DateTime(dueDateTime.year, dueDateTime.month, dueDateTime.day);
+    final dueDay = DateTime(
+      dueDateTime.year,
+      dueDateTime.month,
+      dueDateTime.day,
+    );
 
     final dayDifference = dueDay.difference(nowDate).inDays;
     final timeDifference = dueDateTime.difference(now);
@@ -41,7 +47,7 @@ class HomeworkTile extends StatelessWidget {
       'Donnerstag',
       'Freitag',
       'Samstag',
-      'Sonntag'
+      'Sonntag',
     ];
     final weekday = weekdays[dueDay.weekday - 1];
 
@@ -53,19 +59,22 @@ class HomeworkTile extends StatelessWidget {
       text = 'Heute';
       if (homework.type == HomeworkType.appointment) {
         if (timeDifference.inHours > 0) {
-          text += ', in ${timeDifference.inHours}h und '
+          text +=
+              ', in ${timeDifference.inHours}h und '
               '${timeDifference.inMinutes.remainder(60)}min';
         } else if (timeDifference.inMinutes > 0) {
           text += ', in ${timeDifference.inMinutes} Minuten';
         }
       } else {
-        text += ', bis ${dueDateTime.hour.toString().padLeft(2, '0')}:'
+        text +=
+            ', bis ${dueDateTime.hour.toString().padLeft(2, '0')}:'
             '${dueDateTime.minute.toString().padLeft(2, '0')}';
       }
     } else if (dayDifference == 1) {
       text = 'Morgen';
       if (homework.type != HomeworkType.appointment) {
-        text += ', bis ${dueDateTime.hour.toString().padLeft(2, '0')}:'
+        text +=
+            ', bis ${dueDateTime.hour.toString().padLeft(2, '0')}:'
             '${dueDateTime.minute.toString().padLeft(2, '0')}';
       }
     } else {
@@ -91,14 +100,14 @@ class HomeworkTile extends StatelessWidget {
     final dateText = dueDateText(homework.dueDate);
 
     return ListTile(
-      leading: SubjectAvatar(
-        subject: subject,
-      ),
+      leading: SubjectAvatar(subject: subject),
       title: Text(
-          '${homework.type == HomeworkType.exam ? 'LK: ' : ''}${homework.title}'),
+        '${homework.type == HomeworkType.exam ? 'LK: ' : ''}${homework.title}',
+      ),
       subtitle: dateText != null ? Text(dateText) : null,
-      tileColor:
-          homework.type == HomeworkType.exam ? backColor?.withAlpha(50) : null,
+      tileColor: homework.type == HomeworkType.exam
+          ? backColor?.withAlpha(50)
+          : null,
       // textColor: homework.isExam ? foreColor : null,
       onLongPress: () async {
         // Show options to edit or delete the homework
@@ -107,25 +116,27 @@ class HomeworkTile extends StatelessWidget {
       },
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(BorderRadiusConstants.homeworks),
-        side: BorderSide(
-          color: backColor ?? theme.colorScheme.error,
-          width: 3,
-        ),
+        side: BorderSide(color: backColor ?? theme.colorScheme.error, width: 3),
       ),
       trailing: _buildTrailing(subject, homeworksProvider, theme),
     );
   }
 
   Widget? _buildTrailing(
-      Subject? subject, HomeworksProvider homeworksProvider, ThemeData? theme) {
+    Subject? subject,
+    HomeworksProvider homeworksProvider,
+    ThemeData? theme,
+  ) {
     final completeButton = IconButton(
-        onPressed: () {
-          homeworksProvider.toggleHomeworkCompletion(homework.id);
-          statusChange();
-        },
-        icon: Icon(
-            homework.isCompleted ? Icons.check_circle : Icons.circle_outlined,
-            color: Colors.grey));
+      onPressed: () {
+        homeworksProvider.toggleHomeworkCompletion(homework.id);
+        statusChange();
+      },
+      icon: Icon(
+        homework.isCompleted ? Icons.check_circle : Icons.circle_outlined,
+        color: Colors.grey,
+      ),
+    );
     final rowWithRevive = Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -135,10 +146,11 @@ class HomeworkTile extends StatelessWidget {
             subject != null &&
             subject.nextLesson != null)
           IconButton(
-              onPressed: () {
-                homeworksProvider.newDueDate(homework.id, subject.nextLesson!);
-              },
-              icon: Icon(Icons.replay_rounded)),
+            onPressed: () {
+              homeworksProvider.newDueDate(homework.id, subject.nextLesson!);
+            },
+            icon: Icon(Icons.replay_rounded),
+          ),
         completeButton,
       ],
     );
@@ -148,19 +160,20 @@ class HomeworkTile extends StatelessWidget {
         homework.dueDate != null && DateTime.now().isAfter(homework.dueDate!)
             ? rowWithRevive
             : null,
-      HomeworkType.appointment => homework.dueDate != null
-          ? Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  '${homework.dueDate!.hour.toString().padLeft(2, '0')}:'
-                  '${homework.dueDate!.minute.toString().padLeft(2, '0')}',
-                  style: theme?.textTheme.bodyLarge,
-                ),
-                completeButton
-              ],
-            )
-          : null,
+      HomeworkType.appointment =>
+        homework.dueDate != null
+            ? Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '${homework.dueDate!.hour.toString().padLeft(2, '0')}:'
+                    '${homework.dueDate!.minute.toString().padLeft(2, '0')}',
+                    style: theme?.textTheme.bodyLarge,
+                  ),
+                  completeButton,
+                ],
+              )
+            : null,
     };
   }
 }

@@ -17,7 +17,7 @@ class SubjectProvider extends ChangeNotifier {
   final FirestoreSubjects _firestoreSubjectsService;
 
   SubjectProvider({required FirestoreSubjects firestoreSubjects})
-      : _firestoreSubjectsService = firestoreSubjects;
+    : _firestoreSubjectsService = firestoreSubjects;
 
   /// The list of all subjects, currently only from Untis.
   List<Subject> get subjects => _firestoreSubjects;
@@ -98,8 +98,9 @@ class SubjectProvider extends ChangeNotifier {
 
   /// Toggles the visibility flag of a subject in Firestore and [_firestoreSubjects].
   Future<void> toggleSubjectVisibility(String subjectDocId) async {
-    final subject = _firestoreSubjects
-        .firstWhereOrNull((subject) => subject.documentId == subjectDocId);
+    final subject = _firestoreSubjects.firstWhereOrNull(
+      (subject) => subject.documentId == subjectDocId,
+    );
     if (subject == null) return;
     subject.visible = !subject.visible;
     await _firestoreSubjectsService.saveSubject(subject);

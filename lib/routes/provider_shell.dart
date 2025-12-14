@@ -21,11 +21,7 @@ class ProviderShell extends StatelessWidget {
   final Widget child;
   final String uid;
 
-  const ProviderShell({
-    super.key,
-    required this.child,
-    required this.uid,
-  });
+  const ProviderShell({super.key, required this.child, required this.uid});
 
   @override
   Widget build(BuildContext context) {
@@ -86,9 +82,9 @@ class ProviderShell extends StatelessWidget {
           lazy: false,
         ),
         ChangeNotifierProxyProvider<UntisProvider, SubjectProvider>(
-          create: (_) => SubjectProvider(
-            firestoreSubjects: firestoreSubjects,
-          )..initialize(),
+          create: (_) =>
+              SubjectProvider(firestoreSubjects: firestoreSubjects)
+                ..initialize(),
           update: (_, untisAPIProvider, previous) =>
               (previous?..updateUntisSubjects(untisAPIProvider)) ??
               SubjectProvider(firestoreSubjects: firestoreSubjects),

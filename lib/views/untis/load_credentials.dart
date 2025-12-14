@@ -7,6 +7,7 @@ import '../../utilities/enums.dart';
 import '../../utilities/global_snackbar.dart';
 import '../../widgets/credential_form.dart';
 import '../../widgets/fab.dart';
+import '../../widgets/info_box.dart';
 import '../../widgets/own_progress_indicator.dart';
 import '../../widgets/password_field.dart';
 
@@ -38,6 +39,7 @@ class _LoadCredentialsState extends State<LoadCredentials> {
   }
 
   Future<void> _loadCredentials() async {
+    if (_isLoading) return;
     if (_userPasswordController.text.isEmpty) {
       showSnackBar('Bitte gib dein Benutzerpasswort ein');
       return;
@@ -50,32 +52,31 @@ class _LoadCredentialsState extends State<LoadCredentials> {
     context
         .read<CredentialProvider>()
         .loadCredentialsOnline(_userPasswordController.text)
-        .then((_) {
-      if (mounted) {
-        context.pop();
-      }
-    }).onError((error, stackTrace) {
-      setState(() {
-        showSnackBar('Fehler: $error');
-        _isLoading = false;
-      });
-    });
+        .then(
+          (_) {
+            if (mounted) {
+              context.pop();
+            }
+          },
+          onError: (error, stackTrace) {
+            setState(() {
+              showSnackBar('Fehler: $error');
+              _isLoading = false;
+            });
+          },
+        );
   }
 
   @override
   Widget build(BuildContext context) {
-    var credentialProvider = context.watch<CredentialProvider>();
+    final credentialProvider = context.watch<CredentialProvider>();
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Gespeicherte Anmeldedaten laden'),
-      ),
+      appBar: AppBar(title: const Text('Gespeicherte Anmeldedaten laden')),
       body: SafeArea(
         child: Column(
           children: [
-            // Ladeindikator
             OwnProgressIndicator(
-              active: _isLoading ||
-                  credentialProvider.sessionState == UntisSessionState.loading,
+              active: _isLoading,
               backgroundColor: Theme.of(context).colorScheme.surface,
             ),
 
@@ -88,6 +89,20 @@ class _LoadCredentialsState extends State<LoadCredentials> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      if (credentialProvider.hasCredentials)
+                        InfoBox(
+                          title: 'Achtung!',
+                          paragraphs: [
+                            'Es sind bereits Anmeldedaten auf diesem Gerät gespeichert. Durch das Herunterladen der Clouddaten werden diese unwiderruflich überschrieben.',
+                            if (credentialProvider.sessionStatus ==
+                                UntisSessionStatus.sessionAccomplished)
+                              'Mit den lokalen Anmeldedaten wurde bereits erfolgreich eine Verbindung zu Untis hergestellt.',
+                          ],
+                          icon: Icons.warning,
+                          accentColor: Colors.orange,
+                        ),
+
+                      if (credentialProvider.hasCredentials) standardGap(),
                       // Erklärungstext
                       const Text(
                         'Gib dein Benutzerpasswort ein, um deine gespeicherten Untis-Anmeldedaten zu laden.',
@@ -106,6 +121,22 @@ class _LoadCredentialsState extends State<LoadCredentials> {
                           return null;
                         },
                       ),
+                      Row(
+                        mainAxisAlignment: .start,
+                        mainAxisSize: .min,
+                        children: [
+                          TextButton.icon(
+                            onPressed: buildForgotPasswordDialog,
+                            icon: const Icon(Icons.help_outline),
+                            label: const Text('Passwort vergessen?'),
+                            style: TextButton.styleFrom(
+                              foregroundColor: Theme.of(
+                                context,
+                              ).colorScheme.onSurface,
+                            ),
+                          ),
+                        ],
+                      ),
                       standardGap(),
 
                       Padding(
@@ -115,7 +146,7 @@ class _LoadCredentialsState extends State<LoadCredentials> {
                           disabled: true,
                         ),
                       ),
-                      buildFABGap()
+                      buildFABGap(),
                     ],
                   ),
                 ),
@@ -124,20 +155,39 @@ class _LoadCredentialsState extends State<LoadCredentials> {
           ],
         ),
       ),
-      floatingActionButton:
-          credentialProvider.sessionState == UntisSessionState.loading
-              ? ExtendedFAB(
-                  onClick: () {},
-                  active: false,
-                  icon: Icons.sync,
-                  label: 'Verbinde mit Untis',
-                )
-              : ExtendedFAB(
-                  onClick: _loadCredentials,
-                  active: !_isLoading,
-                  icon: Icons.cloud_download_outlined,
-                  label: 'Anmeldedaten laden'),
+      floatingActionButton: ExtendedFAB(
+        onClick: _loadCredentials,
+        active: true,
+        icon: Icons.sync,
+        label: 'Anmeldedaten importieren',
+      ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+    );
+  }
+
+  Future<void> buildForgotPasswordDialog() async {
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Passwort vergessen'),
+          content: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 400),
+            child: const Text(
+              'Wenn du dein Benutzerpasswort vergessen hast, können wir deine gespeicherten Anmeldedaten aufgrund der Verschlüsselung nicht wiederherstellen.\n'
+              'Deine einzige Möglichkeit besteht darin, deine Anmeldedaten nochmal manuell einzugeben und anschließend erneut in die Cloud hochzuladen.',
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Schließen'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 }
