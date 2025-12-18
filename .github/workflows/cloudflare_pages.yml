@@ -98,6 +98,10 @@ jobs:
             SENTRY_RELEASE: ${{ env.SENTRY_RELEASE }}
         run: dart run sentry_dart_plugin 
 
+      - name: Remove sourcemaps before deploy
+        run: |
+          find build/web -name "*.map" -type f -delete
+
       - name: Deploy to Cloudflare Pages
         id: deploy
         uses: cloudflare/wrangler-action@v3
