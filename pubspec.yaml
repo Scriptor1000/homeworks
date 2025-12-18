@@ -138,9 +138,12 @@ flutter:
   # see https://flutter.dev/to/font-from-package
 
 sentry:
-  upload_debug_symbols: true
+  upload_debug_symbols: false # because no android/ios builds 
   upload_source_maps: true
   upload_sources: true
+
+  commits: auto
+  ignore_missing: true
   
   project: homeworks
   org: max-uf
