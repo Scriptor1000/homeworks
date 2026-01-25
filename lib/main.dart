@@ -82,6 +82,7 @@ class MainApp extends StatelessWidget {
       // so the whole widget tree has access to AuthenticationProvider.
       return authenticationProviderShell(
         child: MaterialApp.router(
+          debugShowCheckedModeBanner: false,
           scaffoldMessengerKey: scaffoldMessengerKey, // Snackbar manager
           localizationsDelegates: const [
             GlobalMaterialLocalizations.delegate,

@@ -38,12 +38,15 @@ class NavigationShell extends StatelessWidget {
   void _onItemTapped(int index, BuildContext context) {
     switch (index) {
       case 0:
+        const TimetableRoute().go(context);
+        break;
+      case 1  :
         const HomeRoute().go(context);
         break;
-      case 1:
+      case 2:
         const UntisRoute().go(context);
         break;
-      case 2:
+      case 3:
         const AccountRoute().go(context);
         break;
       default:

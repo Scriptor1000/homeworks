@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 
 import '../database/models/homework.dart';
 import '../database/models/subject.dart';
@@ -92,6 +93,15 @@ class _HomeState extends State<Home> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Hausaufgaben'),
+        /*actions: [
+          IconButton(
+            iconSize: 32,
+            icon: const Icon(Icons.swap_horiz),
+            onPressed: () {
+              const TimetableRoute().go(context);
+            },
+          ),
+        ],*/
       ),
 
       /// Show spinner until initial homework load completes

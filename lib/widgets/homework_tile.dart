@@ -70,7 +70,90 @@ class HomeworkTile extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     final dateText = dueDateText(homework.dueDate);
+    return ExpansionTile(
+      shape: const RoundedRectangleBorder(
+        side: BorderSide.none,
+      ),
+      leading: SubjectAvatar(subject: subject),
+      title: Text('${homework.isExam ? 'LK: ' : ''}${homework.title}'),
+      subtitle: dateText != null ? Text(dateText) : null,
+      tilePadding: const EdgeInsets.symmetric(horizontal: 16),
+      backgroundColor:
+      homework.isExam ? backColor?.withAlpha(50) : null,
 
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          //const Icon(Icons.expand_more), // Pfeil
+          IconButton(
+            icon: const Icon(Icons.edit),
+            onPressed: () {
+              GoRouter.of(context).go(
+                EditHomeworkRoute(homeworkId: homework.id).location,
+              );
+            },
+          ),
+
+          if (homework.isCompleted)
+            const Icon(Icons.check_circle, color: Colors.green)
+          else
+            IconButton(
+              icon: const Icon(Icons.circle_outlined),
+              onPressed: () {
+                context
+                    .read<HomeworksProvider>()
+                    .completeHomework(homework);
+                onCompleted();
+              },
+            ),
+
+          IconButton(
+            icon: const Icon(Icons.delete, color: Colors.red),
+            onPressed: () async {
+              // Show options to edit or delete the homework
+              await context.read<HomeworksProvider>().deleteHomework(homework);
+              showSnackBar('Hausaufgabe gelöscht');
+            },
+          ),
+        ],
+      ),
+
+      children: [
+        Padding(
+    padding: const EdgeInsets.only(
+      top: 16,
+      right: 16,
+      bottom: 16,
+      left: 16
+    ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Beschreibung:',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(homework.description ?? '—'),
+              ),
+
+
+              const SizedBox(height: 8),
+
+
+            ],
+          ),
+        ),
+      ],
+    );
+
+/*
     return ListTile(
       leading: SubjectAvatar(
         subject: subject,
@@ -128,6 +211,6 @@ class HomeworkTile extends StatelessWidget {
                   icon: const Icon(Icons.circle_outlined, color: Colors.grey)),
         ],
       ),
-    );
+    );*/
   }
 }
