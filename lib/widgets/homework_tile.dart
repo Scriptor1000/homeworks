@@ -107,14 +107,7 @@ class HomeworkTile extends StatelessWidget {
               },
             ),
 
-          IconButton(
-            icon: const Icon(Icons.delete, color: Colors.red),
-            onPressed: () async {
-              // Show options to edit or delete the homework
-              await context.read<HomeworksProvider>().deleteHomework(homework);
-              showSnackBar('Hausaufgabe gelöscht');
-            },
-          ),
+
         ],
       ),
 
@@ -129,7 +122,7 @@ class HomeworkTile extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Align(
+              /*Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
                   'Beschreibung:',
@@ -137,7 +130,28 @@ class HomeworkTile extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
+              ),*/
+              Row(
+                children: [
+                  Text(
+                    'Beschreibung:',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    icon: const Icon(Icons.delete, color: Colors.red),
+                    onPressed: () async {
+                      await context
+                          .read<HomeworksProvider>()
+                          .deleteHomework(homework);
+                      showSnackBar('Hausaufgabe gelöscht');
+                    },
+                  ),
+                ],
               ),
+
               Align(
                 alignment: Alignment.centerLeft,
                 child: Text(homework.description ?? '—'),
