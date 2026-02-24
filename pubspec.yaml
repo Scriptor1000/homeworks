@@ -95,6 +95,7 @@ dev_dependencies:
   fake_cloud_firestore: ^4.0.0
 
   sentry_dart_plugin: ^3.2.0
+  flutter_launcher_icons: ^0.14.4
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -147,3 +148,17 @@ sentry:
   
   project: homeworks
   org: max-uf
+
+flutter_launcher_icons:
+  android: true
+  image_path_android: assets/icon/icon.png
+
+  adaptive_icon_foreground: assets/icon/icon.png
+  adaptive_icon_background: "#FFFFFF" #8eb3e1"
+  adaptive_icon_foreground_inset: 16
+
+  web: 
+    generate: true
+    image_path: assets/icon/icon.png
+    background_color: "#FFFFFF"
+    theme_color: "#FFFFFF"
