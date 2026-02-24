@@ -6,6 +6,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:provider/provider.dart';
@@ -25,12 +26,18 @@ void main() async {
   // even if it was pushed. Standard behavior is that the URL only shows routes you [go] to.
   // GoRouter.optionURLReflectsImperativeAPIs = true;
 
-  SentryWidgetsFlutterBinding.ensureInitialized();
+  WidgetsBinding widgetsBinding =
+      SentryWidgetsFlutterBinding.ensureInitialized();
+
+  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+
   usePathUrlStrategy();
+
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(kReleaseMode);
 
+  FlutterNativeSplash.remove();
   if (kReleaseMode) {
     await SentryFlutter.init((options) {
       options.dsn =

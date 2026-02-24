@@ -50,6 +50,7 @@ dependencies:
   dynamic_color: ^1.7.0
   font_awesome_flutter: ^10.8.0
   gap: ^3.0.1
+  flutter_native_splash: ^2.4.7
 
   # firebase related packages
   firebase_core: ^4.0.0
@@ -154,7 +155,7 @@ flutter_launcher_icons:
   image_path_android: assets/icon/icon.png
 
   adaptive_icon_foreground: assets/icon/icon.png
-  adaptive_icon_background: "#FFFFFF" #8eb3e1"
+  adaptive_icon_background: "#FFFFFF" #8eb3e1
   adaptive_icon_foreground_inset: 16
 
   web: 
@@ -162,3 +163,11 @@ flutter_launcher_icons:
     image_path: assets/icon/icon.png
     background_color: "#FFFFFF"
     theme_color: "#FFFFFF"
+
+flutter_native_splash:
+  color: "#8eb3e1"
+  image: assets/icon/icon.png
+
+  android_12:
+    # background color
+    color: "#8eb3e1"
