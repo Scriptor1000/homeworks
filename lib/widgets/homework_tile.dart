@@ -7,7 +7,6 @@ import '../database/models/homework.dart';
 import '../database/models/subject.dart';
 import '../provider/homeworks_provider.dart';
 import '../provider/subject_provider.dart';
-import '../utilities/constants.dart';
 import '../utilities/global_snackbar.dart';
 import 'subject_avatar.dart';
 import '../routes/typesafe_router.dart';
@@ -67,7 +66,7 @@ class HomeworkTile extends StatelessWidget {
     final backColor = subject?.backColor.harmonizeWith(
       Theme.of(context).primaryColor,
     );
-    final colorScheme = Theme.of(context).colorScheme;
+    //final colorScheme = Theme.of(context).colorScheme;
 
     final dateText = dueDateText(homework.dueDate);
     return ExpansionTile(
