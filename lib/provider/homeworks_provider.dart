@@ -57,7 +57,7 @@ class HomeworksProvider extends ChangeNotifier {
             homework.isCompleted)
         .toList();
     for (var homework in toDelete) {
-      await _firestoreHomeworks.deleteHomework(homework.id);
+      await _firestoreHomeworks.deleteHomework(homework.documentId);
     }
 
     // Remove the same homeworks locally

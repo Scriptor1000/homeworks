@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -73,12 +74,12 @@ class _CreateHomeworkState extends State<CreateHomework> {
       toNextLesson = hw.toNextLesson;
       dueDate = hw.dueDate ?? DateTime.now().add(const Duration(days: 1));
 
-      // Most inefficient way to find the Subject object from the provider
-      final subjects = context.read<SubjectProvider>().subjects;
-      selectedSubject = subjects.firstWhere(
+      /// Find the subject object from the provider
+      final subject = context.read<SubjectProvider>().subjects;
+      selectedSubject = subject.firstWhereOrNull(
             (s) => s.documentId == hw.subjectDocId,
-//orElse: () => subjects.isNotEmpty ? subjects.first : null,
       );
+
     }
   }
 
@@ -95,16 +96,18 @@ class _CreateHomeworkState extends State<CreateHomework> {
     context.watch<UntisProvider>().getCurrentSubject();
 
     if (currentSubject != null &&
-        (selectedSubject == null || selectedSubject == lastCurrentSubject)) {
-      _updateSubject(currentSubject);
+        (selectedSubject == null || selectedSubject == lastCurrentSubject) &&
+        currentSubject != lastCurrentSubject) {
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _updateSubject(currentSubject);
+        lastCurrentSubject = currentSubject;
+      });
     }
 
-    lastCurrentSubject ??= currentSubject;
 
-    // If no subject → automatic next-lesson mode disabled
-    if (selectedSubject == null) {
-      toNextLesson = false;
-    }
+
 
     return Scaffold(
       appBar: AppBar(

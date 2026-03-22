@@ -89,7 +89,7 @@ class HomeworkTile extends StatelessWidget {
             icon: const Icon(Icons.edit),
             onPressed: () {
               GoRouter.of(context).go(
-                EditHomeworkRoute(homeworkId: homework.id).location,
+                EditHomeworkRoute(homeworkId: homework.documentId).location,
               );
             },
           ),
@@ -154,12 +154,12 @@ class HomeworkTile extends StatelessWidget {
 
               Align(
                 alignment: Alignment.centerLeft,
-                child: Text(homework.description ?? '—'),
+                child: Text(
+                  homework.description.isEmpty ? '—' : homework.description,
+                ),
               ),
 
-
               const SizedBox(height: 8),
-
 
             ],
           ),

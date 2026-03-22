@@ -1,10 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../web_authentication/web_authentication.dart' as web;
-import '../provider/authentication_provider.dart';
-import '../utilities/enums.dart';
 
 /// A simple registration screen that allows users to log in with email/password or Google.
 class Registration extends StatefulWidget {
@@ -34,6 +29,7 @@ class _RegistrationState extends State<Registration> {
     // Dispose controllers to free resources.
     _emailController.dispose();
     _passwordController.dispose();
+    _passwordController2.dispose();
     super.dispose();
   }
 
@@ -78,7 +74,7 @@ class _RegistrationState extends State<Registration> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final authProvider = context.watch<AuthenticationProvider>();
+    //final authProvider = context.watch<AuthenticationProvider>();
 
     return Scaffold(
       body: Stack(

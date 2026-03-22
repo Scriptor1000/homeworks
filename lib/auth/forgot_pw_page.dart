@@ -20,7 +20,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
 
   Future _sendResetEmail() async {
     String nachricht;
-
+    setState(() => _isLoading = true);
     try {
       await FirebaseAuth.instance.sendPasswordResetEmail(
         email: _emailController.text.trim(),
@@ -32,12 +32,12 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       } else {
         nachricht = "Keine Adresse eingegeben.";
       }
+    }finally{
+      if (!mounted) return;
+      setState(() => _isLoading = false);
     }
-    setState(() => _isLoading = true);
 
 
-    if (!mounted) return;
-    setState(() => _isLoading = false);
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(

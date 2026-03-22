@@ -46,7 +46,7 @@ class FirestoreHomeworks {
   Future<void> deleteCompletedHomeworks() async {
     final now = DateTime.now();
     final snapshot = await _homeworksCollectionsRef
-        .where('done', isEqualTo: true)
+        .where('isCompleted', isEqualTo: true)
         .where('dueDate', isLessThan: now)
         .get();
     snapshot.docs.forEach((doc) async {
