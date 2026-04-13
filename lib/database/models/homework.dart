@@ -2,12 +2,15 @@ import 'dart:core';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:uuid/uuid.dart';
+import '../../utilities/enums.dart';
 
 /// A Homework which can be saved to Firestore.
 ///
 /// Represents a single homework item with properties like title, description,
 /// due date, and associations to a subject. Can be created manually or imported
 /// from Untis.
+
+/// A Homework which can be saved to Firestore.
 class Homework {
   /// Unique identifier for the homework. Generated automatically if not provided.
    String id;
@@ -23,9 +26,6 @@ class Homework {
 
   /// If true, the due date is determined by the next lesson of the subject.
    bool toNextLesson;
-
-  /// Marks if the homework is an exam.
-   bool isExam;
 
   /// Indicates if the homework was imported from Untis.
    bool fromUntis;
@@ -48,28 +48,32 @@ class Homework {
     required this.isCompleted,
     required this.fromUntis,
     this.dueDate,
-    this.isExam = false, // TODO remove --> own Exam class
+    this.type = HomeworkType.homework,
     DateTime? createdAt,
-  })  : createdAt = createdAt ?? DateTime.now(),
-        id = id ?? const Uuid().v4() {
-    // Validation: if toNextLesson is true, the subject must be from Untis
+  }) : createdAt = createdAt ?? DateTime.now(),
+       id = id ?? const Uuid().v4() {
     if (toNextLesson) {
       assert(
-      subjectDocId.startsWith("untis"),
-      'Homework with toNextLesson must be associated with a Subject from Untis.',
+        subjectDocId.startsWith('untis'),
+        'Homework with toNextLesson must be associated with a Subject from Untis.',
       );
     }
     // Validation: if dueDate is null, toNextLesson must be true
     if (dueDate == null) {
       assert(
-      toNextLesson,
-      'Homework with no dueDate must be toNextLesson so a dueDate can be found.',
+        toNextLesson,
+        'Homework with no dueDate must be toNextLesson so a dueDate can be found.',
       );
     }
   }
 
   /// Factory constructor to create a [Homework] from a Firestore document.
   factory Homework.fromDocument(Map<String, dynamic> json) {
+    if (!json.containsKey('homeworkType')) {
+      json['homeworkType'] = json['isExam'] == true
+          ? HomeworkType.exam.index
+          : HomeworkType.homework.index;
+    }
     return Homework(
       id: json['id'] as String,
       title: json['title'] as String,
@@ -77,7 +81,7 @@ class Homework {
       subjectDocId: json['subjectDocId'] as String,
       toNextLesson: json['toNextLesson'] as bool,
       isCompleted: json['isCompleted'] as bool,
-      isExam: json['isExam'] as bool? ?? false,
+      type: HomeworkType.values[json['homeworkType'] as int],
       fromUntis: json['fromUntis'] as bool,
       dueDate: json.containsKey('dueDate')
           ? (json['dueDate'] as Timestamp).toDate()
@@ -95,7 +99,7 @@ class Homework {
       'toNextLesson': toNextLesson,
       'isCompleted': isCompleted,
       'fromUntis': fromUntis,
-      'isExam': isExam,
+      'homeworkType': type.index,
       'subjectDocId': subjectDocId,
       if (dueDate != null) 'dueDate': Timestamp.fromDate(dueDate!),
       'createdAt': Timestamp.fromDate(createdAt),
@@ -111,8 +115,10 @@ class Homework {
   /// Exams are considered urgent if due within the next 3 days.
   bool get isUrgent =>
       dueDate != null &&
-          DateTime(dueDate!.year, dueDate!.month, dueDate!.day)
-              .difference(DateTime.now())
-              .inDays <
-              (isExam ? 3 : 1);
+      DateTime(
+            dueDate!.year,
+            dueDate!.month,
+            dueDate!.day,
+          ).difference(DateTime.now()).inDays <
+          (type == HomeworkType.exam ? 3 : 1);
 }

@@ -55,7 +55,9 @@ jobs:
     
     steps:
       - uses: actions/checkout@v5
-      
+        with:
+          fetch-depth: 0
+
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -63,9 +65,14 @@ jobs:
           cache: true
 
       - name: Determine Release Name
-        env: 
+        env:
           BRANCH_NAME: ${{github.head_ref || github.ref_name }}
         run: echo "SENTRY_RELEASE=${BRANCH_NAME##*/}@${GITHUB_SHA::7}" >> $GITHUB_ENV
+        env:
+          BRANCH_NAME: ${{github.head_ref || github.ref_name }}
+        run: |
+          echo "Determined release name: ${BRANCH_NAME##*/}@${GITHUB_SHA::7}";
+          echo "SENTRY_RELEASE=${BRANCH_NAME##*/}@${GITHUB_SHA::7}" >> $GITHUB_ENV;
 
       - name: Cache Flutter dependencies
         uses: actions/cache@v4
@@ -93,6 +100,10 @@ jobs:
             SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_TOKEN }}
             SENTRY_RELEASE: ${{ env.SENTRY_RELEASE }}
         run: dart run sentry_dart_plugin 
+
+      - name: Remove sourcemaps before deploy
+        run: |
+          find build/web -name "*.map" -type f -delete
 
       - name: Deploy to Cloudflare Pages
         id: deploy

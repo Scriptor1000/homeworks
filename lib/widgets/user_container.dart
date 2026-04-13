@@ -31,20 +31,19 @@ class _UserContainerState extends State<UserContainer> {
     final authProvider = context.watch<AuthenticationProvider>();
     final user = authProvider.user!;
 
-    final hasGoogle =
-        user.providerData.any((e) => e.providerId == 'google.com');
-    final hasEmailPassword =
-        user.providerData.any((e) => e.providerId == 'password');
+    final hasGoogle = user.providerData.any(
+      (e) => e.providerId == 'google.com',
+    );
+    final hasEmailPassword = user.providerData.any(
+      (e) => e.providerId == 'password',
+    );
 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12.0),
-        border: Border.all(
-          color: Theme.of(context).dividerColor,
-          width: 1.0,
-        ),
+        border: Border.all(color: Theme.of(context).dividerColor, width: 1.0),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -73,9 +72,9 @@ class _UserContainerState extends State<UserContainer> {
           // Benutzername
           Text(
             user.displayName ?? 'Benutzer',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             textAlign: TextAlign.center,
           ),
 
@@ -97,7 +96,10 @@ class _UserContainerState extends State<UserContainer> {
               // Google Sign-In Button
               Expanded(
                 child: _buildGoogleSignInButton(
-                    context, hasGoogle, hasEmailPassword),
+                  context,
+                  hasGoogle,
+                  hasEmailPassword,
+                ),
               ),
 
               const SizedBox(width: 12),
@@ -127,7 +129,10 @@ class _UserContainerState extends State<UserContainer> {
   }
 
   Widget _buildGoogleSignInButton(
-      BuildContext context, bool hasGoogle, bool hasEmailPassword) {
+    BuildContext context,
+    bool hasGoogle,
+    bool hasEmailPassword,
+  ) {
     final authProvider = context.read<AuthenticationProvider>();
 
     // Für Web verwenden wir den renderButton wenn möglich
@@ -154,8 +159,8 @@ class _UserContainerState extends State<UserContainer> {
                   Text(
                     'Google',
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ],
               ),
@@ -168,9 +173,9 @@ class _UserContainerState extends State<UserContainer> {
                     const SizedBox(width: 4),
                     Text(
                       'Verknüpft',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.green,
-                          ),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodySmall?.copyWith(color: Colors.green),
                     ),
                   ],
                 )
@@ -178,11 +183,10 @@ class _UserContainerState extends State<UserContainer> {
                 Text(
                   'Nicht verbunden',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onSurface
-                            .withOpacity(0.6),
-                      ),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.6),
+                  ),
                 ),
               const SizedBox(height: 12),
               if (hasGoogle && hasEmailPassword)
@@ -204,17 +208,19 @@ class _UserContainerState extends State<UserContainer> {
               else if (hasGoogle)
                 FilledButton.icon(
                   onPressed: () => showSnackBar(
-                      'Google-Konto kann nicht getrennt werden, da es die einzige Anmeldemethode ist'),
+                    'Google-Konto kann nicht getrennt werden, da es die einzige Anmeldemethode ist',
+                  ),
                   icon: const Icon(Icons.link_off, size: 16),
                   label: const Text('Trennen'),
                   style: FilledButton.styleFrom(
-                    backgroundColor:
-                        Theme.of(context).colorScheme.outline.withOpacity(0.12),
+                    backgroundColor: Theme.of(
+                      context,
+                    ).colorScheme.outline.withOpacity(0.12),
                     foregroundColor: Theme.of(context).colorScheme.outline,
                   ),
                 )
               else
-                web.renderButton()
+                web.renderButton(),
             ],
           ),
         ),
@@ -242,9 +248,9 @@ class _UserContainerState extends State<UserContainer> {
                 const SizedBox(width: 8),
                 Text(
                   'Google',
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
                 ),
               ],
             ),
@@ -257,9 +263,9 @@ class _UserContainerState extends State<UserContainer> {
                   const SizedBox(width: 4),
                   Text(
                     'Verknüpft',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.green,
-                        ),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: Colors.green),
                   ),
                 ],
               )
@@ -267,11 +273,10 @@ class _UserContainerState extends State<UserContainer> {
               Text(
                 'Nicht verbunden',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .onSurface
-                          .withOpacity(0.6),
-                    ),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withOpacity(0.6),
+                ),
               ),
             const SizedBox(height: 12),
             if (hasGoogle && hasEmailPassword)
@@ -293,12 +298,14 @@ class _UserContainerState extends State<UserContainer> {
             else if (hasGoogle)
               FilledButton.icon(
                 onPressed: () => showSnackBar(
-                    'Google-Konto kann nicht getrennt werden, da es die einzige Anmeldemethode ist'),
+                  'Google-Konto kann nicht getrennt werden, da es die einzige Anmeldemethode ist',
+                ),
                 icon: const Icon(Icons.link_off, size: 16),
                 label: const Text('Trennen'),
                 style: FilledButton.styleFrom(
-                  backgroundColor:
-                      Theme.of(context).colorScheme.outline.withOpacity(0.12),
+                  backgroundColor: Theme.of(
+                    context,
+                  ).colorScheme.outline.withOpacity(0.12),
                   foregroundColor: Theme.of(context).colorScheme.outline,
                 ),
               )
@@ -321,7 +328,9 @@ class _UserContainerState extends State<UserContainer> {
   }
 
   Widget _buildEmailPasswordButton(
-      BuildContext context, bool hasEmailPassword) {
+    BuildContext context,
+    bool hasEmailPassword,
+  ) {
     return Card(
       elevation: 2,
       child: Padding(
@@ -342,9 +351,9 @@ class _UserContainerState extends State<UserContainer> {
                 const SizedBox(width: 8),
                 Text(
                   'Passwort',
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
                 ),
               ],
             ),
@@ -357,9 +366,9 @@ class _UserContainerState extends State<UserContainer> {
                   const SizedBox(width: 4),
                   Text(
                     'Eingerichtet',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.green,
-                        ),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: Colors.green),
                   ),
                 ],
               )
@@ -367,11 +376,10 @@ class _UserContainerState extends State<UserContainer> {
               Text(
                 'Nicht eingerichtet',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .onSurface
-                          .withOpacity(0.6),
-                    ),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withOpacity(0.6),
+                ),
               ),
             const SizedBox(height: 12),
             if (hasEmailPassword)
@@ -415,7 +423,8 @@ class _UserContainerState extends State<UserContainer> {
         return AlertDialog(
           title: const Text('Google-Konto entfernen'),
           content: const Text(
-              'Möchtest du wirklich dein Google-Konto von dieser App entfernen? Diese Aktion kann nicht rückgängig gemacht werden.'),
+            'Möchtest du wirklich dein Google-Konto von dieser App entfernen? Diese Aktion kann nicht rückgängig gemacht werden.',
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),

@@ -1,4 +1,5 @@
 import 'package:collection/collection.dart';
+import 'package:dart_untis_mobile/dart_untis_mobile.dart';
 import 'package:flutter/material.dart';
 
 import 'untis_provider.dart';
@@ -20,7 +21,7 @@ class SubjectProvider extends ChangeNotifier {
   final FirestoreSubjects _firestoreSubjectsService; // Firestore service
 
   SubjectProvider({required FirestoreSubjects firestoreSubjects})
-      : _firestoreSubjectsService = firestoreSubjects;
+    : _firestoreSubjectsService = firestoreSubjects;
 
   /// The list of all subjects, currently only from Firestore
   List<Subject> get subjects => _firestoreSubjects;
@@ -42,6 +43,18 @@ class SubjectProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// The subject associated with the given [UntisElementDescriptor].
+  ///
+  /// Returns null if no such subject exists within [_firestoreSubjects].
+  Subject? getSubjectByUntisId(UntisElementDescriptor untisId) {
+    if (untisId.type != UntisElementType.subject) {
+      return null;
+    }
+    return _firestoreSubjects.firstWhereOrNull(
+      (subject) => subject.id == untisId.id && subject.fromUntis,
+    );
+  }
+
   /// Updates Untis subjects based on data from [UntisProvider]
   ///
   /// Updates [_untisSubjects] and [_untisSubjectStatus], and also updates
@@ -57,13 +70,15 @@ class SubjectProvider extends ChangeNotifier {
     _untisSubjects = untisProvider.untisSubjects;
     _untisSubjectStatus = UntisSubjectStatus.loaded;
 
-    // Sync next lesson dates from Untis to Firestore subjects
+    // Update next lesson dates in Firestore subjects
     for (var untisSubject in _untisSubjects) {
-      final existingSubject = _firestoreSubjects.firstWhereOrNull(
-            (subject) => subject.documentId == untisSubject.documentId,
+      final existingSubject = _firestoreSubjects.indexWhere(
+        // (subject) => subject.documentId == untisSubject.documentId,
+        (subject) => subject.id == untisSubject.id && subject.fromUntis,
       );
-      if (existingSubject != null) {
-        existingSubject.nextLesson = untisSubject.nextLesson;
+      if (existingSubject != -1) {
+        _firestoreSubjects[existingSubject].nextLesson =
+            untisSubject.nextLesson;
       }
     }
 
@@ -88,6 +103,17 @@ class SubjectProvider extends ChangeNotifier {
   Future<void> removeSubject(Subject subject) async {
     await _firestoreSubjectsService.deleteSubject(subject);
     _firestoreSubjects.removeWhere((s) => s.id == subject.id);
+    notifyListeners();
+  }
+
+  /// Toggles the visibility flag of a subject in Firestore and [_firestoreSubjects].
+  Future<void> toggleSubjectVisibility(String subjectDocId) async {
+    final subject = _firestoreSubjects.firstWhereOrNull(
+      (subject) => subject.documentId == subjectDocId,
+    );
+    if (subject == null) return;
+    subject.visible = !subject.visible;
+    await _firestoreSubjectsService.saveSubject(subject);
     notifyListeners();
   }
 }

@@ -104,10 +104,7 @@ abstract class ProgressIndicator extends StatefulWidget {
     super.debugFillProperties(properties);
     String message = active ? 'active' : 'inactive';
 
-    properties.add(MessageProperty(
-      'status',
-      message,
-    ));
+    properties.add(MessageProperty('status', message));
   }
 
   Widget _buildSemanticsWrapper({
@@ -184,8 +181,9 @@ class _LinearProgressIndicatorPainter extends CustomPainter {
 
       final Rect rect = Offset(left, 0.0) & Size(width, size.height);
       if (indicatorBorderRadius != BorderRadius.zero) {
-        final RRect rrect =
-            indicatorBorderRadius.resolve(textDirection).toRRect(rect);
+        final RRect rrect = indicatorBorderRadius
+            .resolve(textDirection)
+            .toRRect(rect);
         canvas.drawRRect(rrect, paint);
       } else {
         canvas.drawRect(rect, paint);
@@ -290,18 +288,24 @@ class _LinearProgressIndicatorState extends State<OwnProgressIndicator>
     super.dispose();
   }
 
-  Widget _buildIndicator(BuildContext context, double animationValue,
-      TextDirection textDirection) {
+  Widget _buildIndicator(
+    BuildContext context,
+    double animationValue,
+    TextDirection textDirection,
+  ) {
     final ProgressIndicatorThemeData defaults = Theme.of(context).useMaterial3
         ? _LinearProgressIndicatorDefaultsM3(context)
         : _LinearProgressIndicatorDefaultsM2(context);
 
-    final ProgressIndicatorThemeData indicatorTheme =
-        ProgressIndicatorTheme.of(context);
-    final Color trackColor = widget.backgroundColor ??
+    final ProgressIndicatorThemeData indicatorTheme = ProgressIndicatorTheme.of(
+      context,
+    );
+    final Color trackColor =
+        widget.backgroundColor ??
         indicatorTheme.linearTrackColor ??
         defaults.linearTrackColor!;
-    final double minHeight = widget.minHeight ??
+    final double minHeight =
+        widget.minHeight ??
         indicatorTheme.linearMinHeight ??
         defaults.linearMinHeight!;
 
@@ -311,8 +315,8 @@ class _LinearProgressIndicatorState extends State<OwnProgressIndicator>
         // Clip is only needed with indeterminate progress indicators
         clipBehavior:
             (widget.borderRadius != BorderRadius.zero && widget.active)
-                ? Clip.antiAlias
-                : Clip.none,
+            ? Clip.antiAlias
+            : Clip.none,
         decoration: ShapeDecoration(
           color: trackColor,
           shape: RoundedRectangleBorder(borderRadius: widget.borderRadius),
@@ -324,8 +328,10 @@ class _LinearProgressIndicatorState extends State<OwnProgressIndicator>
         child: CustomPaint(
           painter: _LinearProgressIndicatorPainter(
             backgroundColor: trackColor,
-            valueColor:
-                widget._getValueColor(context, defaultColor: defaults.color),
+            valueColor: widget._getValueColor(
+              context,
+              defaultColor: defaults.color,
+            ),
             animationValue: animationValue,
             // ignored if widget.value is not null
             textDirection: textDirection,

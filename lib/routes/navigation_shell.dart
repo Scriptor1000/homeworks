@@ -8,11 +8,7 @@ import 'typesafe_router.dart';
 /// The [child] is the current screen displayed above the navigation bar.
 /// The [state] is the current GoRouter state, used to determine the selected index.
 class NavigationShell extends StatelessWidget {
-  const NavigationShell({
-    super.key,
-    required this.child,
-    required this.state,
-  });
+  const NavigationShell({super.key, required this.child, required this.state});
 
   /// The screen to display above the bottom navigation bar.
   final Widget child;

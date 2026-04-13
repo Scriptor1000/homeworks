@@ -8,7 +8,7 @@
 export 'stub.dart' if (dart.library.js_util) 'on_web.dart';
 
 // the thing is that this isn't written anywhere in the documentation
-// and i found this solution only in the example code 
+// and i found this solution only in the example code
 //https://github.com/flutter/packages/blob/main/packages/google_sign_in/google_sign_in/example/lib/main.dart
 
 // PS: the AI had understood the error but advised to delete the import and renderButton call

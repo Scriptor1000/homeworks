@@ -10,6 +10,7 @@ import '../../database/models/subject.dart';
 import '../../provider/homeworks_provider.dart';
 import '../../provider/untis_provider.dart';
 import '../../routes/typesafe_router.dart';
+import '../../utilities/enums.dart';
 import '../../utilities/global_snackbar.dart';
 import '../../widgets/fab.dart';
 import '../../widgets/subject_tile.dart';
@@ -134,6 +135,8 @@ class _CreateHomeworkState extends State<CreateHomework> {
                 standardGap(),
                 _buildDate(context),
                 standardGap(),
+                _buildTime(context),
+                standardGap(),
                 _buildDetails(),
                 buildFABGap()
               ],
@@ -251,8 +254,18 @@ class _CreateHomeworkState extends State<CreateHomework> {
 
     if (picked != null && picked != dueDate) {
       setState(() {
-        dueDate = picked;
-        toNextLesson = false; // Auto next-lesson disabled manually
+        // The time in dueDate is used to determine if the homework can be deleted.
+        // It is set to 18:00 here, so it is not automatically deleted too early in the day.
+        dueDate = picked.add(
+          toNextLesson
+              ? const Duration(hours: 18)
+              : Duration(
+                  // keep the time on date change
+                  hours: dueDate.hour,
+                  minutes: dueDate.minute,
+                ),
+        );
+        toNextLesson = false;
       });
     }
   }
@@ -281,6 +294,7 @@ class _CreateHomeworkState extends State<CreateHomework> {
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
               '${dueDate.day}.${dueDate.month}.${dueDate.year}',
@@ -297,7 +311,60 @@ class _CreateHomeworkState extends State<CreateHomework> {
   }
 
   /// Auto next-lesson toggle
+  void _showTimePicker() async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay(hour: dueDate.hour, minute: dueDate.minute),
+      helpText: 'Uhrzeit wählen',
+      cancelText: 'Abbrechen',
+      confirmText: 'Bestätigen',
+    );
+
+    if (picked != null) {
+      setState(() {
+        dueDate = DateTime(
+          dueDate.year,
+          dueDate.month,
+          dueDate.day,
+          picked.hour,
+          picked.minute,
+        );
+        toNextLesson = false;
+      });
+    }
+  }
+
+  ListTile _buildTime(BuildContext context) {
+    return ListTile(
+      title: const Text('Uhrzeit'),
+      trailing: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          color: Theme.of(context).colorScheme.primaryContainer,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              '${dueDate.hour.toString().padLeft(2, '0')}:${dueDate.minute.toString().padLeft(2, '0')}',
+              style: Theme.of(context).textTheme.bodyLarge,
+            ),
+            littleGap(),
+            const Icon(Icons.access_time_outlined),
+          ],
+        ),
+      ),
+      onTap: _showTimePicker,
+    );
+  }
+
   SwitchListTile _buildNextLessonSwitch(BuildContext context) {
+    // TODO make safe:
+    // subject must be from Untis
+    // dueDate can only be null if nextLesson is true
+    // don't forget to make the same requiremts to fast create
     return SwitchListTile(
       title: const Text('Bis zur nächsten Stunde'),
       value: toNextLesson,
@@ -319,24 +386,24 @@ class _CreateHomeworkState extends State<CreateHomework> {
       width: double.infinity,
       child: selectedSubject != null
           ? SubjectTile(
-        subject: selectedSubject!,
-        trailing: const Icon(Icons.arrow_drop_down),
+              subject: selectedSubject!,
+              trailing: const Icon(Icons.arrow_drop_down),
 
-        // Navigation handled via GoRouter; callback passed via $extra
-        onTap: () =>
-            SubjectSelectionRoute($extra: _updateSubject).push(context),
-      )
+              // This is pushed because it should not be showed in the URL
+              // and it should always navigate back to this page.
+              onTap: () =>
+                  SubjectSelectionRoute($extra: _updateSubject).push(context),
+            )
           : SubjectTileTemplate(
-        title: 'Fach bitte wählen',
-        avatarChild: const Icon(
-          Icons.question_mark,
-          color: Colors.grey,
-        ),
-        trailing: const Icon(Icons.arrow_drop_down),
-        backColor: Colors.grey.shade200,
-        onTap: () =>
-            SubjectSelectionRoute($extra: _updateSubject).push(context),
-      ),
+              title: 'Fach bitte wählen',
+              avatarChild: const Icon(Icons.question_mark, color: Colors.grey),
+              trailing: const Icon(Icons.arrow_drop_down),
+              // TODO responsive color
+              backColor: Colors.grey.shade200,
+              // see above
+              onTap: () =>
+                  SubjectSelectionRoute($extra: _updateSubject).push(context),
+            ),
     );
   }
 
@@ -346,6 +413,7 @@ class _CreateHomeworkState extends State<CreateHomework> {
       width: double.infinity,
       child: SegmentedButton<HomeworkType>(
         multiSelectionEnabled: false,
+        showSelectedIcon: false,
         segments: const [
           ButtonSegment<HomeworkType>(
             value: HomeworkType.homework,
@@ -355,12 +423,16 @@ class _CreateHomeworkState extends State<CreateHomework> {
             value: HomeworkType.exam,
             label: Text('Test'),
           ),
+          ButtonSegment<HomeworkType>(
+            value: HomeworkType.appointment,
+            label: Text('Termin'),
+          ),
         ],
         selected: {selected},
         onSelectionChanged: (Set<HomeworkType> newSelection) {
           setState(() {
             if (newSelection.contains(HomeworkType.exam)) {
-              toNextLesson = false;
+              toNextLesson = false; // Exams should not have next lesson
             }
             selected = newSelection.first;
           });

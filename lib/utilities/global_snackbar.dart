@@ -10,15 +10,15 @@ final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
 void showSnackBar(String message) {
   Future.delayed(Duration.zero, () {
     scaffoldMessengerKey.currentState?.showSnackBar(
-      SnackBar(
-        content: Text(message),
-      ),
+      SnackBar(content: Text(message)),
     );
   });
 }
 
 Future<ScaffoldFeatureController<SnackBar, SnackBarClosedReason>?>
-    showComplexSnackBar(SnackBar snackBar) {
-  return Future.delayed(Duration.zero,
-      () => scaffoldMessengerKey.currentState?.showSnackBar(snackBar));
+showComplexSnackBar(SnackBar snackBar) {
+  return Future.delayed(
+    Duration.zero,
+    () => scaffoldMessengerKey.currentState?.showSnackBar(snackBar),
+  );
 }

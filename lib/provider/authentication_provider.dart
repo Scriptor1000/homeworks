@@ -41,7 +41,7 @@ class AuthenticationProvider extends ChangeNotifier {
   /// Currently authenticated Firebase user.
   User? get user => _firebaseAuth.currentUser;
 
-  /// OAuth Client ID used for Google authentication.
+  /// Client ID for the Google Sign-In.
   static const clientId =
       '626284965826-iovj6s0lvft551f3d6ahdr6qkoc53njg.apps.googleusercontent.com';
 
@@ -66,9 +66,7 @@ class AuthenticationProvider extends ChangeNotifier {
   /// - On web, listens to Google authentication events
   Future<void> initialize() async {
     if (_googleSupported.isCompleted) return;
-
     await _googleSignIn.initialize(clientId: clientId);
-
     try {
       if (_googleSignIn.supportsAuthenticate()) {
         googleSignInState = GoogleSignInState.supported;
@@ -89,10 +87,7 @@ class AuthenticationProvider extends ChangeNotifier {
       if (kDebugMode) {
         print('Google Sign-In Initialisierungsfehler: $error');
       }
-      Sentry.captureException(
-        error,
-        stackTrace: stackTrace,
-      );
+      Sentry.captureException(error, stackTrace: stackTrace);
       googleSignInState = GoogleSignInState.error;
     }
 
@@ -152,7 +147,7 @@ class AuthenticationProvider extends ChangeNotifier {
       final googleUser = await _googleSignIn.authenticate();
       return await _handleGoogleCredentials(googleUser);
     } catch (error) {
-      // TODO: switch error code if GoogleSignInException
+      // TODO swich the error code if it is a GoogleSignInException
       await _googleSignIn.disconnect();
       showSnackBar('Fehler bei der Anmeldung: $error');
     }
@@ -181,9 +176,8 @@ class AuthenticationProvider extends ChangeNotifier {
       if (!allowed) {
         print('Email not allowed: ${googleUser.email}');
         showSnackBar(
-          'Kein Zugang mit dieser Email (${googleUser.email}) möglich.'
-              ' Bitte wende dich an den Administrator.',
-        );
+            'Kein Zugang mit dieser Email (${googleUser.email}) möglich.'
+            ' Bitte wende dich an den Administrator.');
         await _googleSignIn.disconnect();
         return;
       }
@@ -195,7 +189,7 @@ class AuthenticationProvider extends ChangeNotifier {
       );
 
       final userCredential =
-      await _firebaseAuth.signInWithCredential(credential);
+          await _firebaseAuth.signInWithCredential(credential);
       final user = userCredential.user;
 
       if (user != null) {
@@ -209,10 +203,7 @@ class AuthenticationProvider extends ChangeNotifier {
     } catch (error, stackTrace) {
       print('Google Sign-In Fehler: $error');
       // TODO Future.error
-      Sentry.captureException(
-        error,
-        stackTrace: stackTrace,
-      );
+      Sentry.captureException(error, stackTrace: stackTrace);
 
       await _googleSignIn.disconnect();
       await _firebaseAuth.signOut();
@@ -242,7 +233,6 @@ class AuthenticationProvider extends ChangeNotifier {
 
       await user.linkWithCredential(credential);
 
-      // Optionally update user info after linking
       if (googleUser.photoUrl != null) {
         await user.updatePhotoURL(googleUser.photoUrl);
       }
@@ -255,16 +245,13 @@ class AuthenticationProvider extends ChangeNotifier {
 
       notifyListeners();
     } catch (error, stackTrace) {
-      Sentry.captureException(
-        error,
-        stackTrace: stackTrace,
-      );
+      Sentry.captureException(error, stackTrace: stackTrace);
       print('Google Verknüpfungsfehler: $error');
       showSnackBar('Fehler bei der Verknüpfung: $error');
     }
   }
 
-  /// Unlinks Firebase user from Google provider.
+  /// Unlinks the currently signed-in Firebase user from their Google account.
   ///
   /// This method will unlink the Firebase user from their Google account.
   /// It will not delete the display name or photo URL, but will remove the
@@ -281,7 +268,10 @@ class AuthenticationProvider extends ChangeNotifier {
     await _allowedEmails.revokeEmail(user.uid);
   }
 
-  /// Signs the Firebase user out, and disconnects Google session.
+  /// Signs out the currently signed-in user from their Google account.
+  ///
+  /// In future sign ins, the user will have to select their Google account again.
+  /// This method does not unlink the Firebase user from their Google account.
   Future<void> signOut() async {
     await _googleSignIn.disconnect();
     await _firebaseAuth.signOut();
@@ -301,13 +291,11 @@ class AuthenticationProvider extends ChangeNotifier {
     } catch (e) {
       print('Error logging in with email: $e');
       showSnackBar(
-        'Anmeldung fehlgeschlagen: '
-            '${e is FirebaseAuthException ? _getErrorMessage(e) : e.toString()}',
-      );
+          'Anmeldung fehlgeschlagen: ${e is FirebaseAuthException ? _getErrorMessage(e) : e.toString()}');
     }
   }
 
-  /// Human-friendly Firebase Auth error strings.
+  /// The error messages for FirebaseAuth exceptions.
   static String _getErrorMessage(FirebaseAuthException e) {
     switch (e.code) {
       case 'user-not-found':

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 
 import '../database/models/homework.dart';
 import '../database/models/subject.dart';
 import '../provider/homeworks_provider.dart';
+import '../provider/subject_provider.dart';
 import '../provider/untis_provider.dart';
 import '../routes/typesafe_router.dart';
 import '../utilities/constants.dart';
@@ -68,6 +70,7 @@ class _HomeState extends State<Home> {
     if (text.isNotEmpty) {
       fastCreate();
     } else {
+      // Navigiere zur CreateHomework-Seite
       const CreateHomeworkRoute().go(context);
     }
   }
@@ -159,11 +162,10 @@ class _HomeState extends State<Home> {
   Widget buildPoorlyHomeworks(
       BuildContext context, List<Homework> poorlyHomeworks) {
     return buildDecoratedHomeworks(
-      context: context,
-      borderColor: Colors.grey,
-      label: 'Ohne Abgabedatum',
-      child: buildHomeworks(poorlyHomeworks),
-    );
+        context: context,
+        borderColor: Colors.grey,
+        label: 'Ohne Abgabedatum',
+        child: buildHomeworks(poorlyHomeworks));
   }
 
   /// Adds border, padding + label for homework category sections
@@ -186,7 +188,7 @@ class _HomeState extends State<Home> {
               width: urgentContainerBorderWidth,
             ),
             borderRadius:
-            BorderRadius.circular(BorderRadiusConstants.homeworks),
+                BorderRadius.circular(BorderRadiusConstants.homeworks),
           ),
           child: child,
         ),
@@ -202,10 +204,9 @@ class _HomeState extends State<Home> {
             color: Theme.of(context).scaffoldBackgroundColor,
             child: Text(
               label,
-              style: Theme.of(context)
-                  .textTheme
-                  .labelMedium
-                  ?.copyWith(color: borderColor),
+              style: Theme.of(
+                context,
+              ).textTheme.labelMedium?.copyWith(color: borderColor),
             ),
           ),
         ),
@@ -258,10 +259,9 @@ class _HomeState extends State<Home> {
                 _textFocus.unfocus();
               },
               decoration: InputDecoration(
-                hintText: 'Schnell hinzufügen...',
-                fillColor: Theme.of(context).colorScheme.surface,
-                filled: true,
-              ),
+                  hintText: 'Schnell hinzufügen...',
+                  fillColor: Theme.of(context).colorScheme.surface,
+                  filled: true),
             ),
           ),
 
@@ -289,17 +289,34 @@ class _HomeState extends State<Home> {
   /// Creates a quick homework entry using the currently active subject (if any)
   Future<void> fastCreate() async {
     final untisProvider = context.read<UntisProvider>();
-    var currentSubject = untisProvider.getCurrentSubject();
+    var currentSubjectID = untisProvider.getCurrentSubject();
 
-    /// If no subject found → navigate to subject selection with callback
-    if (currentSubject == null) {
+    if (currentSubjectID == null) {
+      // This is pushed because it should not be showed in the URL
+      // and it should always navigate back to this page.
       SubjectSelectionRoute($extra: onSubjectForFastCreate).push(context);
     } else {
-      /// Otherwise, auto-create homework for this subject
       final homeworkProvider = context.read<HomeworksProvider>();
-      await homeworkProvider.fastCreateHomework(
-          _textController.text, currentSubject);
-      _textController.clear();
+      final currentSubject = subjectProvider.getSubjectByUntisId(
+        currentSubjectID,
+      );
+      if (currentSubject == null) {
+        Sentry.logger.warn(
+          'No subject found for current subject ID: ${currentSubjectID.id}',
+        );
+        SubjectSelectionRoute($extra: onSubjectForFastCreate).push(context);
+      } else {
+        if (currentSubject.visible == false) {
+          showSnackBar(
+            'Das erkannte aktuelle Fach ist ausgeblendet, es wurde trotzdem verwendet.',
+          );
+        }
+        await homeworkProvider.fastCreateHomework(
+          _textController.text,
+          currentSubject,
+        );
+        _textController.clear();
+      }
     }
   }
 

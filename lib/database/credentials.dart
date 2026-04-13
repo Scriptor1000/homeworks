@@ -14,27 +14,31 @@ class FirestoreCredentials {
   final CredentialCryptography _cryptography;
   final ItemFactory _itemFactory;
 
-  FirestoreCredentials(
-      {required FirestoreUser firestoreUser,
-      required CredentialCryptography cryptography,
-      required ItemFactory itemFactory})
-      : _firestoreUser = firestoreUser,
-        _cryptography = cryptography,
-        _itemFactory = itemFactory;
+  FirestoreCredentials({
+    required FirestoreUser firestoreUser,
+    required CredentialCryptography cryptography,
+    required ItemFactory itemFactory,
+  }) : _firestoreUser = firestoreUser,
+       _cryptography = cryptography,
+       _itemFactory = itemFactory;
 
   /// Saves the Untis credentials to Firestore.
   ///
   /// Uploads the [credentials] after encrypting them with [userPassword].
   /// It also saves a hash of the [credentials] for verification.
   Future<void> saveCredentials(
-      UntisCredentials credentials, String userPassword) async {
+    UntisCredentials credentials,
+    String userPassword,
+  ) async {
     final encryptedCredentials = await _cryptography.databaseEncryption(
-        userPassword, credentials.toJsonString());
+      userPassword,
+      credentials.toJsonString(),
+    );
     final credentialsHash = await credentials.calculateHash();
 
     await _firestoreUser.userDocument.set({
       credentialsField: encryptedCredentials,
-      credentialsHashField: credentialsHash
+      credentialsHashField: credentialsHash,
     }, SetOptions(merge: true));
   }
 
@@ -54,7 +58,9 @@ class FirestoreCredentials {
       return null;
     }
     final credentialsJsonString = await _cryptography.databaseDecryption(
-        userPassword, encryptedCredentials);
+      userPassword,
+      encryptedCredentials,
+    );
 
     return _itemFactory.untisCredentialsFromJSON(credentialsJsonString);
   }

@@ -42,16 +42,15 @@ void main() {
 
       for (var i = 0; i < subjects.length; i++) {
         final fromUntis = i % 2 == 0;
-        when(subjects[i].documentId)
-            .thenReturn('${fromUntis ? 'untis_' : 'custom_'}$i');
-        when(subjects[i].toDocument()).thenReturn({
-          'id': i,
-          'fromUntis': fromUntis,
-        });
-        when(itemFactory.subjectFromDocument({
-          'id': i,
-          'fromUntis': fromUntis,
-        })).thenReturn(subjects[i]);
+        when(
+          subjects[i].documentId,
+        ).thenReturn('${fromUntis ? 'untis_' : 'custom_'}$i');
+        when(
+          subjects[i].toDocument(),
+        ).thenReturn({'id': i, 'fromUntis': fromUntis});
+        when(
+          itemFactory.subjectFromDocument({'id': i, 'fromUntis': fromUntis}),
+        ).thenReturn(subjects[i]);
       }
     });
 
@@ -73,8 +72,9 @@ void main() {
           .doc(subjects[0].documentId)
           .set(subjects[0].toDocument());
       // test
-      final loaded =
-          await firestoreSubjects.loadSubject(subjects[0].documentId);
+      final loaded = await firestoreSubjects.loadSubject(
+        subjects[0].documentId,
+      );
       // verify
       expect(loaded, isNotNull);
       expect(loaded!, equals(subjects[0]));
@@ -132,8 +132,10 @@ void main() {
       final untisSubjects = await firestoreSubjects.loadAllUntisSubjects();
       // verify
       expect(untisSubjects.length, equals(2));
-      expect(untisSubjects.every((s) => s.documentId.startsWith('untis_')),
-          isTrue);
+      expect(
+        untisSubjects.every((s) => s.documentId.startsWith('untis_')),
+        isTrue,
+      );
     });
   });
 }

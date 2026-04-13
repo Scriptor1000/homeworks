@@ -21,7 +21,7 @@ version: 1.0.0+1
 #flutter run -d chrome --web-hostname localhost --web-port 5000 --web-experimental-hot-reload
 
 environment:
-  sdk: ^3.5.4
+  sdk: ^3.10.0
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -42,7 +42,7 @@ dependencies:
 
   dart_untis_mobile: ^1.1.0
 
-  go_router: ^16.2.1
+  go_router: ^17.0.1
   provider: ^6.1.2
 
   # ui related packages
@@ -50,6 +50,7 @@ dependencies:
   dynamic_color: ^1.7.0
   font_awesome_flutter: ^10.8.0
   gap: ^3.0.1
+  flutter_native_splash: ^2.4.7
 
   # firebase related packages
   firebase_core: ^4.0.0
@@ -69,7 +70,7 @@ dependencies:
 
   # storage related packages
   shared_preferences: ^2.3.3
-  flutter_secure_storage: ^9.2.4
+  flutter_secure_storage: ^10.0.0
   
 
 dev_dependencies:
@@ -95,6 +96,7 @@ dev_dependencies:
   fake_cloud_firestore: ^4.0.0
 
   sentry_dart_plugin: ^3.2.0
+  flutter_launcher_icons: ^0.14.4
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -138,9 +140,34 @@ flutter:
   # see https://flutter.dev/to/font-from-package
 
 sentry:
-  upload_debug_symbols: true
+  upload_debug_symbols: false # because no android/ios builds 
   upload_source_maps: true
   upload_sources: true
+
+  commits: auto
+  ignore_missing: true
   
   project: homeworks
   org: max-uf
+
+flutter_launcher_icons:
+  android: true
+  image_path_android: assets/icon/icon.png
+
+  adaptive_icon_foreground: assets/icon/icon.png
+  adaptive_icon_background: "#FFFFFF" #8eb3e1
+  adaptive_icon_foreground_inset: 16
+
+  web: 
+    generate: true
+    image_path: assets/icon/icon.png
+    background_color: "#FFFFFF"
+    theme_color: "#FFFFFF"
+
+flutter_native_splash:
+  color: "#8eb3e1"
+  image: assets/icon/icon.png
+
+  android_12:
+    # background color
+    color: "#8eb3e1"

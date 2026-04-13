@@ -338,12 +338,12 @@ class _AuthenticationState extends State<Authentication> {
         ),
       )
           : const Text(
-        'Anmelden',
-        style: TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
+              'Anmelden',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
     );
   }
 

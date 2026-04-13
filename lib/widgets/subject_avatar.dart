@@ -31,12 +31,11 @@ class SubjectAvatar extends StatelessWidget {
           child: FittedBox(
             fit: BoxFit.contain,
             alignment: Alignment.center,
-            child: Text(_standardizeShortName(subject!.shortName),
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: foreColor,
-                  fontWeight: FontWeight.bold,
-                )),
+            child: Text(
+              _standardizeShortName(subject!.shortName),
+              textAlign: TextAlign.center,
+              style: TextStyle(color: foreColor, fontWeight: FontWeight.bold),
+            ),
           ),
         ),
       );

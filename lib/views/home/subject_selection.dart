@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../database/models/subject.dart';
 import '../../provider/subject_provider.dart';
+import '../../widgets/search_screen.dart';
 import '../../widgets/subject_tile.dart';
 
 /// A screen that allows users to choose a [Subject].
@@ -116,5 +117,13 @@ class _SubjectSelectionState extends State<SubjectSelection> {
         ),
       ),
     );
+  }
+
+  Widget _buildSubjectTile(
+    BuildContext context,
+    Subject subject,
+    VoidCallback onTap,
+  ) {
+    return SubjectTile(subject: subject, onTap: () => onTap());
   }
 }

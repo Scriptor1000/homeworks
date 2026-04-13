@@ -6,6 +6,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:provider/provider.dart';
@@ -18,44 +19,40 @@ import 'routes/typesafe_router.dart';
 import 'utilities/constants.dart';
 import 'utilities/global_snackbar.dart';
 
-const SENTRY_RELEASE_NAME = String.fromEnvironment('SENTRY_RELEASE');
+const sentryReleaseName = String.fromEnvironment('SENTRY_RELEASE');
 
 void main() async {
   /// The following line enables that the URL shows the last route on the stack,
   /// even if it was pushed. Standard behavior is that the URL only shows routes you [go] to.
   /// GoRouter.optionURLReflectsImperativeAPIs = true;
 
-  SentryWidgetsFlutterBinding.ensureInitialized(); // initialize every binding to prevent errors
-  usePathUrlStrategy(); // no hash in url
+  WidgetsBinding widgetsBinding =
+      SentryWidgetsFlutterBinding.ensureInitialized();
 
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform, // connect project with Firebase
-  );
+  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+
+  usePathUrlStrategy();
+
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(kReleaseMode);
 
-  if (kDebugMode) {
-    runApp(const MainApp());
-  } else {
-    await SentryFlutter.init(
-      (options) {
-        options.dsn =
-            'https://2937d7b0e20d869f78933ba866a6c078@o4510119803092992.ingest.de.sentry.io/4510119812661328';
-        options.environment = 'production';
-        options.tracesSampleRate = 0.0; // Performance-Tracking aus
-        options.enableAutoSessionTracking = true;
-        options.attachStacktrace = true;
-        options.replay.onErrorSampleRate = 0.2;
+  FlutterNativeSplash.remove();
+  if (kReleaseMode) {
+    await SentryFlutter.init((options) {
+      options.dsn =
+          'https://2937d7b0e20d869f78933ba866a6c078@o4510119803092992.ingest.de.sentry.io/4510119812661328';
+      options.enableAutoSessionTracking = true;
 
-        if (SENTRY_RELEASE_NAME.isNotEmpty) {
-          options.release = SENTRY_RELEASE_NAME;
-          options.environment = SENTRY_RELEASE_NAME.split('@').first == 'main'
-              ? 'production'
-              : 'staging';
-        }
-      },
-      appRunner: () => runApp(SentryWidget(child: const MainApp())),
-    );
+      if (sentryReleaseName.isNotEmpty) {
+        options.release = sentryReleaseName;
+        options.environment = sentryReleaseName.split('@').first == 'main'
+            ? 'production'
+            : 'staging';
+      }
+    }, appRunner: () => runApp(SentryWidget(child: const MainApp())));
+  } else {
+    runApp(const MainApp());
   }
 }
 

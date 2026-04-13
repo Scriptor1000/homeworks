@@ -47,17 +47,20 @@ void main() {
 
       when(credentials.toJsonString()).thenReturn(jsonCredentials);
       when(credentials.calculateHash()).thenAnswer((_) async => credentialHash);
-      when(mockItemFactory.untisCredentialsFromJSON(jsonCredentials))
-          .thenReturn(credentials);
+      when(
+        mockItemFactory.untisCredentialsFromJSON(jsonCredentials),
+      ).thenReturn(credentials);
 
       when(mockFirestoreUser.userDocument).thenReturn(
-          mockFirestore.collection(FirestoreUser.userCollection).doc(uid));
+        mockFirestore.collection(FirestoreUser.userCollection).doc(uid),
+      );
 
-      when(mockCryptography.databaseEncryption(userPassword, jsonCredentials))
-          .thenAnswer((_) async => encryptedCredentials);
-      when(mockCryptography.databaseDecryption(
-              userPassword, encryptedCredentials))
-          .thenAnswer((_) async => jsonCredentials);
+      when(
+        mockCryptography.databaseEncryption(userPassword, jsonCredentials),
+      ).thenAnswer((_) async => encryptedCredentials);
+      when(
+        mockCryptography.databaseDecryption(userPassword, encryptedCredentials),
+      ).thenAnswer((_) async => jsonCredentials);
     });
 
     test('should upload the credentials encrypted', () async {
@@ -69,12 +72,17 @@ void main() {
 
       final credentialHash = await credentials.calculateHash();
 
-      verify(mockCryptography.databaseEncryption(userPassword, jsonCredentials))
-          .called(1);
-      expect(data[FirestoreCredentials.credentialsField],
-          equals(encryptedCredentials));
-      expect(data[FirestoreCredentials.credentialsHashField],
-          equals(credentialHash));
+      verify(
+        mockCryptography.databaseEncryption(userPassword, jsonCredentials),
+      ).called(1);
+      expect(
+        data[FirestoreCredentials.credentialsField],
+        equals(encryptedCredentials),
+      );
+      expect(
+        data[FirestoreCredentials.credentialsHashField],
+        equals(credentialHash),
+      );
     });
 
     test('should decrypt downloaded credentials', () async {
@@ -83,20 +91,22 @@ void main() {
         FirestoreCredentials.credentialsField: encryptedCredentials,
       });
       // test
-      final loadedCredentials =
-          await firestoreCredentials.loadCredentials(userPassword);
+      final loadedCredentials = await firestoreCredentials.loadCredentials(
+        userPassword,
+      );
       // verify
-      verify(mockCryptography.databaseDecryption(
-              userPassword, encryptedCredentials))
-          .called(1);
+      verify(
+        mockCryptography.databaseDecryption(userPassword, encryptedCredentials),
+      ).called(1);
 
       expect(loadedCredentials, isNotNull);
     });
 
     test('should return null when no credentials are there', () {
       // test
-      final loadedCredentials =
-          firestoreCredentials.loadCredentials(userPassword);
+      final loadedCredentials = firestoreCredentials.loadCredentials(
+        userPassword,
+      );
       // verify
       expect(loadedCredentials, completion(isNull));
     });

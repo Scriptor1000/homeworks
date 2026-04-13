@@ -10,9 +10,7 @@ class AccountView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Konto'),
-      ),
+      appBar: AppBar(title: const Text('Konto')),
       body: const SingleChildScrollView(
         child: Padding(
           padding: EdgeInsets.all(16.0),

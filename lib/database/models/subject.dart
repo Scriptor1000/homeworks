@@ -24,6 +24,9 @@ class Subject {
   /// Short name or abbreviation of the subject.
   final String shortName;
 
+  /// Visibility of the subject.
+  bool visible;
+
   /// Date of the next lesson for this subject, if available.
   DateTime? nextLesson;
 
@@ -31,23 +34,25 @@ class Subject {
   ///
   /// Colors are converted from Untis values, and the `fromUntis` flag is set to true.
   Subject.fromUntisSubject(UntisSubject untisSubject)
-      : backColor = Color(untisSubject.backColorValue ?? 0),
-        foreColor = Color(untisSubject.foreColorValue ?? 0xFFFFFFFF),
-        id = untisSubject.id.id,
-        name = untisSubject.longName,
-        fromUntis = true,
-        shortName = untisSubject.name;
+    : backColor = Color(untisSubject.backColorValue ?? 0),
+      foreColor = Color(untisSubject.foreColorValue ?? 0xFFFFFFFF),
+      id = untisSubject.id.id,
+      name = untisSubject.longName,
+      fromUntis = true,
+      visible = true,
+      shortName = untisSubject.name;
 
   /// Creates a Subject from a Firestore document.
   ///
   /// Provides default values if some fields are missing in the document.
   Subject.fromDocument(Map<String, dynamic> doc)
-      : backColor = Color(doc['backColor'] ?? 0),
-        foreColor = Color(doc['foreColor'] ?? 0xFFFFFFFF),
-        id = doc['id'] ?? -1,
-        fromUntis = doc['fromUntis'] ?? false,
-        name = doc['name'] ?? '<Kein Name gespeichert>',
-        shortName = doc['shortName'] ?? '<0>';
+    : backColor = Color(doc['backColor'] ?? 0),
+      foreColor = Color(doc['foreColor'] ?? 0xFFFFFFFF),
+      id = doc['id'] ?? -1,
+      fromUntis = doc['fromUntis'] ?? false,
+      name = doc['name'] ?? '<Kein Name gespeichert>',
+      shortName = doc['shortName'] ?? '<0>',
+      visible = doc['visible'] ?? true;
 
   /// Converts the subject into a Firestore-compatible map.
   Map<String, dynamic> toDocument() {
@@ -58,6 +63,7 @@ class Subject {
       'fromUntis': fromUntis,
       'name': name,
       'shortName': shortName,
+      'visible': visible,
     };
   }
 
