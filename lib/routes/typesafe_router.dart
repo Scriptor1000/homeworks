@@ -27,7 +27,6 @@ import '../timetable/stundenplan.dart';
 import 'navigation_shell.dart';
 import 'provider_shell.dart';
 import '../utilities/homeworks_list.dart';
-import '../database/models/homework.dart';
 import '../provider/homeworks_provider.dart';
 part 'typesafe_router.g.dart';
 

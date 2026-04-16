@@ -94,7 +94,7 @@ class _LoadCredentialsState extends State<LoadCredentials> {
             // Progress bar (at top)
             OwnProgressIndicator(
               active: _isLoading ||
-                  credentialProvider.sessionState == UntisSessionState.loading,
+                  credentialProvider.sessionStatus == UntisSessionStatus.loading,
               backgroundColor: Theme.of(context).colorScheme.surface,
             ),
 

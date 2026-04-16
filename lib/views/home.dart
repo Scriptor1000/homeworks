@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:go_router/go_router.dart';
+import 'package:dart_untis_mobile/dart_untis_mobile.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
+import 'package:collection/collection.dart';
 
 import '../database/models/homework.dart';
 import '../database/models/subject.dart';
@@ -226,7 +227,7 @@ class _HomeState extends State<Home> {
           padding: const EdgeInsets.symmetric(vertical: 6),
           child: HomeworkTile(
             homework: homework,
-            onCompleted: () {
+            statusChange: () {
               onCompleted(index);
             },
           ),
@@ -297,8 +298,8 @@ class _HomeState extends State<Home> {
       SubjectSelectionRoute($extra: onSubjectForFastCreate).push(context);
     } else {
       final homeworkProvider = context.read<HomeworksProvider>();
-      final currentSubject = subjectProvider.getSubjectByUntisId(
-        currentSubjectID,
+      final currentSubject = context.read<SubjectProvider>().subjects.firstWhereOrNull(
+            (s) => s.id == currentSubjectID.id,
       );
       if (currentSubject == null) {
         Sentry.logger.warn(

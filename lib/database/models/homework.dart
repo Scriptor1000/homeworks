@@ -39,7 +39,10 @@ class Homework {
   /// The due date for the homework. Can be null if [toNextLesson] is true.
   DateTime? dueDate;
 
-  Homework({
+   /// The type of the homework, which can be a regular homework, an exam, or an appointment.
+   HomeworkType type;
+
+   Homework({
     String? id,
     required this.title,
     required this.description,

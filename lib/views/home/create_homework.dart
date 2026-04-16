@@ -4,6 +4,7 @@ import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:dart_untis_mobile/dart_untis_mobile.dart';
 
 import '../../database/models/homework.dart';
 import '../../database/models/subject.dart';
@@ -15,11 +16,9 @@ import '../../utilities/global_snackbar.dart';
 import '../../widgets/fab.dart';
 import '../../widgets/subject_tile.dart';
 import '../../provider/subject_provider.dart';
-
 /// Defines the type of homework created.
 /// [homework] → normal task
 /// [exam] → exam or test
-enum HomeworkType { homework, exam }
 
 /// Page for creating and saving a new [Homework].
 ///
@@ -71,7 +70,7 @@ class _CreateHomeworkState extends State<CreateHomework> {
       final hw = widget.existingHomework!;
       _titleController.text = hw.title;
       _descriptionController.text = hw.description ?? '';
-      selected = hw.isExam ? HomeworkType.exam : HomeworkType.homework;
+      selected = hw.type;
       toNextLesson = hw.toNextLesson;
       dueDate = hw.dueDate ?? DateTime.now().add(const Duration(days: 1));
 
@@ -93,8 +92,12 @@ class _CreateHomeworkState extends State<CreateHomework> {
   @override
   Widget build(BuildContext context) {
     /// Automatically suggest the current lesson’s subject if none selected
-    Subject? currentSubject =
-    context.watch<UntisProvider>().getCurrentSubject();
+    UntisElementDescriptor? currentDescriptor = context.watch<UntisProvider>().getCurrentSubject();
+    Subject? currentSubject = currentDescriptor == null
+        ? null
+        : context.watch<SubjectProvider>().subjects.firstWhereOrNull(
+          (s) => s.id == currentDescriptor.id,
+    );
 
     if (currentSubject != null &&
         (selectedSubject == null || selectedSubject == lastCurrentSubject) &&
@@ -175,7 +178,7 @@ class _CreateHomeworkState extends State<CreateHomework> {
         homework.subjectDocId = selectedSubject!.documentId;
         homework.toNextLesson = toNextLesson;
         homework.dueDate = dueDate;
-        homework.isExam = selected == HomeworkType.exam;
+        homework.type = selected;
 
       } else {
         // Create new homework
@@ -187,7 +190,7 @@ class _CreateHomeworkState extends State<CreateHomework> {
           isCompleted: false,
           dueDate: dueDate,
           fromUntis: false,
-          isExam: selected == HomeworkType.exam,
+          type: selected,
         );
         context.read<HomeworksProvider>().createHomework(homework);
       }
@@ -369,7 +372,7 @@ class _CreateHomeworkState extends State<CreateHomework> {
       title: const Text('Bis zur nächsten Stunde'),
       value: toNextLesson,
       onChanged: (value) async {
-        if (selectedSubject == null || selected == HomeworkType.exam) {
+        if (selectedSubject == null || selected != HomeworkType.homework) {
           return; // Disabled for exam/no subject
         }
         setState(() {

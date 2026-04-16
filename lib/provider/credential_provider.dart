@@ -106,13 +106,14 @@ class CredentialProvider extends ChangeNotifier {
   /// Creates a Untis session using current credentials
   Future<void> _createSession() async {
     if (_credentials == null) return;
-    _sessionState = UntisSessionState.loading;
+    _sessionStatus = UntisSessionStatus.loading;
     notifyListeners();
     try {
-      _session = await _itemFactory.createUntisSession(_credentials!);
-      _sessionState = UntisSessionState.accomplished;
+      final res = await _itemFactory.createUntisSession(_credentials!);
+      _session = res.session;
+      _sessionStatus = res.status;
     } catch (e) {
-      _sessionState = UntisSessionState.error;
+      _sessionStatus = UntisSessionStatus.error;
       print('Error creating session: $e');
     }
     notifyListeners();
@@ -152,7 +153,7 @@ class CredentialProvider extends ChangeNotifier {
 
     _credentials = storedCredentials;
     await _createSession();
-    if (_sessionState == UntisSessionState.error) {
+    if (_sessionStatus == UntisSessionStatus.error) {
       _credentials = null;
       return Future.error('Anmeldung fehlgeschlagen.');
     }

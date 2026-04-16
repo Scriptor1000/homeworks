@@ -7,13 +7,11 @@ import '../database/models/homework.dart';
 import '../database/models/subject.dart';
 import '../provider/homeworks_provider.dart';
 import '../provider/subject_provider.dart';
-import '../utilities/constants.dart';
 import '../utilities/enums.dart';
 import '../utilities/global_snackbar.dart';
 import 'subject_avatar.dart';
 import '../routes/typesafe_router.dart';
 import 'package:go_router/go_router.dart';
-
 
 /// A [ListTile] widget that displays homework information and allows marking it as completed.
 ///
@@ -93,12 +91,10 @@ class HomeworkTile extends StatelessWidget {
         (s) => s.documentId == homework.subjectDocId,
       ),
     );
-    final homeworksProvider = context.read<HomeworksProvider>();
 
     final backColor = subject?.backColor.harmonizeWith(
       Theme.of(context).primaryColor,
     );
-    final theme = Theme.of(context);
 
     final dateText = dueDateText(homework.dueDate);
     return ExpansionTile(
@@ -106,11 +102,11 @@ class HomeworkTile extends StatelessWidget {
         side: BorderSide.none,
       ),
       leading: SubjectAvatar(subject: subject),
-      title: Text('${homework.isExam ? 'LK: ' : ''}${homework.title}'),
+      title: Text('${homework.type == HomeworkType.exam ? 'LK: ' : ''}${homework.title}'),
       subtitle: dateText != null ? Text(dateText) : null,
       tilePadding: const EdgeInsets.symmetric(horizontal: 16),
       backgroundColor:
-      homework.isExam ? backColor?.withAlpha(50) : null,
+      homework.type == HomeworkType.exam ? backColor?.withAlpha(50) : null,
 
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
@@ -133,8 +129,8 @@ class HomeworkTile extends StatelessWidget {
               onPressed: () {
                 context
                     .read<HomeworksProvider>()
-                    .completeHomework(homework);
-                onCompleted();
+                    .toggleHomeworkCompletion(homework.id);
+                statusChange();
               },
             ),
 
@@ -275,5 +271,7 @@ class HomeworkTile extends StatelessWidget {
               )
             : null,
     };
+  }
+}*/
   }
 }
