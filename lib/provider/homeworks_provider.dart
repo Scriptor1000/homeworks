@@ -1,6 +1,5 @@
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
-import 'package:collection/collection.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 
 import '../database/homeworks.dart';

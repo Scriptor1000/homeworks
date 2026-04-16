@@ -69,7 +69,7 @@ class _CreateHomeworkState extends State<CreateHomework> {
     if (widget.existingHomework != null) {
       final hw = widget.existingHomework!;
       _titleController.text = hw.title;
-      _descriptionController.text = hw.description ?? '';
+      _descriptionController.text = hw.description;
       selected = hw.type;
       toNextLesson = hw.toNextLesson;
       dueDate = hw.dueDate ?? DateTime.now().add(const Duration(days: 1));

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:dart_untis_mobile/dart_untis_mobile.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:collection/collection.dart';
 
@@ -15,7 +14,6 @@ import '../utilities/global_snackbar.dart';
 import '../utilities/homeworks_list.dart';
 import '../widgets/fab.dart';
 import '../widgets/homework_tile.dart';
-import 'home/create_homework.dart';
 
 /// Layout constants controlling spacing and border sizes for urgent homework UI
 const urgentContainerMargin = 12.0;
