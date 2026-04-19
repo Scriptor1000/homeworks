@@ -13,7 +13,6 @@ import 'package:provider/provider.dart';
 import '../auth/login.dart';
 import '../database/models/subject.dart';
 import '../database/user.dart';
-import '../errors/authentication_error.dart';
 import '../views/account.dart';
 import '../views/home.dart';
 import '../views/home/create_homework.dart';
@@ -67,11 +66,7 @@ final appRouter = GoRouter(
     }
     return null;
   },
-  onException: (context, state, router) {
-    if (state.error is UnauthorizedException) {
-      router.go(_authLocation);
-    }
-  },
+
   routes: $appRoutes,
 );
 /// Route for timetable demo page
@@ -194,7 +189,7 @@ class CreateHomeworkRoute extends GoRouteData with $CreateHomeworkRoute {
   }
 }
 
-class TimetableRoute extends GoRouteData with $TimetableRoute {//skibidi
+class TimetableRoute extends GoRouteData with $TimetableRoute {
   const TimetableRoute();
 
   @override

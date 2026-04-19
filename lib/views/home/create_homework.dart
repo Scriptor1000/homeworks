@@ -60,7 +60,7 @@ class _CreateHomeworkState extends State<CreateHomework> {
   bool toNextLesson = true;
 
   /// The due date of the task
-  DateTime dueDate = DateTime.now().add(const Duration(days: 1));
+  DateTime? dueDate;
 
   @override
   void initState() {
@@ -72,7 +72,7 @@ class _CreateHomeworkState extends State<CreateHomework> {
       _descriptionController.text = hw.description;
       selected = hw.type;
       toNextLesson = hw.toNextLesson;
-      dueDate = hw.dueDate ?? DateTime.now().add(const Duration(days: 1));
+      dueDate = hw.dueDate;
 
       /// Find the subject object from the provider
       final subject = context.read<SubjectProvider>().subjects;
@@ -83,6 +83,7 @@ class _CreateHomeworkState extends State<CreateHomework> {
     }
   }
 
+  @override
   void dispose() {
     _titleController.dispose();
     _descriptionController.dispose();
@@ -167,6 +168,10 @@ class _CreateHomeworkState extends State<CreateHomework> {
         showSnackBar('Bitte wähle ein Fach aus');
         return;
       }
+      if(!toNextLesson && dueDate == null) {
+        showSnackBar('Bitte ein Fälligkeitsdatum wählen');
+        return;
+      }
 
       Homework homework;
 
@@ -246,7 +251,7 @@ class _CreateHomeworkState extends State<CreateHomework> {
   Future<void> _showDatePicker() async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: dueDate,
+      initialDate: dueDate ?? DateTime.now().add(const Duration(days: 1)),
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 365)),
       helpText: 'Fälligkeitsdatum wählen',
@@ -264,8 +269,8 @@ class _CreateHomeworkState extends State<CreateHomework> {
               ? const Duration(hours: 18)
               : Duration(
                   // keep the time on date change
-                  hours: dueDate.hour,
-                  minutes: dueDate.minute,
+                  hours: dueDate?.hour ?? 18,
+                  minutes: dueDate?.minute ?? 0,
                 ),
         );
         toNextLesson = false;
@@ -300,7 +305,7 @@ class _CreateHomeworkState extends State<CreateHomework> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              '${dueDate.day}.${dueDate.month}.${dueDate.year}',
+              dueDate != null ? '${dueDate!.day}.${dueDate!.month}.${dueDate!.year}' : 'Kein Datum',
               style: Theme.of(context).textTheme.bodyLarge,
             ),
             littleGap(),
@@ -317,7 +322,7 @@ class _CreateHomeworkState extends State<CreateHomework> {
   void _showTimePicker() async {
     final TimeOfDay? picked = await showTimePicker(
       context: context,
-      initialTime: TimeOfDay(hour: dueDate.hour, minute: dueDate.minute),
+      initialTime: TimeOfDay(hour: dueDate?.hour ?? 18, minute: dueDate?.minute ?? 0),
       helpText: 'Uhrzeit wählen',
       cancelText: 'Abbrechen',
       confirmText: 'Bestätigen',
@@ -325,10 +330,11 @@ class _CreateHomeworkState extends State<CreateHomework> {
 
     if (picked != null) {
       setState(() {
+        final base = dueDate ?? DateTime.now().add(const Duration(days: 1));
         dueDate = DateTime(
-          dueDate.year,
-          dueDate.month,
-          dueDate.day,
+          base.year,
+          base.month,
+          base.day,
           picked.hour,
           picked.minute,
         );
@@ -351,7 +357,9 @@ class _CreateHomeworkState extends State<CreateHomework> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              '${dueDate.hour.toString().padLeft(2, '0')}:${dueDate.minute.toString().padLeft(2, '0')}',
+              dueDate != null
+                  ? '${dueDate!.hour.toString().padLeft(2, '0')}:${dueDate!.minute.toString().padLeft(2, '0')}'
+                  : 'Keine Uhrzeit',
               style: Theme.of(context).textTheme.bodyLarge,
             ),
             littleGap(),
@@ -377,6 +385,9 @@ class _CreateHomeworkState extends State<CreateHomework> {
         }
         setState(() {
           toNextLesson = value;
+          if (!value && dueDate == null) {
+            dueDate = DateTime.now().add(const Duration(days: 1));
+          }
         });
         _findNextLesson();
       },

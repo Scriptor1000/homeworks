@@ -63,7 +63,11 @@ class CredentialProvider extends ChangeNotifier {
     notifyListeners();
     await _loadCredentialsLocal();
     _isLoadingCredentials = false;
-    print('Loaded credentials: $_credentials');
+    if (kDebugMode) {
+      debugPrint(
+        'Loaded credentials from secure storage: ${_credentials != null ? 'present' : 'absent'}',
+      );
+    }
 
     await _loadOnlineStatus();
   }

@@ -122,9 +122,14 @@ class AuthenticationProvider extends ChangeNotifier {
       String email,
       String password,
       ) async {
+    final trimmedEmail = email.trim();
+    final allowed = await _allowedEmails.isEmailAllowed(trimmedEmail);
+    if (!allowed) {
+      return 'Kein Zugang mit dieser Email möglich. Bitte wende dich an den Administrator.';
+    }
     try {
       await _firebaseAuth.createUserWithEmailAndPassword(
-        email: email.trim(),
+        email: trimmedEmail,
         password: password.trim(),
       );
 
@@ -281,6 +286,13 @@ class AuthenticationProvider extends ChangeNotifier {
   ///
   /// Shows a snackbar on failure.
   Future<void> loginWithEmail(String email, String password) async {
+    final trimmedEmail = email.trim();
+    final allowed = await _allowedEmails.isEmailAllowed(trimmedEmail);
+    if (!allowed) {
+      showSnackBar(
+          'Kein Zugang mit dieser Email möglich. Bitte wende dich an den Administrator.');
+      return;
+    }
     final credentials = EmailAuthProvider.credential(
       email: email,
       password: password,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
+import '../../provider/authentication_provider.dart';
 
 /// A simple registration screen that allows users to log in with email/password or Google.
 class Registration extends StatefulWidget {
@@ -37,37 +38,24 @@ class _RegistrationState extends State<Registration> {
 
 
   Future <void> _register() async {
-    String nachricht = "Registrierung erfolgreich.";
-    setState(() => _isLoading = true);
     if (_passwordController.text != _passwordController2.text) {
-      setState(() => _isLoading = false); // Reset loading
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Die Passwörter stimmen nicht überein.")),
       );
       return;
     }
-    try {
-        await FirebaseAuth.instance.createUserWithEmailAndPassword(
-          email: _emailController.text.trim(),
-          password: _passwordController.text.trim(),
-        );
-    } on FirebaseAuthException catch (e) {
-      if (e.code == 'weak-password') {
-        nachricht = "Das Passwort ist zu schwach.";
-      } else if (e.code == 'email-already-in-use') {
-        nachricht = "Die E-Mail-Adresse wird bereits verwendet.";
-      }else {
-        nachricht = "Bitte gib eine gültige E-Mail-Adresse und ein Passwort ein.";
-      }
-    }
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(nachricht),
-      ),
+    setState(() => _isLoading = true);
+
+    final authProvider = context.read<AuthenticationProvider>();
+    final error = await authProvider.registerWithEmail(
+      _emailController.text,
+      _passwordController.text,
     );
-    if (mounted) {
-      setState(() => _isLoading = false);
-    }
+    if(!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(error ?? "Registrierung erfolgreich!")),
+    );
+    setState(() => _isLoading = false);
   }
 
 
@@ -135,7 +123,7 @@ class _RegistrationState extends State<Registration> {
                           borderRadius: BorderRadius.circular(16.0),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
+                              color: Colors.black.withValues(alpha: 0.1),
                               blurRadius: 10,
                               spreadRadius: 1,
                               offset: const Offset(0, 4),
@@ -310,7 +298,6 @@ class _RegistrationState extends State<Registration> {
       ),
     );
   }
-  /// Builds the Google sign-in button based on the platform/state.
 
 
 }

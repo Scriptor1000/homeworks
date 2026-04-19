@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+/// Page for resetting the user's password via Firebase.
+/// The user enters their email address and receives a
+/// password reset email from Firebase Auth.
 class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({super.key});
 
@@ -10,6 +13,7 @@ class ForgotPasswordPage extends StatefulWidget {
 
 class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   final TextEditingController _emailController = TextEditingController();
+  /// Prevents multiple submissions while a Firebase request is in progress.
   bool _isLoading = false;
 
   @override
@@ -17,33 +21,46 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     _emailController.dispose();
     super.dispose();
   }
-
-  Future _sendResetEmail() async {
-    String nachricht;
+  /// Sends a password reset email to the entered address.
+  /// Shows a [SnackBar] with feedback on success or failure.
+  /// Exits early if the widget is no longer mounted.
+  Future<void> _sendResetEmail() async {
     setState(() => _isLoading = true);
+
+    String nachricht;
     try {
       await FirebaseAuth.instance.sendPasswordResetEmail(
         email: _emailController.text.trim(),
       );
-      nachricht = "E-Mail gesendet. Falls sie nicht eingetroffen ist, bitte Spam-Ordner und die eingegebene E-Mail überprüfen.";
+      nachricht =
+      'E-Mail gesendet. Falls sie nicht eingetroffen ist, bitte Spam-Ordner und die eingegebene E-Mail überprüfen.';
     } on FirebaseAuthException catch (e) {
-      if (e.code == 'invalid-email') {
-        nachricht = "Die E-Mail-Adresse ist ungültig.";
-      } else {
-        nachricht = "Keine Adresse eingegeben.";
-      }
-    }finally{
+      nachricht = _getErrorMessage(e.code);
+    } finally {
       if (!mounted) return;
       setState(() => _isLoading = false);
     }
 
-
-
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(nachricht),
-      ),
+      SnackBar(content: Text(nachricht)),
     );
+  }
+
+  String _getErrorMessage(String code) {
+    switch (code) {
+      case 'invalid-email':
+        return 'Die E-Mail-Adresse ist ungültig.';
+      case 'missing-email':
+        return 'Bitte eine E-Mail-Adresse eingeben.';
+      case 'user-not-found':
+        return 'E-Mail gesendet (falls ein Konto existiert).';
+      case 'too-many-requests':
+        return 'Zu viele Versuche. Bitte kurz warten und erneut versuchen.';
+      case 'network-request-failed':
+        return 'Keine Internetverbindung. Bitte Verbindung prüfen.';
+      default:
+        return 'Ein unbekannter Fehler ist aufgetreten (Code: $code).';
+    }
   }
 
   @override
@@ -101,7 +118,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
+                              color: Colors.black.withValues(alpha: 0.1),
                               blurRadius: 10,
                               spreadRadius: 1,
                               offset: const Offset(0, 4),

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../provider/untis_provider.dart';
 
 /// Demo page with sample timetable data.
 
@@ -147,8 +146,8 @@ class TimetableWidget extends StatelessWidget {
           child: Table(
             defaultColumnWidth: FixedColumnWidth(cellWidth),
             border: TableBorder(
-              verticalInside: BorderSide(color: Colors.grey.withOpacity(0.12)),
-              horizontalInside: BorderSide(color: Colors.grey.withOpacity(0.12)),
+              verticalInside: BorderSide(color: Colors.grey.withValues(alpha: 0.12)),
+              horizontalInside: BorderSide(color: Colors.grey.withValues(alpha: 0.12)),
             ),
             children: _buildRows(context),
           ),
@@ -245,7 +244,7 @@ class TimetableWidget extends StatelessWidget {
           borderRadius: BorderRadius.circular(10),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.06),
+              color: Colors.black.withValues(alpha: 0.06),
               blurRadius: 4,
               offset: const Offset(0, 2),
             ),

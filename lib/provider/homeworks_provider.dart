@@ -119,7 +119,9 @@ class HomeworksProvider extends ChangeNotifier {
     _analyticsService.updateDueDates(count);
   }
   Homework? getById(String id) {
-    return _homeworks.firstWhereOrNull((hw) => hw.id == id);
+    return _homeworks.firstWhereOrNull(
+          (hw) => hw.documentId == id || hw.id == id,
+    );
   }
   /// Creates a new homework and stores it in Firestore and updates the local list.
   ///

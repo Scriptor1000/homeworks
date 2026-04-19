@@ -34,7 +34,6 @@ class _UploadCredentialsState extends State<UploadCredentials> {
   bool loading = false;
 
   /// Upload completed state (not used to block UI here but could be extended).
-  bool completed = false;
 
   @override
   void initState() {
@@ -188,7 +187,7 @@ class _UploadCredentialsState extends State<UploadCredentials> {
 
   /// Validates the form and uploads the credentials online using the provided secret.
   void save() async {
-    if (loading || completed) return;
+    if (loading) return;
     if (!_formKey.currentState!.validate()) {
       return;
     }
@@ -205,15 +204,14 @@ class _UploadCredentialsState extends State<UploadCredentials> {
         .uploadCredentialsOnline(secret)
         .then(
           (_) => {
-            if (mounted)
+            if (mounted){
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Anmeldedaten erfolgreich hochgeladen'),
                 ),
               ),
-            setState(() {
-              loading = false;
-            }),
+              context.pop(),
+            }
           },
           onError: (error, _) {
             if (mounted) {

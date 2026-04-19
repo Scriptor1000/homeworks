@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 
 import '../../database/models/subject.dart';
 import '../../provider/subject_provider.dart';
-import '../../widgets/search_screen.dart';
 import '../../widgets/subject_tile.dart';
 
 /// A screen that allows users to choose a [Subject].
@@ -36,15 +35,17 @@ class _SubjectSelectionState extends State<SubjectSelection> {
     /// Reads the full list of subjects from the provider.
     final subjects = context.watch<SubjectProvider>().subjects;
 
-    /// Filters subjects by name or shortName depending on `query`.
+    /// Filters subjects by visibility and by name or shortName depending on
+    /// `query`.
     final filteredSubjects = subjects.where((subject) {
-      return subject.name.toLowerCase().contains(query.toLowerCase()) ||
-          subject.shortName.toLowerCase().contains(query.toLowerCase());
+      return subject.visible &&
+          (subject.name.toLowerCase().contains(query.toLowerCase()) ||
+              subject.shortName.toLowerCase().contains(query.toLowerCase()));
     }).toList();
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Fach auswählen'), // "Select subject"
+        title: const Text('Fach auswählen'),
       ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -54,28 +55,43 @@ class _SubjectSelectionState extends State<SubjectSelection> {
               children: [
                 // TODO: Add "Today's subjects" section
                 Expanded(
-                  child: ListView.builder(
-                    /// +1 so we can add spacing at the end of the list
+                  child: filteredSubjects.isEmpty
+                      ? Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          subjects.isEmpty
+                              ? Icons.library_books_outlined
+                              : Icons.search_off,
+                          size: 48,
+                          color: Theme.of(context).colorScheme.outline,
+                        ),
+                        const Gap(12),
+                        Text(
+                          subjects.isEmpty
+                              ? 'Keine Fächer vorhanden'
+                              : 'Kein Fach gefunden für „$query"',
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Theme.of(context).colorScheme.outline,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  )
+                      : ListView.builder(
                     itemCount: filteredSubjects.length + 1,
                     itemBuilder: (context, index) {
                       if (index == filteredSubjects.length) {
-                        // Adds extra spacing at bottom so the SearchBar doesn't overlap list
                         return const Gap(56 + 16);
                       }
-
                       return Padding(
                         padding: const EdgeInsets.symmetric(vertical: 4),
                         child: SubjectTile(
                           subject: filteredSubjects[index],
                           onTap: () {
-                            print(
-                                'Selected subject: ${filteredSubjects[index].name}');
-
-                            /// Runs callback if provided
-                            widget.onSubjectSelected
-                                ?.call(filteredSubjects[index]);
-
-                            /// Close this screen
+                            widget.onSubjectSelected?.call(filteredSubjects[index]);
                             Navigator.pop(context);
                           },
                         ),
@@ -103,7 +119,6 @@ class _SubjectSelectionState extends State<SubjectSelection> {
                 /// If exactly one match → auto-select
                 onSubmitted: (query) {
                   if (filteredSubjects.length == 1) {
-                    print('Selected subject: ${filteredSubjects[0].name}');
                     widget.onSubjectSelected?.call(filteredSubjects[0]);
                     Navigator.pop(context);
                   }
@@ -119,11 +134,4 @@ class _SubjectSelectionState extends State<SubjectSelection> {
     );
   }
 
-  Widget _buildSubjectTile(
-    BuildContext context,
-    Subject subject,
-    VoidCallback onTap,
-  ) {
-    return SubjectTile(subject: subject, onTap: () => onTap());
-  }
 }
