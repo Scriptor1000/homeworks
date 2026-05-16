@@ -9,7 +9,6 @@ import '../utilities/enums.dart';
 import '../utilities/global_snackbar.dart';
 import '../web_authentication/web_authentication.dart' as web;
 import 'fab.dart';
-import '../auth/forgot_pw_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 /// A widget that displays user information and allows account management.
 ///
@@ -185,7 +184,7 @@ class _UserContainerState extends State<UserContainer> {
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Theme.of(
                       context,
-                    ).colorScheme.onSurface.withOpacity(0.6),
+                    ).colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
                 ),
               const SizedBox(height: 12),
@@ -215,7 +214,7 @@ class _UserContainerState extends State<UserContainer> {
                   style: FilledButton.styleFrom(
                     backgroundColor: Theme.of(
                       context,
-                    ).colorScheme.outline.withOpacity(0.12),
+                    ).colorScheme.outline.withValues(alpha: 0.12),
                     foregroundColor: Theme.of(context).colorScheme.outline,
                   ),
                 )
@@ -275,7 +274,7 @@ class _UserContainerState extends State<UserContainer> {
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: Theme.of(
                     context,
-                  ).colorScheme.onSurface.withOpacity(0.6),
+                  ).colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
               ),
             const SizedBox(height: 12),
@@ -305,7 +304,7 @@ class _UserContainerState extends State<UserContainer> {
                 style: FilledButton.styleFrom(
                   backgroundColor: Theme.of(
                     context,
-                  ).colorScheme.outline.withOpacity(0.12),
+                  ).colorScheme.outline.withValues(alpha: 0.12),
                   foregroundColor: Theme.of(context).colorScheme.outline,
                 ),
               )
@@ -378,7 +377,7 @@ class _UserContainerState extends State<UserContainer> {
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: Theme.of(
                     context,
-                  ).colorScheme.onSurface.withOpacity(0.6),
+                  ).colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
               ),
             const SizedBox(height: 12),
@@ -493,14 +492,20 @@ class _UserContainerState extends State<UserContainer> {
 Future <void> _sendResetEmail() async {
     String nachricht;
 
-    try {
-      await FirebaseAuth.instance.sendPasswordResetEmail(
-        email: context.read<AuthenticationProvider>().user!.email!,
-      );
-      nachricht = "E-Mail gesendet. Falls sie nicht eingetroffen ist, bitte Spam-Ordner und die eingegebene E-Mail überprüfen.";
-    } on FirebaseAuthException catch (e) {
-      nachricht = "Fehler beim Senden der E-Mail";
-    }
+    final email = context.read<AuthenticationProvider>().user?.email;
+
+    if (email == null || email.trim().isEmpty) {
+      nachricht = "Für dieses Konto ist keine E-Mail-Adresse hinterlegt. Bitte hinterlegen Sie zuerst eine E-Mail-Adresse.";
+    } else {
+      try {
+        await FirebaseAuth.instance.sendPasswordResetEmail(
+          email: email,
+        );
+        nachricht = "E-Mail gesendet. Falls sie nicht eingetroffen ist, bitte Spam-Ordner und die eingegebene E-Mail überprüfen.";
+      } on FirebaseAuthException catch (e) {
+        nachricht = "Fehler beim Senden der E-Mail";
+      }
+      }
 
     if (!mounted) return;
 

@@ -139,7 +139,7 @@ class _HomeState extends State<Home> {
 
   /// Called when homework is marked done; currently logs only
   void onCompleted(int index) {
-    print('Homework at index $index completed');
+    Sentry.logger.info('Homework at index $index completed');
   }
 
   /// Builds the "urgent" decorated section

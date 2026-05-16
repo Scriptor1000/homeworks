@@ -9,7 +9,7 @@ import '../../widgets/fab.dart';
 import '../../widgets/info_box.dart';
 import '../../widgets/own_progress_indicator.dart';
 import '../../widgets/password_field.dart';
-
+import 'package:sentry_flutter/sentry_flutter.dart';
 /// A widget for uploading Untis credentials to Firestore.
 ///
 /// Credentials are loaded from [CredentialProvider].
@@ -38,7 +38,9 @@ class _UploadCredentialsState extends State<UploadCredentials> {
   @override
   void initState() {
     super.initState();
-    final credentials = context.read<CredentialProvider>().credentials;
+    final credentials = context
+        .read<CredentialProvider>()
+        .credentials;
 
     /// If credentials exist, prefill form, otherwise pop the screen.
     if (credentials != null) {
@@ -49,7 +51,10 @@ class _UploadCredentialsState extends State<UploadCredentials> {
         _serverController.text = credentials.server;
       });
     } else {
-      context.pop();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        context.pop();
+      });
     }
   }
 
@@ -89,10 +94,14 @@ class _UploadCredentialsState extends State<UploadCredentials> {
           key: _formKey,
           child: Column(
             children: [
+
               /// Loading indicator
               OwnProgressIndicator(
                 active: loading,
-                backgroundColor: Theme.of(context).colorScheme.surface,
+                backgroundColor: Theme
+                    .of(context)
+                    .colorScheme
+                    .surface,
               ),
 
               /// Main scrollable content
@@ -103,6 +112,7 @@ class _UploadCredentialsState extends State<UploadCredentials> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+
                       /// Show info if already uploaded
                       if (alreadyUploaded)
                         const InfoBox(
@@ -200,31 +210,28 @@ class _UploadCredentialsState extends State<UploadCredentials> {
     final credentialProvider = context.read<CredentialProvider>();
 
     /// Upload encrypted credentials
-    await credentialProvider
-        .uploadCredentialsOnline(secret)
-        .then(
-          (_) => {
-            if (mounted){
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Anmeldedaten erfolgreich hochgeladen'),
-                ),
-              ),
-              context.pop(),
-            }
-          },
-          onError: (error, _) {
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Fehler beim Hochladen der Anmeldedaten'),
-                ),
-              );
-              setState(() {
-                loading = false;
-              });
-            }
-          },
-        );
+
+    try {
+      await credentialProvider
+          .uploadCredentialsOnline(secret);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Anmeldedaten erfolgreich hochgeladen'),
+        ),
+      );
+      context.pop();
+    } catch (error, stackTrace) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Fehler beim Hochladen der Anmeldedaten'),));
+      Sentry.captureException(error, stackTrace: stackTrace);
+    }finally {
+      if (!mounted) return;
+      setState(() {
+        loading = false;
+      });
+    }
   }
 }
+

@@ -10,7 +10,6 @@ import '../../utilities/enums.dart';
 /// due date, and associations to a subject. Can be created manually or imported
 /// from Untis.
 
-/// A Homework which can be saved to Firestore.
 class Homework {
   /// Unique identifier for the homework. Generated automatically if not provided.
    String id;

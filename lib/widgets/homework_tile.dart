@@ -111,7 +111,6 @@ class HomeworkTile extends StatelessWidget {
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          //const Icon(Icons.expand_more), // Pfeil
           IconButton(
             icon: const Icon(Icons.edit),
             onPressed: () {
@@ -122,7 +121,15 @@ class HomeworkTile extends StatelessWidget {
           ),
 
           if (homework.isCompleted)
-            const Icon(Icons.check_circle, color: Colors.green)
+            IconButton(
+              icon: const Icon(Icons.check_circle, color: Colors.green),
+              onPressed: () {
+                context
+                    .read<HomeworksProvider>()
+                    .toggleHomeworkCompletion(homework.id);
+                statusChange();
+              },
+            )
           else
             IconButton(
               icon: const Icon(Icons.circle_outlined),

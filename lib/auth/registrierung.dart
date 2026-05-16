@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../provider/authentication_provider.dart';
+import '../provider/authentication_provider.dart';
 
 /// A simple registration screen that allows users to log in with email/password or Google.
 class Registration extends StatefulWidget {
