@@ -22,7 +22,7 @@ import '../views/untis/load_credentials.dart';
 import '../views/untis/untis_login.dart';
 import '../views/untis/upload_credentials.dart';
 import '../views/untis_view.dart';
-import '../timetable/stundenplan.dart';
+//import '../timetable/stundenplan.dart';
 import 'navigation_shell.dart';
 import 'provider_shell.dart';
 import '../provider/homeworks_provider.dart';
@@ -33,7 +33,7 @@ final _refreshStream =
     GoRouterRefreshStream(FirebaseAuth.instance.authStateChanges());
 
 /// Shortcut getters for route locations
-String get _timetableLocation => const TimetableRoute().location;
+//String get _timetableLocation => const TimetableRoute().location;
 String get _homeLocation => const HomeRoute().location;
 String get _untisLocation => const UntisRoute().location;
 String get _accountLocation => const AccountRoute().location;
@@ -106,7 +106,7 @@ class AuthRoute extends GoRouteData with $AuthRoute {
         TypedGoRoute<SubjectSelectionRoute>(path: 'subjectSelection'),
       ],
     ),
-    TypedGoRoute<TimetableRoute>(path: '/timetable'),
+    //TypedGoRoute<TimetableRoute>(path: '/timetable'),
     TypedGoRoute<UntisRoute>(
       path: '/untis',
       routes: <TypedRoute<RouteData>>[
@@ -189,14 +189,14 @@ class CreateHomeworkRoute extends GoRouteData with $CreateHomeworkRoute {
   }
 }
 
-class TimetableRoute extends GoRouteData with $TimetableRoute {
+/*class TimetableRoute extends GoRouteData with $TimetableRoute {
   const TimetableRoute();
 
   @override
   Widget build(BuildContext context, GoRouterState state) {
     return const TimetableDemoPage();
   }
-}
+}*/
 
 class EditHomeworkRoute extends GoRouteData with $EditHomeworkRoute {
   const EditHomeworkRoute({required this.homeworkId});
@@ -350,21 +350,21 @@ class DestinationsManager {
   /// Returns the index of the bottom navigation bar based on the current route.
   static int getNavigationIndex(GoRouterState state) {
     final location = state.matchedLocation;
-    if (location.startsWith(_timetableLocation)) return 0;
-    if (location.startsWith(_homeLocation)) return 1;
-    if (location.startsWith(_untisLocation)) return 2;
-    if (location.startsWith(_accountLocation)) return 3;
+    //if (location.startsWith(_timetableLocation)) return 0;
+    if (location.startsWith(_homeLocation)) return 0;
+    if (location.startsWith(_untisLocation)) return 1;
+    if (location.startsWith(_accountLocation)) return 2;
     return 0;
   }
 
   /// Navigation destinations for bottom navigation bar
   static List<NavigationDestination> get bottomNavigationDestinations {
     return [
-      const NavigationDestination(
+      /*const NavigationDestination(
         icon: Icon(Icons.edit_calendar_outlined),
         selectedIcon: Icon(Icons.edit_calendar),
         label: 'Timetable',
-      ),
+      ),*/
       const NavigationDestination(
         icon: Icon(Icons.home_outlined),
         selectedIcon: Icon(Icons.home),

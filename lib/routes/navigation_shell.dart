@@ -33,16 +33,16 @@ class NavigationShell extends StatelessWidget {
   /// Handles taps on the bottom navigation items.
   void _onItemTapped(int index, BuildContext context) {
     switch (index) {
+      //case 0:
+        //const TimetableRoute().go(context);
+        //break;
       case 0:
-        const TimetableRoute().go(context);
-        break;
-      case 1  :
         const HomeRoute().go(context);
         break;
-      case 2:
+      case 1:
         const UntisRoute().go(context);
         break;
-      case 3:
+      case 2:
         const AccountRoute().go(context);
         break;
       default:
