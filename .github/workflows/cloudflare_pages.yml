@@ -67,9 +67,6 @@ jobs:
       - name: Determine Release Name
         env:
           BRANCH_NAME: ${{github.head_ref || github.ref_name }}
-        run: echo "SENTRY_RELEASE=${BRANCH_NAME##*/}@${GITHUB_SHA::7}" >> $GITHUB_ENV
-        env:
-          BRANCH_NAME: ${{github.head_ref || github.ref_name }}
         run: |
           echo "Determined release name: ${BRANCH_NAME##*/}@${GITHUB_SHA::7}";
           echo "SENTRY_RELEASE=${BRANCH_NAME##*/}@${GITHUB_SHA::7}" >> $GITHUB_ENV;
