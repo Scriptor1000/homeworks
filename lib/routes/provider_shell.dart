@@ -13,6 +13,7 @@ import '../provider/credential_provider.dart';
 import '../provider/homeworks_provider.dart';
 import '../provider/subject_provider.dart';
 import '../provider/untis_provider.dart';
+import '../provider/timetable_provider.dart';
 import '../utilities/analytics_service.dart';
 import '../utilities/cryptography.dart';
 
@@ -99,6 +100,12 @@ class ProviderShell extends StatelessWidget {
               SubjectProvider(firestoreSubjects: firestoreSubjects),
           lazy: false,
         ),
+        // Provides timetable data, updated when UntisProvider changes
+        /*ChangeNotifierProvider(
+          create: (_) => TimetableProvider(),
+          lazy: false,
+        ),*/
+
       ],
       // The child widget which now has access to all above providers
       child: child,

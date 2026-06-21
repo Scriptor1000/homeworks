@@ -157,13 +157,32 @@ class CredentialProvider extends ChangeNotifier {
 
     _credentials = storedCredentials;
     await _createSession();
-    if (_sessionStatus == UntisSessionStatus.error) {
+    if (_sessionStatus != UntisSessionStatus.sessionAccomplished ||
+        _session == null) {
+      final String errorMessage;
+      if (_sessionStatus == UntisSessionStatus.invalidCredentials) {
+        errorMessage = 'Ungültige Anmeldedaten.';
+      } else if (_sessionStatus == UntisSessionStatus.error) {
+        errorMessage = 'Anmeldung fehlgeschlagen.';
+      } else {
+        // noCredentials, loading, or sessionAccomplished-with-null-session:
+        // none of these should be reachable here, since _credentials was
+        // just set and await _createSession() always resolves to a final status.
+        Sentry.logger.error(
+          'Unexpected UntisSessionStatus $_sessionStatus after '
+              '_createSession() in loadCredentialsOnline (session: $_session)',
+        );
+        errorMessage = 'Unbekannter Fehler bei der Anmeldung.';
+      }
       _credentials = null;
-      return Future.error('Anmeldung fehlgeschlagen.');
+      _session = null;
+      notifyListeners();
+      return Future.error(errorMessage);
     }
     await _saveCredentialsLocal();
     _loadOnlineStatus();
-  }
+
+    }
 
   /// Uploads the current credentials to Firestore.
   ///

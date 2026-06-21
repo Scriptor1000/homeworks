@@ -184,6 +184,7 @@ class _CreateHomeworkState extends State<CreateHomework> {
         homework.toNextLesson = toNextLesson;
         homework.dueDate = dueDate;
         homework.type = selected;
+        context.read<HomeworksProvider>().updateHomework(homework);
 
       } else {
         // Create new homework

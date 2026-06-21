@@ -178,6 +178,32 @@ class HomeworksProvider extends ChangeNotifier {
     );
   }
 
+  Future<void> updateHomework(Homework updatedHomework) async {
+    final homework = _homeworks.firstWhereOrNull(
+      (hw) => hw.documentId == updatedHomework.documentId || hw.id == updatedHomework.id,
+    );
+    if (homework == null) {
+      Sentry.logger.error('Homework with id ${updatedHomework.id} not found for updating. '
+          'Current homeworks ID: ${_homeworks.map((hw) => hw.id).join(', ')}',
+    );
+      return;
+    }
+    return _mutateState(
+      mutateLocalState: (){
+        homework.title = updatedHomework.title;
+        homework.description = updatedHomework.description;
+        homework.subjectDocId = updatedHomework.subjectDocId;
+        homework.toNextLesson = updatedHomework.toNextLesson;
+        homework.dueDate = updatedHomework.dueDate;
+        homework.type = updatedHomework.type;
+
+      },
+      mutateRemoteState: () async =>
+          await _firestoreHomeworks.saveHomework(homework),
+      logAnalytics: (){},
+    );
+  }
+
   /// Deletes a homework from Firestore and [_homeworks].
   ///
   /// It finds the homework by its [HomeworkID] in the [_homeworks] list and removes it.

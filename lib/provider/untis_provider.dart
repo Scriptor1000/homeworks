@@ -169,15 +169,11 @@ class UntisProvider extends ChangeNotifier {
       }
       _untisSubjects.add(subject);
 
-      // if a not cancelled period is before the next lesson (which shouldn't be the case because
-      // the periods should be ordered) or there isn't a next lesson (which could be because the
-      // first lesson in which the subject was found was cancelled) then the next lesson is updated
+
     } else if (!isCancelled &&
         (listedSubject.nextLesson == null ||
             period.startDateTime.isBefore(listedSubject.nextLesson!)) &&
         period.startDateTime.isAfter(todayNight)) {
-      // NOTE: you can make the change  on the variable because it is only a reference to
-      // the subject in the list, so this changes the subject in the list
       listedSubject.nextLesson = period.startDateTime;
     }
   }
@@ -269,21 +265,7 @@ class UntisProvider extends ChangeNotifier {
 
   /// This method is not implemented yet.
   void loadUntisHomeworks() {
-    // Could contain test, homework information
-    // also used at events, subject is needed
-    // print(timetable!.periods[3].text);
 
-    // is used to declare exams
-    // print(await _session!.getExams(
-    //   startDate: DateTime.now(),
-    //   endDate: DateTime.now().add(const Duration(days: 30)),
-    // ));
-
-    // is used to declare homeworks, but some also annouce exams
-    // print(await _session!.getHomework(
-    //   startDate: DateTime.now(),
-    //   endDate: DateTime.now().add(const Duration(days: 30)),
-    // ));
   }
 }
 

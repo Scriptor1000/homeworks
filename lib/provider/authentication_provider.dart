@@ -130,7 +130,7 @@ class AuthenticationProvider extends ChangeNotifier {
     try {
       await _firebaseAuth.createUserWithEmailAndPassword(
         email: trimmedEmail,
-        password: password.trim(),
+        password: password,
       );
 
       return null; // success
@@ -294,7 +294,7 @@ class AuthenticationProvider extends ChangeNotifier {
       return;
     }
     final credentials = EmailAuthProvider.credential(
-      email: email,
+      email: trimmedEmail,
       password: password,
     );
 

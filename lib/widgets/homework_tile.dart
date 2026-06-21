@@ -1,5 +1,4 @@
 import 'package:collection/collection.dart';
-import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -92,9 +91,6 @@ class HomeworkTile extends StatelessWidget {
       ),
     );
 
-    final backColor = subject?.backColor.harmonizeWith(
-      Theme.of(context).primaryColor,
-    );
 
     final dateText = dueDateText(homework.dueDate);
     return ExpansionTile(
@@ -106,7 +102,7 @@ class HomeworkTile extends StatelessWidget {
       subtitle: dateText != null ? Text(dateText) : null,
       tilePadding: const EdgeInsets.symmetric(horizontal: 16),
       backgroundColor:
-      homework.type == HomeworkType.exam ? backColor?.withAlpha(50) : null,
+      homework.type == HomeworkType.exam ? Colors.transparent : null,
 
       trailing: Row(
         mainAxisSize: MainAxisSize.min,

@@ -175,9 +175,6 @@ class _RegistrationState extends State<Registration> {
                               ),
                             ) ,
 
-                            // Divider with "ODER"
-                            buildDivider(),
-                            const SizedBox(height: 20),
                           ],
                         ),
                       ),
