@@ -6,7 +6,6 @@ import 'package:sentry_flutter/sentry_flutter.dart';
 
 import '../../provider/credential_provider.dart';
 import '../../provider/untis_provider.dart';
-import '../../utilities/enums.dart';
 
 /// Screen to view the timetable of a teacher.
 class FindTeacher extends StatefulWidget {
@@ -120,13 +119,27 @@ class _FindTeacherState extends State<FindTeacher> {
   }
 
   Widget _formatDate(UntisPeriod period) {
+    String weekday = switch (period.startDateTime.weekday) {
+      1 => 'Montag',
+      2 => 'Dienstag',
+      3 => 'Mittwoch',
+      4 => 'Donnerstag',
+      5 => 'Freitag',
+      6 => 'Samstag',
+      7 => 'Sonntag',
+      _ => '',
+    };
+
     return Row(
       children: [
         SizedBox(width: 30, child: Divider()),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           child: Text(
-            '${period.startDateTime.day.toString().padLeft(2, '0')}.${period.startDateTime.month.toString().padLeft(2, '0')}.${period.startDateTime.year}',
+            '$weekday - '
+            '${period.startDateTime.day.toString().padLeft(2, '0')}'
+            '.${period.startDateTime.month.toString().padLeft(2, '0')}'
+            '.${period.startDateTime.year}',
             style: Theme.of(context).textTheme.labelLarge?.copyWith(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
