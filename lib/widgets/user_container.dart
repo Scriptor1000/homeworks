@@ -10,6 +10,7 @@ import '../utilities/global_snackbar.dart';
 import '../web_authentication/web_authentication.dart' as web;
 import 'fab.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+
 /// A widget that displays user information and allows account management.
 ///
 /// Shows the user's profile picture, name, email, and linked accounts.
@@ -147,7 +148,7 @@ class _UserContainerState extends State<UserContainer> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
+                  FaIcon(
                     FontAwesomeIcons.google,
                     color: hasGoogle
                         ? Colors.green
@@ -237,7 +238,7 @@ class _UserContainerState extends State<UserContainer> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
+                FaIcon(
                   FontAwesomeIcons.google,
                   color: hasGoogle
                       ? Colors.green
@@ -467,57 +468,61 @@ class _UserContainerState extends State<UserContainer> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text("Passwort zurücksetzen"),
-        content: Text("Wenn Sie ihr Passwort ändern wollen, wird Ihnen eine E-Mail zum Zurücksetzen ihres Passworts geschickt."),
+        title: Text('Passwort zurücksetzen'),
+        content: Text(
+          'Wenn Sie ihr Passwort ändern wollen, wird Ihnen eine E-Mail zum Zurücksetzen ihres Passworts geschickt.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: Text("Abbrechen"),
+            child: Text('Abbrechen'),
           ),
           TextButton(
             onPressed: () {
               Navigator.of(context).pop();
               _sendResetEmail();
             },
-            child: Text("E-Mail senden"),
+            child: Text('E-Mail senden'),
           ),
         ],
-      )
+      ),
     );
     // TODO: Implementiere Passwort-Änderung
     // Diese Funktion sollte einen Dialog öffnen, in dem der Benutzer
     // sein aktuelles Passwort bestätigt und ein neues festlegt.
     // Verwende FirebaseAuth.updatePassword() nach Re-Authentifizierung
   }
-Future <void> _sendResetEmail() async {
-    String nachricht;
+
+  Future<void> _sendResetEmail() async {
+    String message;
 
     final email = context.read<AuthenticationProvider>().user?.email;
 
     if (email == null || email.trim().isEmpty) {
-      nachricht = "Für dieses Konto ist keine E-Mail-Adresse hinterlegt. Bitte hinterlegen Sie zuerst eine E-Mail-Adresse.";
+      message =
+          'Für dieses Konto ist keine E-Mail-Adresse hinterlegt. Bitte hinterlegen Sie zuerst eine E-Mail-Adresse.';
     } else {
       try {
-        await FirebaseAuth.instance.sendPasswordResetEmail(
-          email: email,
-        );
-        nachricht = "E-Mail gesendet. Falls sie nicht eingetroffen ist, bitte Spam-Ordner und die eingegebene E-Mail überprüfen.";
-      } on FirebaseAuthException catch (e) {
-        nachricht = "Fehler beim Senden der E-Mail";
+        await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+        message =
+            'E-Mail gesendet. Falls sie nicht eingetroffen ist, bitte Spam-Ordner und die eingegebene E-Mail überprüfen.';
+      } on FirebaseAuthException {
+        message = 'Fehler beim Senden der E-Mail';
       }
-      }
+    }
 
     if (!mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(nachricht),
-      ),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
+
   Future<void> _signOut() async {
-    await context.read<CredentialProvider>().clearCredentialsLocal();
-    await context.read<AuthenticationProvider>().signOut();
+    await Future.wait([
+      context.read<AuthenticationProvider>().signOut(),
+      context.read<CredentialProvider>().clearCredentialsLocal(),
+    ]);
 
     showSnackBar('Erfolgreich abgemeldet');
   }
