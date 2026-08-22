@@ -18,6 +18,16 @@ class NavigationShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    int maxWidth = 600; // Define the maximum width for the layout
+
+    return LayoutBuilder(
+      builder: (context, constraints) => constraints.maxWidth > maxWidth
+          ? _buildLargeLayout(context)
+          : _buildSmallLayout(context),
+    );
+  }
+
+  Widget _buildSmallLayout(BuildContext context) {
     return Scaffold(
       body: child,
       bottomNavigationBar: NavigationBar(
@@ -26,6 +36,25 @@ class NavigationShell extends StatelessWidget {
           _onItemTapped(index, context);
         },
         destinations: DestinationsManager.bottomNavigationDestinations,
+      ),
+    );
+  }
+
+  Widget _buildLargeLayout(BuildContext context) {
+    return Scaffold(
+      body: Row(
+        children: [
+          NavigationRail(
+            selectedIndex: DestinationsManager.getNavigationIndex(state),
+            onDestinationSelected: (index) {
+              _onItemTapped(index, context);
+            },
+            labelType: NavigationRailLabelType.all,
+            destinations: DestinationsManager.navigationRailDestinations,
+          ),
+          const VerticalDivider(thickness: 1, width: 1),
+          Expanded(child: child),
+        ],
       ),
     );
   }

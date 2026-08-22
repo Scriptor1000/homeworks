@@ -29,8 +29,9 @@ import '../provider/homeworks_provider.dart';
 part 'typesafe_router.g.dart';
 
 /// Stream that triggers GoRouter refresh when FirebaseAuth state changes
-final _refreshStream =
-    GoRouterRefreshStream(FirebaseAuth.instance.authStateChanges());
+final _refreshStream = GoRouterRefreshStream(
+  FirebaseAuth.instance.authStateChanges(),
+);
 
 /// Shortcut getters for route locations
 //String get _timetableLocation => const TimetableRoute().location;
@@ -69,8 +70,8 @@ final appRouter = GoRouter(
 
   routes: $appRoutes,
 );
-/// Route for timetable demo page
 
+/// Route for timetable demo page
 
 /// Route for authentication screen
 @TypedGoRoute<AuthRoute>(path: '/auth')
@@ -149,10 +150,7 @@ class NavigationShellRoute extends ShellRouteData {
       // Wrap child with ProviderShell for access to providers
       child: ProviderShell(
         uid: user.uid,
-        child: NavigationShell(
-          state: state,
-          child: navigator,
-        ),
+        child: NavigationShell(state: state, child: navigator),
       ),
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
         return SharedAxisTransition(
@@ -173,10 +171,7 @@ class HomeRoute extends GoRouteData with $HomeRoute {
 
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
-    return NoTransitionPage(
-      key: state.pageKey,
-      child: const Home(),
-    );
+    return NoTransitionPage(key: state.pageKey, child: const Home());
   }
 }
 
@@ -209,17 +204,12 @@ class EditHomeworkRoute extends GoRouteData with $EditHomeworkRoute {
     final homework = context.read<HomeworksProvider>().getById(homeworkId);
 
     if (homework == null) {
-      return Scaffold(
-        body: Center(
-          child: Text('Homework not found'),
-        ),
-      );
+      return Scaffold(body: Center(child: Text('Homework not found')));
     }
 
     return CreateHomework(existingHomework: homework);
   }
 }
-
 
 class SubjectSelectionRoute extends GoRouteData with $SubjectSelectionRoute {
   /// Callback wich is called when a subject is selected.
@@ -233,9 +223,7 @@ class SubjectSelectionRoute extends GoRouteData with $SubjectSelectionRoute {
 
   @override
   Widget build(BuildContext context, GoRouterState state) {
-    return SubjectSelection(
-      onSubjectSelected: $extra,
-    );
+    return SubjectSelection(onSubjectSelected: $extra);
   }
 
   @override
@@ -254,10 +242,7 @@ class UntisRoute extends GoRouteData with $UntisRoute {
 
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
-    return NoTransitionPage(
-      key: state.pageKey,
-      child: const UntisView(),
-    );
+    return NoTransitionPage(key: state.pageKey, child: const UntisView());
   }
 }
 
@@ -306,10 +291,7 @@ class AccountRoute extends GoRouteData with $AccountRoute {
 
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
-    return NoTransitionPage(
-      key: state.pageKey,
-      child: const AccountView(),
-    );
+    return NoTransitionPage(key: state.pageKey, child: const AccountView());
   }
 }
 
@@ -379,6 +361,26 @@ class DestinationsManager {
         icon: Icon(Icons.person_outline),
         selectedIcon: Icon(Icons.person),
         label: 'Konto',
+      ),
+    ];
+  }
+
+  static List<NavigationRailDestination> get navigationRailDestinations {
+    return [
+      const NavigationRailDestination(
+        icon: Icon(Icons.home_outlined),
+        selectedIcon: Icon(Icons.home),
+        label: Text('Home'),
+      ),
+      const NavigationRailDestination(
+        icon: Icon(Icons.school_outlined),
+        selectedIcon: Icon(Icons.school),
+        label: Text('Untis'),
+      ),
+      const NavigationRailDestination(
+        icon: Icon(Icons.person_outline),
+        selectedIcon: Icon(Icons.person),
+        label: Text('Konto'),
       ),
     ];
   }
