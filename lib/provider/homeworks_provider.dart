@@ -65,10 +65,12 @@ class HomeworksProvider extends ChangeNotifier {
     }
 
     // Remove the same homeworks locally
-    _homeworks.removeWhere((homework) =>
-        homework.dueDate != null &&
-        homework.dueDate!.isBefore(now) &&
-        homework.isCompleted);
+    _homeworks.removeWhere(
+      (homework) =>
+          homework.dueDate != null &&
+          homework.dueDate!.isBefore(now) &&
+          homework.isCompleted,
+    );
 
     _homeworksLoaded = true;
     notifyListeners();
@@ -118,11 +120,13 @@ class HomeworksProvider extends ChangeNotifier {
 
     _analyticsService.updateDueDates(count);
   }
+
   Homework? getById(String id) {
     return _homeworks.firstWhereOrNull(
-          (hw) => hw.documentId == id || hw.id == id,
+      (hw) => hw.documentId == id || hw.id == id,
     );
   }
+
   /// Creates a new homework and stores it in Firestore and updates the local list.
   ///
   /// It generates a new [Homework] object with the given [title] and [subject], the rest is filled with standard values.
@@ -180,27 +184,29 @@ class HomeworksProvider extends ChangeNotifier {
 
   Future<void> updateHomework(Homework updatedHomework) async {
     final homework = _homeworks.firstWhereOrNull(
-      (hw) => hw.documentId == updatedHomework.documentId || hw.id == updatedHomework.id,
+      (hw) =>
+          hw.documentId == updatedHomework.documentId ||
+          hw.id == updatedHomework.id,
     );
     if (homework == null) {
-      Sentry.logger.error('Homework with id ${updatedHomework.id} not found for updating. '
-          'Current homeworks ID: ${_homeworks.map((hw) => hw.id).join(', ')}',
-    );
+      Sentry.logger.error(
+        'Homework with id ${updatedHomework.id} not found for updating. '
+        'Current homeworks ID: ${_homeworks.map((hw) => hw.id).join(', ')}',
+      );
       return;
     }
     return _mutateState(
-      mutateLocalState: (){
+      mutateLocalState: () {
         homework.title = updatedHomework.title;
         homework.description = updatedHomework.description;
         homework.subjectDocId = updatedHomework.subjectDocId;
         homework.toNextLesson = updatedHomework.toNextLesson;
         homework.dueDate = updatedHomework.dueDate;
         homework.type = updatedHomework.type;
-
       },
       mutateRemoteState: () async =>
           await _firestoreHomeworks.saveHomework(homework),
-      logAnalytics: (){},
+      logAnalytics: () {},
     );
   }
 

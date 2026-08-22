@@ -13,6 +13,7 @@ class ForgotPasswordPage extends StatefulWidget {
 
 class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   final TextEditingController _emailController = TextEditingController();
+
   /// Prevents multiple submissions while a Firebase request is in progress.
   bool _isLoading = false;
 
@@ -21,6 +22,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     _emailController.dispose();
     super.dispose();
   }
+
   /// Sends a password reset email to the entered address.
   /// Shows a [SnackBar] with feedback on success or failure.
   /// Exits early if the widget is no longer mounted.
@@ -33,7 +35,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
         email: _emailController.text.trim(),
       );
       nachricht =
-      'E-Mail gesendet. Falls sie nicht eingetroffen ist, bitte Spam-Ordner und die eingegebene E-Mail überprüfen.';
+          'E-Mail gesendet. Falls sie nicht eingetroffen ist, bitte Spam-Ordner und die eingegebene E-Mail überprüfen.';
     } on FirebaseAuthException catch (e) {
       nachricht = _getErrorMessage(e.code);
     } finally {
@@ -41,9 +43,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       setState(() => _isLoading = false);
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(nachricht)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(nachricht)));
   }
 
   String _getErrorMessage(String code) {
@@ -164,8 +166,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: colorScheme.primary,
                                 foregroundColor: colorScheme.onPrimary,
-                                padding:
-                                const EdgeInsets.symmetric(vertical: 14),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -173,23 +176,23 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                               ),
                               child: _isLoading
                                   ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor:
-                                  AlwaysStoppedAnimation<Color>(
-                                    Colors.white,
-                                  ),
-                                ),
-                              )
+                                      height: 20,
+                                      width: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                              Colors.white,
+                                            ),
+                                      ),
+                                    )
                                   : const Text(
-                                "E-Mail senden",
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
+                                      "E-Mail senden",
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
                             ),
 
                             const SizedBox(height: 16),
@@ -207,7 +210,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                            ) ,
+                            ),
                           ],
                         ),
                       ),

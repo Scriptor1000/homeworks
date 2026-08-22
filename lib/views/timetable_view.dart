@@ -8,7 +8,6 @@ import '../routes/typesafe_router.dart';
 import '../utilities/enums.dart';
 import '../widgets/info_box.dart';
 
-
 /// Screen that shows the user's weekly timetable, built from the subjects
 /// and periods retrieved via the Untis API.
 class TimetableView extends StatefulWidget {
@@ -37,9 +36,10 @@ class _TimetableViewState extends State<TimetableView> {
   /// Untis session.
   void _loadTimetable() {
     final credentialProvider = context.read<CredentialProvider>();
-    context
-        .read<TimetableProvider>()
-        .updateFromSession(credentialProvider, _weekStart);
+    context.read<TimetableProvider>().updateFromSession(
+      credentialProvider,
+      _weekStart,
+    );
   }
 
   void _goToPreviousWeek() {
@@ -65,7 +65,7 @@ class _TimetableViewState extends State<TimetableView> {
     // Once the Untis session becomes available (or the requested week
     // changes), get the timetable for it.
     if (credentialProvider.sessionStatus ==
-        UntisSessionStatus.sessionAccomplished &&
+            UntisSessionStatus.sessionAccomplished &&
         timetableProvider.status != UntisSubjectStatus.loading &&
         timetableProvider.loadedWeekStart != _weekStart) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _loadTimetable());
@@ -99,11 +99,11 @@ class _TimetableViewState extends State<TimetableView> {
   }
 
   Widget _buildBody(
-      BuildContext context,
-      CredentialProvider credentialProvider,
-      TimetableProvider timetableProvider,
-      List<DateTime> days,
-      ) {
+    BuildContext context,
+    CredentialProvider credentialProvider,
+    TimetableProvider timetableProvider,
+    List<DateTime> days,
+  ) {
     if (credentialProvider.sessionStatus == UntisSessionStatus.loading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -158,7 +158,6 @@ class _TimetableViewState extends State<TimetableView> {
     return 'Stundenplan – ${fmt(weekStart)} bis ${fmt(end)}';
   }
 }
-
 
 /// A weekly timetable grid, similar to a calendar week view.
 ///
@@ -217,7 +216,8 @@ class TimetableWidget extends StatelessWidget {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    for (final day in days) _buildDayColumn(context, colorScheme, day),
+                    for (final day in days)
+                      _buildDayColumn(context, colorScheme, day),
                   ],
                 ),
               ),
@@ -259,10 +259,15 @@ class TimetableWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildDayColumn(BuildContext context, ColorScheme colorScheme, DateTime day) {
+  Widget _buildDayColumn(
+    BuildContext context,
+    ColorScheme colorScheme,
+    DateTime day,
+  ) {
     final isToday = _isSameDay(day, DateTime.now());
-    final dayLessons = lessons.where((lesson) => _isSameDay(lesson.start, day)).toList()
-      ..sort((a, b) => a.start.compareTo(b.start));
+    final dayLessons =
+        lessons.where((lesson) => _isSameDay(lesson.start, day)).toList()
+          ..sort((a, b) => a.start.compareTo(b.start));
 
     return SizedBox(
       width: dayColumnWidth,
@@ -281,7 +286,8 @@ class TimetableWidget extends StatelessWidget {
                 child: Stack(
                   children: [
                     ..._buildHourLines(colorScheme),
-                    for (final lesson in dayLessons) _buildLessonCard(context, colorScheme, lesson),
+                    for (final lesson in dayLessons)
+                      _buildLessonCard(context, colorScheme, lesson),
                     if (isToday) _buildNowIndicator(colorScheme),
                   ],
                 ),
@@ -293,7 +299,12 @@ class TimetableWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildDayHeader(BuildContext context, ColorScheme colorScheme, DateTime day, bool isToday) {
+  Widget _buildDayHeader(
+    BuildContext context,
+    ColorScheme colorScheme,
+    DateTime day,
+    bool isToday,
+  ) {
     const weekdayNames = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
 
     return Container(
@@ -319,14 +330,19 @@ class TimetableWidget extends StatelessWidget {
             height: 26,
             alignment: Alignment.center,
             decoration: isToday
-                ? BoxDecoration(color: colorScheme.primary, shape: BoxShape.circle)
+                ? BoxDecoration(
+                    color: colorScheme.primary,
+                    shape: BoxShape.circle,
+                  )
                 : null,
             child: Text(
               '${day.day}',
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
-                color: isToday ? colorScheme.onPrimary : colorScheme.onSurfaceVariant,
+                color: isToday
+                    ? colorScheme.onPrimary
+                    : colorScheme.onSurfaceVariant,
               ),
             ),
           ),
@@ -351,7 +367,11 @@ class TimetableWidget extends StatelessWidget {
     ];
   }
 
-  Widget _buildLessonCard(BuildContext context, ColorScheme colorScheme, TimetableLesson lesson) {
+  Widget _buildLessonCard(
+    BuildContext context,
+    ColorScheme colorScheme,
+    TimetableLesson lesson,
+  ) {
     final top = _minutesFromDayStart(lesson.start) / 60 * hourHeight;
     final height = lesson.duration.inMinutes / 60 * hourHeight;
 
@@ -399,7 +419,9 @@ class TimetableWidget extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                     fontSize: 13,
                     decoration: isCancelled ? TextDecoration.lineThrough : null,
-                    color: isCancelled ? colorScheme.onSurfaceVariant : colorScheme.onSurface,
+                    color: isCancelled
+                        ? colorScheme.onSurfaceVariant
+                        : colorScheme.onSurface,
                   ),
                 ),
                 if (height > 36)
@@ -407,7 +429,10 @@ class TimetableWidget extends StatelessWidget {
                     lesson.room,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant),
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 if (height > 52 && isExam)
                   Text(
@@ -445,11 +470,12 @@ class TimetableWidget extends StatelessWidget {
           Container(
             width: 8,
             height: 8,
-            decoration: const BoxDecoration(color: Colors.redAccent, shape: BoxShape.circle),
+            decoration: const BoxDecoration(
+              color: Colors.redAccent,
+              shape: BoxShape.circle,
+            ),
           ),
-          Expanded(
-            child: Container(height: 1.5, color: Colors.redAccent),
-          ),
+          Expanded(child: Container(height: 1.5, color: Colors.redAccent)),
         ],
       ),
     );
@@ -459,7 +485,6 @@ class TimetableWidget extends StatelessWidget {
     return ((dateTime.hour - dayStartHour) * 60 + dateTime.minute).toDouble();
   }
 }
-
 
 void _showLessonDetails(BuildContext context, TimetableLesson lesson) {
   final colorScheme = Theme.of(context).colorScheme;
@@ -502,20 +527,32 @@ void _showLessonDetails(BuildContext context, TimetableLesson lesson) {
               '${_formatTime(lesson.start)} – ${_formatTime(lesson.end)} Uhr',
             ),
             const SizedBox(height: 8),
-            _detailRow(context, Icons.location_on_outlined, 'Raum ${lesson.room}'),
+            _detailRow(
+              context,
+              Icons.location_on_outlined,
+              'Raum ${lesson.room}',
+            ),
             if (lesson.teacher != null) ...[
               const SizedBox(height: 8),
               _detailRow(context, Icons.person_outline, lesson.teacher!),
             ],
             if (lesson.state == LessonState.cancelled) ...[
               const SizedBox(height: 16),
-              _statusBanner(Icons.event_busy, 'Diese Stunde entfällt.', colorScheme.error),
+              _statusBanner(
+                Icons.event_busy,
+                'Diese Stunde entfällt.',
+                colorScheme.error,
+              ),
             ] else if (lesson.state == LessonState.substitution) ...[
               const SizedBox(height: 16),
               _statusBanner(Icons.swap_horiz, 'Vertretung', Colors.orange),
             ] else if (lesson.state == LessonState.exam) ...[
               const SizedBox(height: 16),
-              _statusBanner(Icons.edit_note, 'Klassenarbeit / Prüfung', colorScheme.primary),
+              _statusBanner(
+                Icons.edit_note,
+                'Klassenarbeit / Prüfung',
+                colorScheme.primary,
+              ),
             ],
           ],
         ),
@@ -527,7 +564,11 @@ void _showLessonDetails(BuildContext context, TimetableLesson lesson) {
 Widget _detailRow(BuildContext context, IconData icon, String text) {
   return Row(
     children: [
-      Icon(icon, size: 18, color: Theme.of(context).colorScheme.onSurfaceVariant),
+      Icon(
+        icon,
+        size: 18,
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
+      ),
       const SizedBox(width: 10),
       Text(text, style: Theme.of(context).textTheme.bodyMedium),
     ],
@@ -546,7 +587,10 @@ Widget _statusBanner(IconData icon, String text, Color color) {
       children: [
         Icon(icon, size: 18, color: color),
         const SizedBox(width: 8),
-        Text(text, style: TextStyle(color: color, fontWeight: FontWeight.bold)),
+        Text(
+          text,
+          style: TextStyle(color: color, fontWeight: FontWeight.bold),
+        ),
       ],
     ),
   );

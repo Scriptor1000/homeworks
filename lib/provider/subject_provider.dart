@@ -15,8 +15,10 @@ class SubjectProvider extends ChangeNotifier {
   List<Subject> _firestoreSubjects = []; // subjects loaded from Firestore
   List<Subject> _untisSubjects = []; // subjects loaded from Untis
 
-  bool _firestoreSubjectsLoaded = false; // whether Firestore subjects are loaded
-  UntisSubjectStatus _untisSubjectStatus = UntisSubjectStatus.untisUnavailable; // status of Untis subjects
+  bool _firestoreSubjectsLoaded =
+      false; // whether Firestore subjects are loaded
+  UntisSubjectStatus _untisSubjectStatus =
+      UntisSubjectStatus.untisUnavailable; // status of Untis subjects
 
   final FirestoreSubjects _firestoreSubjectsService; // Firestore service
 

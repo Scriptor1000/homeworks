@@ -49,14 +49,12 @@ class _AuthenticationState extends State<Authentication> {
     }
   }
 
-  Future <void> _register() async {
+  Future<void> _register() async {
     setState(() => _isLoading = true);
     // Navigate to Register page
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => Registration(),
-      ),
+      MaterialPageRoute(builder: (context) => Registration()),
     );
     if (mounted) {
       setState(() => _isLoading = false);
@@ -129,9 +127,7 @@ class _AuthenticationState extends State<Authentication> {
                       // Login Card with email/password fields and buttons
                       Container(
                         padding: const EdgeInsets.all(24.0),
-                        constraints: const BoxConstraints(
-                          maxWidth: 500,
-                        ),
+                        constraints: const BoxConstraints(maxWidth: 500),
                         decoration: BoxDecoration(
                           color: colorScheme.surface,
                           borderRadius: BorderRadius.circular(16.0),
@@ -192,7 +188,11 @@ class _AuthenticationState extends State<Authentication> {
                                 const SizedBox(width: 12),
 
                                 // Icon between buttons
-                                Icon(Icons.swap_horiz, color: colorScheme.primary, size: 28),
+                                Icon(
+                                  Icons.swap_horiz,
+                                  color: colorScheme.primary,
+                                  size: 28,
+                                ),
 
                                 const SizedBox(width: 12),
 
@@ -202,7 +202,10 @@ class _AuthenticationState extends State<Authentication> {
                                     onTap: () {
                                       Navigator.push(
                                         context,
-                                        MaterialPageRoute(builder: (context) => ForgotPasswordPage()),
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              ForgotPasswordPage(),
+                                        ),
                                       );
                                     },
                                     child: Text(
@@ -224,7 +227,9 @@ class _AuthenticationState extends State<Authentication> {
                             const SizedBox(height: 20),
 
                             // Google Sign-in button (or web button if needed)
-                            buildGoogleSignInButton(authProvider.googleSignInState),
+                            buildGoogleSignInButton(
+                              authProvider.googleSignInState,
+                            ),
                           ],
                         ),
                       ),
@@ -266,9 +271,7 @@ class _AuthenticationState extends State<Authentication> {
       decoration: InputDecoration(
         labelText: 'E-Mail',
         prefixIcon: const Icon(Icons.email_outlined),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: colorScheme.primary, width: 2),
@@ -297,9 +300,7 @@ class _AuthenticationState extends State<Authentication> {
           ),
           onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
         ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: colorScheme.primary, width: 2),
@@ -322,49 +323,35 @@ class _AuthenticationState extends State<Authentication> {
         backgroundColor: colorScheme.primary,
         foregroundColor: colorScheme.onPrimary,
         padding: const EdgeInsets.symmetric(vertical: 14),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         elevation: 2,
       ),
       child: _isLoading
           ? const SizedBox(
-        height: 20,
-        width: 20,
-        child: CircularProgressIndicator(
-          strokeWidth: 2,
-          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-        ),
-      )
+              height: 20,
+              width: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              ),
+            )
           : const Text(
               'Anmelden',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
     );
   }
 
-
-
-
   /// Builds the Google sign-in button based on the platform/state.
   Widget buildGoogleSignInButton(GoogleSignInState supported) {
     return switch (supported) {
-    // Google sign-in available
+      // Google sign-in available
       GoogleSignInState.supported => OutlinedButton.icon(
         onPressed: _isLoading ? null : _googleLogin,
-        icon: const FaIcon(
-          FontAwesomeIcons.google,
-          size: 18,
-        ),
+        icon: const FaIcon(FontAwesomeIcons.google, size: 18),
         label: const Text(
           'Mit Google anmelden',
-          style: TextStyle(
-            fontWeight: FontWeight.w500,
-            fontSize: 16,
-          ),
+          style: TextStyle(fontWeight: FontWeight.w500, fontSize: 16),
         ),
         style: OutlinedButton.styleFrom(
           side: BorderSide(color: Colors.grey.shade300),
@@ -375,7 +362,7 @@ class _AuthenticationState extends State<Authentication> {
         ),
       ),
 
-    // Google sign-in not available
+      // Google sign-in not available
       GoogleSignInState.notSupported => OutlinedButton.icon(
         onPressed: null,
         icon: const FaIcon(
@@ -396,11 +383,13 @@ class _AuthenticationState extends State<Authentication> {
         ),
       ),
 
-    // Web button required for Google sign-in
-      GoogleSignInState.needWebButton =>
-          SizedBox(height: 40, child: web.renderButton()),
+      // Web button required for Google sign-in
+      GoogleSignInState.needWebButton => SizedBox(
+        height: 40,
+        child: web.renderButton(),
+      ),
 
-    // Error state
+      // Error state
       GoogleSignInState.error => OutlinedButton.icon(
         onPressed: null,
         icon: const FaIcon(
@@ -408,10 +397,7 @@ class _AuthenticationState extends State<Authentication> {
           color: Colors.red,
           size: 18,
         ),
-        label: const Text(
-          'Fehler',
-          style: TextStyle(color: Colors.red),
-        ),
+        label: const Text('Fehler', style: TextStyle(color: Colors.red)),
         style: OutlinedButton.styleFrom(
           side: BorderSide(color: Colors.grey.shade300),
           padding: const EdgeInsets.symmetric(vertical: 14),
@@ -421,7 +407,7 @@ class _AuthenticationState extends State<Authentication> {
         ),
       ),
 
-    // Loading state
+      // Loading state
       GoogleSignInState.loading => OutlinedButton.icon(
         onPressed: null,
         icon: const SizedBox(
@@ -443,5 +429,4 @@ class _AuthenticationState extends State<Authentication> {
       ),
     };
   }
-
 }

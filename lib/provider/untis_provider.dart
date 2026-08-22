@@ -168,8 +168,6 @@ class UntisProvider extends ChangeNotifier {
         subject.nextLesson = period.startDateTime;
       }
       _untisSubjects.add(subject);
-
-
     } else if (!isCancelled &&
         (listedSubject.nextLesson == null ||
             period.startDateTime.isBefore(listedSubject.nextLesson!)) &&
@@ -264,9 +262,7 @@ class UntisProvider extends ChangeNotifier {
   }
 
   /// This method is not implemented yet.
-  void loadUntisHomeworks() {
-
-  }
+  void loadUntisHomeworks() {}
 }
 
 /// Result of a teacher search containing found periods and current searching place.

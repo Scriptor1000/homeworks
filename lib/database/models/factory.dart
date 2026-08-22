@@ -24,6 +24,7 @@ class ItemFactory {
   UntisCredentials untisCredentialsFromJSON(String jsonString) {
     return UntisCredentials.fromJsonString(jsonString);
   }
+
   /// Creates an [UntisSession] using the provided [UntisCredentials].
   ///
   /// This wraps the `UntisSession.init` method from the `dart_untis_mobile` package.

@@ -12,25 +12,25 @@ import '../../utilities/enums.dart';
 
 class Homework {
   /// Unique identifier for the homework. Generated automatically if not provided.
-   String id;
+  String id;
 
   /// Title of the homework.
-   String title;
+  String title;
 
   /// Detailed description of the homework.
-   String description;
+  String description;
 
   /// Document ID of the subject this homework belongs to.
-   String subjectDocId;
+  String subjectDocId;
 
   /// If true, the due date is determined by the next lesson of the subject.
-   bool toNextLesson;
+  bool toNextLesson;
 
   /// Indicates if the homework was imported from Untis.
-   bool fromUntis;
+  bool fromUntis;
 
   /// Timestamp when the homework was created.
-   DateTime createdAt;
+  DateTime createdAt;
 
   /// Indicates if the homework has been completed.
   bool isCompleted;
@@ -38,10 +38,10 @@ class Homework {
   /// The due date for the homework. Can be null if [toNextLesson] is true.
   DateTime? dueDate;
 
-   /// The type of the homework, which can be a regular homework, an exam, or an appointment.
-   HomeworkType type;
+  /// The type of the homework, which can be a regular homework, an exam, or an appointment.
+  HomeworkType type;
 
-   Homework({
+  Homework({
     String? id,
     required this.title,
     required this.description,

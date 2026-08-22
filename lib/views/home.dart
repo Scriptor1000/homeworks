@@ -85,12 +85,8 @@ class _HomeState extends State<Home> {
     final poorlyHomeworks = homeworkProvider.homeworks.withoutDueDate;
 
     /// Sort urgent & non-urgent homeworks chronologically
-    urgentHomeworks.sort(
-          (a, b) => a.dueDate!.compareTo(b.dueDate!),
-    );
-    nonUrgentHomeworks.sort(
-          (a, b) => a.dueDate!.compareTo(b.dueDate!),
-    );
+    urgentHomeworks.sort((a, b) => a.dueDate!.compareTo(b.dueDate!));
+    nonUrgentHomeworks.sort((a, b) => a.dueDate!.compareTo(b.dueDate!));
 
     return Scaffold(
       appBar: AppBar(
@@ -110,26 +106,28 @@ class _HomeState extends State<Home> {
       body: !homeworkProvider.homeworksLoaded
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
-        child: Column(
-          children: [
-            /// Urgent section
-            if (urgentHomeworks.isNotEmpty)
-              buildUrgentHomeworks(context, urgentHomeworks),
+              child: Column(
+                children: [
+                  /// Urgent section
+                  if (urgentHomeworks.isNotEmpty)
+                    buildUrgentHomeworks(context, urgentHomeworks),
 
-            /// Normal due-date homework section
-            Padding(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: horizontalPadding),
-                child: buildHomeworks(nonUrgentHomeworks)),
+                  /// Normal due-date homework section
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: horizontalPadding,
+                    ),
+                    child: buildHomeworks(nonUrgentHomeworks),
+                  ),
 
-            /// Items without due date
-            if (poorlyHomeworks.isNotEmpty)
-              buildPoorlyHomeworks(context, poorlyHomeworks),
+                  /// Items without due date
+                  if (poorlyHomeworks.isNotEmpty)
+                    buildPoorlyHomeworks(context, poorlyHomeworks),
 
-            buildFABGap()
-          ],
-        ),
-      ),
+                  buildFABGap(),
+                ],
+              ),
+            ),
 
       /// Adds a FAB row with quick add text field + button
       floatingActionButton: buildFAB(),
@@ -159,12 +157,15 @@ class _HomeState extends State<Home> {
 
   /// Builds "no due date" decorated section
   Widget buildPoorlyHomeworks(
-      BuildContext context, List<Homework> poorlyHomeworks) {
+    BuildContext context,
+    List<Homework> poorlyHomeworks,
+  ) {
     return buildDecoratedHomeworks(
-        context: context,
-        borderColor: Colors.grey,
-        label: 'Ohne Abgabedatum',
-        child: buildHomeworks(poorlyHomeworks));
+      context: context,
+      borderColor: Colors.grey,
+      label: 'Ohne Abgabedatum',
+      child: buildHomeworks(poorlyHomeworks),
+    );
   }
 
   /// Adds border, padding + label for homework category sections
@@ -179,15 +180,18 @@ class _HomeState extends State<Home> {
         /// Main bordered container
         Container(
           margin: const EdgeInsets.symmetric(
-              horizontal: urgentContainerMargin, vertical: 8),
+            horizontal: urgentContainerMargin,
+            vertical: 8,
+          ),
           padding: const EdgeInsets.all(urgentContainerPadding),
           decoration: BoxDecoration(
             border: Border.all(
               color: borderColor,
               width: urgentContainerBorderWidth,
             ),
-            borderRadius:
-                BorderRadius.circular(BorderRadiusConstants.homeworks),
+            borderRadius: BorderRadius.circular(
+              BorderRadiusConstants.homeworks,
+            ),
           ),
           child: child,
         ),
@@ -258,17 +262,19 @@ class _HomeState extends State<Home> {
                 _textFocus.unfocus();
               },
               decoration: InputDecoration(
-                  hintText: 'Schnell hinzufügen...',
-                  fillColor: Theme.of(context).colorScheme.surface,
-                  filled: true),
+                hintText: 'Schnell hinzufügen...',
+                fillColor: Theme.of(context).colorScheme.surface,
+                filled: true,
+              ),
             ),
           ),
 
           /// Animated add button that shrinks/expands when textfield focused
           AnimatedPadding(
             duration: duration,
-            padding:
-            EdgeInsets.only(left: focused ? 10 : 2 * horizontalPadding),
+            padding: EdgeInsets.only(
+              left: focused ? 10 : 2 * horizontalPadding,
+            ),
             child: AnimatedScale(
               alignment: Alignment.centerRight,
               duration: duration,
@@ -296,9 +302,10 @@ class _HomeState extends State<Home> {
       SubjectSelectionRoute($extra: onSubjectForFastCreate).push(context);
     } else {
       final homeworkProvider = context.read<HomeworksProvider>();
-      final currentSubject = context.read<SubjectProvider>().subjects.firstWhereOrNull(
-            (s) => s.id == currentSubjectID.id,
-      );
+      final currentSubject = context
+          .read<SubjectProvider>()
+          .subjects
+          .firstWhereOrNull((s) => s.id == currentSubjectID.id);
       if (currentSubject == null) {
         Sentry.logger.warn(
           'No subject found for current subject ID: ${currentSubjectID.id}',

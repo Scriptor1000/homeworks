@@ -44,9 +44,7 @@ class _SubjectSelectionState extends State<SubjectSelection> {
     }).toList();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Fach auswählen'),
-      ),
+      appBar: AppBar(title: const Text('Fach auswählen')),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Stack(
@@ -57,47 +55,52 @@ class _SubjectSelectionState extends State<SubjectSelection> {
                 Expanded(
                   child: filteredSubjects.isEmpty
                       ? Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          subjects.isEmpty
-                              ? Icons.library_books_outlined
-                              : Icons.search_off,
-                          size: 48,
-                          color: Theme.of(context).colorScheme.outline,
-                        ),
-                        const Gap(12),
-                        Text(
-                          subjects.isEmpty
-                              ? 'Keine Fächer vorhanden'
-                              : 'Kein Fach gefunden für „$query"',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Theme.of(context).colorScheme.outline,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                subjects.isEmpty
+                                    ? Icons.library_books_outlined
+                                    : Icons.search_off,
+                                size: 48,
+                                color: Theme.of(context).colorScheme.outline,
+                              ),
+                              const Gap(12),
+                              Text(
+                                subjects.isEmpty
+                                    ? 'Keine Fächer vorhanden'
+                                    : 'Kein Fach gefunden für „$query"',
+                                style: Theme.of(context).textTheme.bodyMedium
+                                    ?.copyWith(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.outline,
+                                    ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
                           ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
-                  )
+                        )
                       : ListView.builder(
-                    itemCount: filteredSubjects.length + 1,
-                    itemBuilder: (context, index) {
-                      if (index == filteredSubjects.length) {
-                        return const Gap(56 + 16);
-                      }
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: SubjectTile(
-                          subject: filteredSubjects[index],
-                          onTap: () {
-                            widget.onSubjectSelected?.call(filteredSubjects[index]);
-                            Navigator.pop(context);
+                          itemCount: filteredSubjects.length + 1,
+                          itemBuilder: (context, index) {
+                            if (index == filteredSubjects.length) {
+                              return const Gap(56 + 16);
+                            }
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 4),
+                              child: SubjectTile(
+                                subject: filteredSubjects[index],
+                                onTap: () {
+                                  widget.onSubjectSelected?.call(
+                                    filteredSubjects[index],
+                                  );
+                                  Navigator.pop(context);
+                                },
+                              ),
+                            );
                           },
                         ),
-                      );
-                    },
-                  ),
                 ),
               ],
             ),
@@ -133,5 +136,4 @@ class _SubjectSelectionState extends State<SubjectSelection> {
       ),
     );
   }
-
 }

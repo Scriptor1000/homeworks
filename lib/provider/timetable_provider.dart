@@ -36,13 +36,13 @@ class TimetableProvider extends ChangeNotifier {
   /// Does nothing if there is no usable session, or if [weekStart] is
   /// already loaded.
   Future<void> updateFromSession(
-      CredentialProvider credentialProvider,
-      DateTime weekStart,
-      ) async {
+    CredentialProvider credentialProvider,
+    DateTime weekStart,
+  ) async {
     final session = credentialProvider.session;
 
     if (credentialProvider.sessionStatus !=
-        UntisSessionStatus.sessionAccomplished ||
+            UntisSessionStatus.sessionAccomplished ||
         session == null) {
       if (_status != UntisSubjectStatus.untisUnavailable) {
         _lessons = [];

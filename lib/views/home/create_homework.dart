@@ -16,6 +16,7 @@ import '../../utilities/global_snackbar.dart';
 import '../../widgets/fab.dart';
 import '../../widgets/subject_tile.dart';
 import '../../provider/subject_provider.dart';
+
 /// Defines the type of homework created.
 /// [homework] → normal task
 /// [exam] → exam or test
@@ -77,9 +78,8 @@ class _CreateHomeworkState extends State<CreateHomework> {
       /// Find the subject object from the provider
       final subject = context.read<SubjectProvider>().subjects;
       selectedSubject = subject.firstWhereOrNull(
-            (s) => s.documentId == hw.subjectDocId,
+        (s) => s.documentId == hw.subjectDocId,
       );
-
     }
   }
 
@@ -93,17 +93,18 @@ class _CreateHomeworkState extends State<CreateHomework> {
   @override
   Widget build(BuildContext context) {
     /// Automatically suggest the current lesson’s subject if none selected
-    UntisElementDescriptor? currentDescriptor = context.watch<UntisProvider>().getCurrentSubject();
+    UntisElementDescriptor? currentDescriptor = context
+        .watch<UntisProvider>()
+        .getCurrentSubject();
     Subject? currentSubject = currentDescriptor == null
         ? null
         : context.watch<SubjectProvider>().subjects.firstWhereOrNull(
-          (s) => s.id == currentDescriptor.id,
-    );
+            (s) => s.id == currentDescriptor.id,
+          );
 
     if (currentSubject != null &&
         (selectedSubject == null || selectedSubject == lastCurrentSubject) &&
         currentSubject != lastCurrentSubject) {
-
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         _updateSubject(currentSubject);
@@ -111,14 +112,8 @@ class _CreateHomeworkState extends State<CreateHomework> {
       });
     }
 
-
-
-
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Hinzufügen'),
-        elevation: 0,
-      ),
+      appBar: AppBar(title: const Text('Hinzufügen'), elevation: 0),
       body: Padding(
         padding: const EdgeInsets.all(16),
 
@@ -142,7 +137,7 @@ class _CreateHomeworkState extends State<CreateHomework> {
                 _buildTime(context),
                 standardGap(),
                 _buildDetails(),
-                buildFABGap()
+                buildFABGap(),
               ],
             ),
           ),
@@ -154,7 +149,9 @@ class _CreateHomeworkState extends State<CreateHomework> {
       /// Save button
       floatingActionButton: ExtendedFAB(
         icon: Icons.save,
-        label: widget.existingHomework == null ? 'Hausaufgabe hinzufügen' : 'Änderungen Speichern',
+        label: widget.existingHomework == null
+            ? 'Hausaufgabe hinzufügen'
+            : 'Änderungen Speichern',
         onClick: _submit,
         active: true,
       ),
@@ -168,7 +165,7 @@ class _CreateHomeworkState extends State<CreateHomework> {
         showSnackBar('Bitte wähle ein Fach aus');
         return;
       }
-      if(!toNextLesson && dueDate == null) {
+      if (!toNextLesson && dueDate == null) {
         showSnackBar('Bitte ein Fälligkeitsdatum wählen');
         return;
       }
@@ -185,7 +182,6 @@ class _CreateHomeworkState extends State<CreateHomework> {
         homework.dueDate = dueDate;
         homework.type = selected;
         context.read<HomeworksProvider>().updateHomework(homework);
-
       } else {
         // Create new homework
         homework = Homework(
@@ -203,7 +199,6 @@ class _CreateHomeworkState extends State<CreateHomework> {
       context.pop();
     }
   }
-
 
   /// Set new selected subject and update due date
   void _updateSubject(Subject subject) {
@@ -283,9 +278,7 @@ class _CreateHomeworkState extends State<CreateHomework> {
   TextFormField _buildDetails() {
     return TextFormField(
       controller: _descriptionController,
-      decoration: const InputDecoration(
-        hintText: 'Beschreibung eingeben...',
-      ),
+      decoration: const InputDecoration(hintText: 'Beschreibung eingeben...'),
       maxLines: 5,
     );
   }
@@ -306,7 +299,9 @@ class _CreateHomeworkState extends State<CreateHomework> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              dueDate != null ? '${dueDate!.day}.${dueDate!.month}.${dueDate!.year}' : 'Kein Datum',
+              dueDate != null
+                  ? '${dueDate!.day}.${dueDate!.month}.${dueDate!.year}'
+                  : 'Kein Datum',
               style: Theme.of(context).textTheme.bodyLarge,
             ),
             littleGap(),
@@ -323,7 +318,10 @@ class _CreateHomeworkState extends State<CreateHomework> {
   void _showTimePicker() async {
     final TimeOfDay? picked = await showTimePicker(
       context: context,
-      initialTime: TimeOfDay(hour: dueDate?.hour ?? 18, minute: dueDate?.minute ?? 0),
+      initialTime: TimeOfDay(
+        hour: dueDate?.hour ?? 18,
+        minute: dueDate?.minute ?? 0,
+      ),
       helpText: 'Uhrzeit wählen',
       cancelText: 'Abbrechen',
       confirmText: 'Bestätigen',

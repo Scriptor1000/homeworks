@@ -52,6 +52,7 @@ class _LoadCredentialsState extends State<LoadCredentials> {
   /// 4. Stop loading or show error
   Future<void> _loadCredentials() async {
     if (_isLoading) return;
+
     /// User forgot password
     if (_userPasswordController.text.isEmpty) {
       showSnackBar('Bitte gib dein Benutzerpasswort ein');
@@ -93,8 +94,10 @@ class _LoadCredentialsState extends State<LoadCredentials> {
           children: [
             // Progress bar (at top)
             OwnProgressIndicator(
-              active: _isLoading ||
-                  credentialProvider.sessionStatus == UntisSessionStatus.loading,
+              active:
+                  _isLoading ||
+                  credentialProvider.sessionStatus ==
+                      UntisSessionStatus.loading,
               backgroundColor: Theme.of(context).colorScheme.surface,
             ),
 
@@ -169,7 +172,7 @@ class _LoadCredentialsState extends State<LoadCredentials> {
                           disabled: true,
                         ),
                       ),
-                      buildFABGap()
+                      buildFABGap(),
                     ],
                   ),
                 ),

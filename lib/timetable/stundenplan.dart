@@ -55,7 +55,9 @@ class TimetableDemoPage extends StatelessWidget {
     };
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Timetable (mithilfe von KI(gerade unbenutzbar))')),
+      appBar: AppBar(
+        title: const Text('Timetable (mithilfe von KI(gerade unbenutzbar))'),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(8.0),
         child: TimetableWidget(
@@ -88,10 +90,10 @@ class Position {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-          other is Position &&
-              runtimeType == other.runtimeType &&
-              day == other.day &&
-              slot == other.slot;
+      other is Position &&
+          runtimeType == other.runtimeType &&
+          day == other.day &&
+          slot == other.slot;
 
   @override
   int get hashCode => day.hashCode ^ slot.hashCode;
@@ -146,8 +148,12 @@ class TimetableWidget extends StatelessWidget {
           child: Table(
             defaultColumnWidth: FixedColumnWidth(cellWidth),
             border: TableBorder(
-              verticalInside: BorderSide(color: Colors.grey.withValues(alpha: 0.12)),
-              horizontalInside: BorderSide(color: Colors.grey.withValues(alpha: 0.12)),
+              verticalInside: BorderSide(
+                color: Colors.grey.withValues(alpha: 0.12),
+              ),
+              horizontalInside: BorderSide(
+                color: Colors.grey.withValues(alpha: 0.12),
+              ),
             ),
             children: _buildRows(context),
           ),
@@ -160,22 +166,26 @@ class TimetableWidget extends StatelessWidget {
     final List<TableRow> rows = [];
 
     // Header row: empty corner cell + day headers
-    rows.add(TableRow(
-      children: [
-        // top-left corner for times header label (optional)
-        SizedBox(
-          height: cellHeight * 0.75,
-          width: cellWidth,
-          child: Center(
-            child: Text(
-              'Time',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
+    rows.add(
+      TableRow(
+        children: [
+          // top-left corner for times header label (optional)
+          SizedBox(
+            height: cellHeight * 0.75,
+            width: cellWidth,
+            child: Center(
+              child: Text(
+                'Time',
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
+              ),
             ),
           ),
-        ),
-        ...days.map((d) => _buildHeaderCell(d)).toList(),
-      ],
-    ));
+          ...days.map((d) => _buildHeaderCell(d)).toList(),
+        ],
+      ),
+    );
 
     // For each time slot row, create left time cell + day cells
     for (int r = 0; r < timeSlots.length; r++) {
@@ -183,17 +193,19 @@ class TimetableWidget extends StatelessWidget {
       final List<Widget> rowCells = [];
 
       // left column: time slot
-      rowCells.add(Container(
-        height: cellHeight,
-        padding: const EdgeInsets.all(6),
-        alignment: Alignment.center,
-        color: Colors.grey.shade50,
-        child: Text(
-          slotLabel,
-          textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.bodySmall,
+      rowCells.add(
+        Container(
+          height: cellHeight,
+          padding: const EdgeInsets.all(6),
+          alignment: Alignment.center,
+          color: Colors.grey.shade50,
+          child: Text(
+            slotLabel,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
         ),
-      ));
+      );
 
       // day columns
       for (int c = 0; c < days.length; c++) {
@@ -213,14 +225,15 @@ class TimetableWidget extends StatelessWidget {
       height: cellHeight * 0.75,
       alignment: Alignment.center,
       padding: const EdgeInsets.symmetric(horizontal: 8),
-      child: Text(
-        label,
-        style: const TextStyle(fontWeight: FontWeight.w600),
-      ),
+      child: Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
     );
   }
 
-  Widget _buildContentCell(BuildContext context, Position pos, TimetableEntry? entry) {
+  Widget _buildContentCell(
+    BuildContext context,
+    Position pos,
+    TimetableEntry? entry,
+  ) {
     if (entry == null) {
       // empty cell
       return InkWell(
@@ -301,32 +314,49 @@ class EntryDetailSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding:
-      EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom, left: 16, right: 16, top: 16),
-      child: Wrap(children: [
-        ListTile(
-          leading: CircleAvatar(backgroundColor: entry.color, child: const Icon(Icons.book, color: Colors.white)),
-          title: Text(entry.subject, style: const TextStyle(fontWeight: FontWeight.w700)),
-          subtitle: Text('${entry.teacher ?? ''}${entry.teacher != null && entry.room != null ? ' · ' : ''}${entry.room ?? ''}'),
-        ),
-        const SizedBox(height: 8),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
-          child: Text(
-            'Here you can display more details, links to materials, homework, or quick actions like "Add homework", "Share" or "Mark as favorite".',
-            style: Theme.of(context).textTheme.bodySmall,
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+        left: 16,
+        right: 16,
+        top: 16,
+      ),
+      child: Wrap(
+        children: [
+          ListTile(
+            leading: CircleAvatar(
+              backgroundColor: entry.color,
+              child: const Icon(Icons.book, color: Colors.white),
+            ),
+            title: Text(
+              entry.subject,
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+            subtitle: Text(
+              '${entry.teacher ?? ''}${entry.teacher != null && entry.room != null ? ' · ' : ''}${entry.room ?? ''}',
+            ),
           ),
-        ),
-        const SizedBox(height: 12),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Close')),
-            const SizedBox(width: 12),
-          ],
-        ),
-        const SizedBox(height: 12),
-      ]),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
+            child: Text(
+              'Here you can display more details, links to materials, homework, or quick actions like "Add homework", "Share" or "Mark as favorite".',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Close'),
+              ),
+              const SizedBox(width: 12),
+            ],
+          ),
+          const SizedBox(height: 12),
+        ],
+      ),
     );
   }
 }

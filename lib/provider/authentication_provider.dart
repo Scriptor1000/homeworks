@@ -55,9 +55,9 @@ class AuthenticationProvider extends ChangeNotifier {
     required FirebaseAuth firebaseAuth,
     required GoogleSignIn googleSignIn,
     required FirestoreAllowedEmails allowedEmails,
-  })  : _firebaseAuth = firebaseAuth,
-        _googleSignIn = googleSignIn,
-        _allowedEmails = allowedEmails;
+  }) : _firebaseAuth = firebaseAuth,
+       _googleSignIn = googleSignIn,
+       _allowedEmails = allowedEmails;
 
   /// Initializes Google Sign-In compatibility and event listeners.
   ///
@@ -100,15 +100,11 @@ class AuthenticationProvider extends ChangeNotifier {
   /// Shows a snackbar with success or error messages.
   Future<void> sendPasswordReset(String email) async {
     try {
-      await _firebaseAuth.sendPasswordResetEmail(
-        email: email.trim(),
-      );
+      await _firebaseAuth.sendPasswordResetEmail(email: email.trim());
 
       showSnackBar("Eine E-Mail zum Zurücksetzen wurde gesendet.");
     } on FirebaseAuthException catch (e) {
-      showSnackBar(
-        "${_getErrorMessage(e)}",
-      );
+      showSnackBar("${_getErrorMessage(e)}");
     } catch (e) {
       showSnackBar("$e");
     }
@@ -118,10 +114,7 @@ class AuthenticationProvider extends ChangeNotifier {
   ///
   /// Does NOT automatically log in — Firebase does this implicitly.
   /// Returns `null` if successful, or an error message on failure.
-  Future<String?> registerWithEmail(
-      String email,
-      String password,
-      ) async {
+  Future<String?> registerWithEmail(String email, String password) async {
     final trimmedEmail = email.trim();
     final allowed = await _allowedEmails.isEmailAllowed(trimmedEmail);
     if (!allowed) {
@@ -181,8 +174,9 @@ class AuthenticationProvider extends ChangeNotifier {
       if (!allowed) {
         print('Email not allowed: ${googleUser.email}');
         showSnackBar(
-            'Kein Zugang mit dieser Email (${googleUser.email}) möglich.'
-            ' Bitte wende dich an den Administrator.');
+          'Kein Zugang mit dieser Email (${googleUser.email}) möglich.'
+          ' Bitte wende dich an den Administrator.',
+        );
         await _googleSignIn.disconnect();
         return;
       }
@@ -193,15 +187,13 @@ class AuthenticationProvider extends ChangeNotifier {
         idToken: googleAuth.idToken,
       );
 
-      final userCredential =
-          await _firebaseAuth.signInWithCredential(credential);
+      final userCredential = await _firebaseAuth.signInWithCredential(
+        credential,
+      );
       final user = userCredential.user;
 
       if (user != null) {
-        await _allowedEmails.removeTemporaryEntries(
-          googleUser.email,
-          user.uid,
-        );
+        await _allowedEmails.removeTemporaryEntries(googleUser.email, user.uid);
       }
 
       notifyListeners();
@@ -290,7 +282,8 @@ class AuthenticationProvider extends ChangeNotifier {
     final allowed = await _allowedEmails.isEmailAllowed(trimmedEmail);
     if (!allowed) {
       showSnackBar(
-          'Kein Zugang mit dieser Email möglich. Bitte wende dich an den Administrator.');
+        'Kein Zugang mit dieser Email möglich. Bitte wende dich an den Administrator.',
+      );
       return;
     }
     final credentials = EmailAuthProvider.credential(
@@ -303,7 +296,8 @@ class AuthenticationProvider extends ChangeNotifier {
     } catch (e) {
       print('Error logging in with email: $e');
       showSnackBar(
-          'Anmeldung fehlgeschlagen: ${e is FirebaseAuthException ? _getErrorMessage(e) : e.toString()}');
+        'Anmeldung fehlgeschlagen: ${e is FirebaseAuthException ? _getErrorMessage(e) : e.toString()}',
+      );
     }
   }
 

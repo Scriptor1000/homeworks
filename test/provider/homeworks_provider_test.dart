@@ -554,8 +554,9 @@ void main() {
         fromUntis: false,
       );
 
-      when(mockFirestoreHomeworks.loadAllHomeworks())
-          .thenAnswer((_) async => [homework]);
+      when(
+        mockFirestoreHomeworks.loadAllHomeworks(),
+      ).thenAnswer((_) async => [homework]);
 
       await homeworksProvider.initialize();
 
@@ -578,8 +579,9 @@ void main() {
         dueDate: now,
         fromUntis: true,
       );
-      when(mockFirestoreHomeworks.loadAllHomeworks())
-          .thenAnswer((_) async => [homework]);
+      when(
+        mockFirestoreHomeworks.loadAllHomeworks(),
+      ).thenAnswer((_) async => [homework]);
       await homeworksProvider.initialize();
       // test
       final result = homeworksProvider.getById(homework.documentId);
@@ -589,8 +591,9 @@ void main() {
     });
     test('should return null when id does not exist', () async {
       // setup
-      when(mockFirestoreHomeworks.loadAllHomeworks())
-          .thenAnswer((_) async => []);
+      when(
+        mockFirestoreHomeworks.loadAllHomeworks(),
+      ).thenAnswer((_) async => []);
 
       await homeworksProvider.initialize();
 

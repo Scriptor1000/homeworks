@@ -29,13 +29,13 @@ class CredentialProvider extends ChangeNotifier {
   CredentialsOnlineStatus _credentialsOnlineStatus =
       CredentialsOnlineStatus.loading;
 
-  CredentialProvider(
-      {required FirestoreCredentials firestoreCredentials,
-      required ItemFactory itemFactory,
-      required FlutterSecureStorage storage})
-      : _firestoreCredentials = firestoreCredentials,
-        _itemFactory = itemFactory,
-        _storage = storage;
+  CredentialProvider({
+    required FirestoreCredentials firestoreCredentials,
+    required ItemFactory itemFactory,
+    required FlutterSecureStorage storage,
+  }) : _firestoreCredentials = firestoreCredentials,
+       _itemFactory = itemFactory,
+       _storage = storage;
 
   /// Wheter the credentials are currently being loaded or the loading process is finished.
   bool get isLoading => _isLoadingCredentials;
@@ -127,7 +127,9 @@ class CredentialProvider extends ChangeNotifier {
   Future<void> _saveCredentialsLocal() async {
     if (_credentials != null) {
       await _storage.write(
-          key: credentialsKey, value: _credentials!.toJsonString());
+        key: credentialsKey,
+        value: _credentials!.toJsonString(),
+      );
     }
   }
 
@@ -170,7 +172,7 @@ class CredentialProvider extends ChangeNotifier {
         // just set and await _createSession() always resolves to a final status.
         Sentry.logger.error(
           'Unexpected UntisSessionStatus $_sessionStatus after '
-              '_createSession() in loadCredentialsOnline (session: $_session)',
+          '_createSession() in loadCredentialsOnline (session: $_session)',
         );
         errorMessage = 'Unbekannter Fehler bei der Anmeldung.';
       }
@@ -181,8 +183,7 @@ class CredentialProvider extends ChangeNotifier {
     }
     await _saveCredentialsLocal();
     _loadOnlineStatus();
-
-    }
+  }
 
   /// Uploads the current credentials to Firestore.
   ///

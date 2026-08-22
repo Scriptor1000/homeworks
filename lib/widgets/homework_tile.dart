@@ -47,7 +47,7 @@ class HomeworkTile extends StatelessWidget {
       'Donnerstag',
       'Freitag',
       'Samstag',
-      'Sonntag'
+      'Sonntag',
     ];
     final weekday = weekdays[dueDay.weekday - 1];
 
@@ -91,18 +91,18 @@ class HomeworkTile extends StatelessWidget {
       ),
     );
 
-
     final dateText = dueDateText(homework.dueDate);
     return ExpansionTile(
-      shape: const RoundedRectangleBorder(
-        side: BorderSide.none,
-      ),
+      shape: const RoundedRectangleBorder(side: BorderSide.none),
       leading: SubjectAvatar(subject: subject),
-      title: Text('${homework.type == HomeworkType.exam ? 'LK: ' : ''}${homework.title}'),
+      title: Text(
+        '${homework.type == HomeworkType.exam ? 'LK: ' : ''}${homework.title}',
+      ),
       subtitle: dateText != null ? Text(dateText) : null,
       tilePadding: const EdgeInsets.symmetric(horizontal: 16),
-      backgroundColor:
-      homework.type == HomeworkType.exam ? Colors.transparent : null,
+      backgroundColor: homework.type == HomeworkType.exam
+          ? Colors.transparent
+          : null,
 
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
@@ -110,9 +110,9 @@ class HomeworkTile extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.edit),
             onPressed: () {
-              GoRouter.of(context).go(
-                EditHomeworkRoute(homeworkId: homework.documentId).location,
-              );
+              GoRouter.of(
+                context,
+              ).go(EditHomeworkRoute(homeworkId: homework.documentId).location);
             },
           ),
 
@@ -120,9 +120,9 @@ class HomeworkTile extends StatelessWidget {
             IconButton(
               icon: const Icon(Icons.check_circle, color: Colors.green),
               onPressed: () {
-                context
-                    .read<HomeworksProvider>()
-                    .toggleHomeworkCompletion(homework.id);
+                context.read<HomeworksProvider>().toggleHomeworkCompletion(
+                  homework.id,
+                );
                 statusChange();
               },
             )
@@ -130,25 +130,23 @@ class HomeworkTile extends StatelessWidget {
             IconButton(
               icon: const Icon(Icons.circle_outlined),
               onPressed: () {
-                context
-                    .read<HomeworksProvider>()
-                    .toggleHomeworkCompletion(homework.id);
+                context.read<HomeworksProvider>().toggleHomeworkCompletion(
+                  homework.id,
+                );
                 statusChange();
               },
             ),
-
-
         ],
       ),
 
       children: [
         Padding(
-    padding: const EdgeInsets.only(
-      top: 16,
-      right: 16,
-      bottom: 16,
-      left: 16
-    ),
+          padding: const EdgeInsets.only(
+            top: 16,
+            right: 16,
+            bottom: 16,
+            left: 16,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -173,9 +171,9 @@ class HomeworkTile extends StatelessWidget {
                   IconButton(
                     icon: const Icon(Icons.delete, color: Colors.red),
                     onPressed: () async {
-                      await context
-                          .read<HomeworksProvider>()
-                          .deleteHomework(homework.id);
+                      await context.read<HomeworksProvider>().deleteHomework(
+                        homework.id,
+                      );
                       showSnackBar('Hausaufgabe gelöscht');
                     },
                   ),
@@ -190,14 +188,13 @@ class HomeworkTile extends StatelessWidget {
               ),
 
               const SizedBox(height: 8),
-
             ],
           ),
         ),
       ],
     );
 
-/*
+    /*
     return ListTile(
       leading: SubjectAvatar(subject: subject),
       title: Text(

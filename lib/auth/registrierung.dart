@@ -19,6 +19,7 @@ class _RegistrationState extends State<Registration> {
 
   /// Controller for the second password input field.
   final TextEditingController _passwordController2 = TextEditingController();
+
   /// Controls whether the password is obscured (hidden) or visible.
   bool _obscurePassword = true;
 
@@ -36,8 +37,7 @@ class _RegistrationState extends State<Registration> {
 
   /// Handles the login process with email and password.
 
-
-  Future <void> _register() async {
+  Future<void> _register() async {
     if (_passwordController.text != _passwordController2.text) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Die Passwörter stimmen nicht überein.")),
@@ -51,13 +51,12 @@ class _RegistrationState extends State<Registration> {
       _emailController.text,
       _passwordController.text,
     );
-    if(!mounted) return;
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(error ?? "Registrierung erfolgreich!")),
     );
     setState(() => _isLoading = false);
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -115,9 +114,7 @@ class _RegistrationState extends State<Registration> {
                       // Login Card with email/password fields and buttons
                       Container(
                         padding: const EdgeInsets.all(24.0),
-                        constraints: const BoxConstraints(
-                          maxWidth: 500,
-                        ),
+                        constraints: const BoxConstraints(maxWidth: 500),
                         decoration: BoxDecoration(
                           color: colorScheme.surface,
                           borderRadius: BorderRadius.circular(16.0),
@@ -150,11 +147,19 @@ class _RegistrationState extends State<Registration> {
                             const SizedBox(height: 16),
 
                             // Password input field
-                            buildPasswordField(colorScheme, _passwordController, "Passwort"),
+                            buildPasswordField(
+                              colorScheme,
+                              _passwordController,
+                              "Passwort",
+                            ),
                             const SizedBox(height: 24),
 
                             // second Password input field
-                            buildPasswordField(colorScheme, _passwordController2, "Passwort bestätigen"),
+                            buildPasswordField(
+                              colorScheme,
+                              _passwordController2,
+                              "Passwort bestätigen",
+                            ),
                             const SizedBox(height: 24),
 
                             // Register button
@@ -173,8 +178,7 @@ class _RegistrationState extends State<Registration> {
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                            ) ,
-
+                            ),
                           ],
                         ),
                       ),
@@ -216,9 +220,7 @@ class _RegistrationState extends State<Registration> {
       decoration: InputDecoration(
         labelText: 'E-Mail',
         prefixIcon: const Icon(Icons.email_outlined),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: colorScheme.primary, width: 2),
@@ -233,7 +235,11 @@ class _RegistrationState extends State<Registration> {
   }
 
   /// Builds the password input field with visibility toggle.
-  TextFormField buildPasswordField(ColorScheme colorScheme, TextEditingController controller,String txt) {
+  TextFormField buildPasswordField(
+    ColorScheme colorScheme,
+    TextEditingController controller,
+    String txt,
+  ) {
     return TextFormField(
       controller: controller,
       decoration: InputDecoration(
@@ -247,9 +253,7 @@ class _RegistrationState extends State<Registration> {
           ),
           onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
         ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: colorScheme.primary, width: 2),
@@ -263,8 +267,6 @@ class _RegistrationState extends State<Registration> {
     );
   }
 
-
-
   ElevatedButton buildRegisterButton(ColorScheme colorScheme) {
     return ElevatedButton(
       onPressed: _isLoading ? null : _register,
@@ -272,29 +274,22 @@ class _RegistrationState extends State<Registration> {
         backgroundColor: colorScheme.primary,
         foregroundColor: colorScheme.onPrimary,
         padding: const EdgeInsets.symmetric(vertical: 14),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         elevation: 2,
       ),
       child: _isLoading
           ? const SizedBox(
-        height: 20,
-        width: 20,
-        child: CircularProgressIndicator(
-          strokeWidth: 2,
-          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-        ),
-      )
+              height: 20,
+              width: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              ),
+            )
           : const Text(
-        'Registrieren',
-        style: TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
+              'Registrieren',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
     );
   }
-
-
 }
