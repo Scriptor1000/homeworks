@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
+import '../provider/config_provider.dart';
 import 'typesafe_router.dart';
 
 /// A shell widget that displays a bottom navigation bar across all routes.
@@ -18,7 +20,9 @@ class NavigationShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    int maxWidth = 600; // Define the maximum width for the layout
+    int maxWidth = context.select(
+      (ConfigProvider provider) => provider.maxWidthThreshold,
+    ); // Define the maximum width for the layout
 
     return LayoutBuilder(
       builder: (context, constraints) => constraints.maxWidth > maxWidth

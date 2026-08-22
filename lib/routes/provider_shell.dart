@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
@@ -9,6 +10,7 @@ import '../database/homeworks.dart';
 import '../database/models/factory.dart';
 import '../database/subjects.dart';
 import '../database/user.dart';
+import '../provider/config_provider.dart';
 import '../provider/credential_provider.dart';
 import '../provider/homeworks_provider.dart';
 import '../provider/subject_provider.dart';
@@ -56,6 +58,10 @@ class ProviderShell extends StatelessWidget {
       firestoreUser: firestoreUser,
       itemFactory: itemFactory,
     );
+    // Config provider for remote config
+    final configProvider = ConfigProvider(
+      remoteConfig: FirebaseRemoteConfig.instance,
+    );
 
     return MultiProvider(
       providers: [
@@ -100,12 +106,16 @@ class ProviderShell extends StatelessWidget {
               SubjectProvider(firestoreSubjects: firestoreSubjects),
           lazy: false,
         ),
+        ChangeNotifierProvider(
+          create: (_) => configProvider..initialize(),
+          lazy: false,
+        ),
+
         // Provides timetable data, updated when UntisProvider changes
         /*ChangeNotifierProvider(
           create: (_) => TimetableProvider(),
           lazy: false,
         ),*/
-
       ],
       // The child widget which now has access to all above providers
       child: child,

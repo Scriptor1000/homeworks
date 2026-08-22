@@ -65,39 +65,38 @@ class MainApp extends StatelessWidget {
   Widget build(BuildContext context) {
     // DynamicColorBuilder automatically adapts the app colors to system theme
     // (Android 12+), falling back to a seeded color scheme otherwise.
-    return DynamicColorBuilder(builder: (light, dark) {
-      light ??= ColorScheme.fromSeed(
-        seedColor: Colors.blue,
-        brightness: Brightness.light,
-      );
-      dark ??= ColorScheme.fromSeed(
-        seedColor: Colors.blue,
-        brightness: Brightness.dark,
-      );
+    return DynamicColorBuilder(
+      builder: (light, dark) {
+        light ??= ColorScheme.fromSeed(
+          seedColor: Colors.blue,
+          brightness: Brightness.light,
+        );
+        dark ??= ColorScheme.fromSeed(
+          seedColor: Colors.blue,
+          brightness: Brightness.dark,
+        );
 
-      // Wrap the MaterialApp in the authentication provider shell
-      // so the whole widget tree has access to AuthenticationProvider.
-      return authenticationProviderShell(
-        child: MaterialApp.router(
-          debugShowCheckedModeBanner: false,
-          scaffoldMessengerKey: scaffoldMessengerKey, // Snackbar manager
-          localizationsDelegates: const [
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-          theme: _buildTheme(light, Brightness.light),
-          darkTheme: _buildTheme(dark, Brightness.dark),
-          themeMode: ThemeMode.system, // Use system light/dark preference
-          routerConfig: appRouter, // Main router
-          supportedLocales: const [
-            Locale('de', 'DE'),
-            Locale('en', 'US'),
-          ],
-          locale: const Locale('de', 'DE'),
-        ),
-      );
-    });
+        // Wrap the MaterialApp in the authentication provider shell
+        // so the whole widget tree has access to AuthenticationProvider.
+        return authenticationProviderShell(
+          child: MaterialApp.router(
+            debugShowCheckedModeBanner: false,
+            scaffoldMessengerKey: scaffoldMessengerKey, // Snackbar manager
+            localizationsDelegates: const [
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            theme: _buildTheme(light, Brightness.light),
+            darkTheme: _buildTheme(dark, Brightness.dark),
+            themeMode: ThemeMode.system, // Use system light/dark preference
+            routerConfig: appRouter, // Main router
+            supportedLocales: const [Locale('de', 'DE'), Locale('en', 'US')],
+            locale: const Locale('de', 'DE'),
+          ),
+        );
+      },
+    );
   }
 
   /// Builds and returns a customized theme for a given ColorScheme and brightness.
@@ -118,16 +117,14 @@ class MainApp extends StatelessWidget {
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
-          border: standardInputBorder,
-          enabledBorder: standardInputBorder,
-          focusedBorder: OutlineInputBorder(
-            borderRadius: standardInputBorder.borderRadius,
-            borderSide: BorderSide(
-              color: colorScheme.primary,
-              width: 2,
-            ),
-          ),
-          disabledBorder: standardInputBorder),
+        border: standardInputBorder,
+        enabledBorder: standardInputBorder,
+        focusedBorder: OutlineInputBorder(
+          borderRadius: standardInputBorder.borderRadius,
+          borderSide: BorderSide(color: colorScheme.primary, width: 2),
+        ),
+        disabledBorder: standardInputBorder,
+      ),
     );
   }
 }
@@ -140,12 +137,15 @@ class MainApp extends StatelessWidget {
 /// This ensures authentication state and logic is available everywhere.
 ///
 Widget authenticationProviderShell({required Widget child}) {
-  final firebaseAuth = FirebaseAuth.instance;  // Get the shared Firebase Authentication instance
-  final googleSignIn = GoogleSignIn.instance;  // Get the shared Google Sign-In service
+  final firebaseAuth =
+      FirebaseAuth.instance; // Get the shared Firebase Authentication instance
+  final googleSignIn =
+      GoogleSignIn.instance; // Get the shared Google Sign-In service
 
   // Create helper to check Firestore for allowed email accounts
-  final allowedEmails =
-      FirestoreAllowedEmails(firestore: FirebaseFirestore.instance);
+  final allowedEmails = FirestoreAllowedEmails(
+    firestore: FirebaseFirestore.instance,
+  );
 
   // Provide AuthenticationProvider to descendant widgets
   // and run initialize() right away (.. syntax = cascade)
