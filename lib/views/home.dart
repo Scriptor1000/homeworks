@@ -220,6 +220,7 @@ class _HomeState extends State<Home> {
   /// Renders a list of homework tiles (not scrollable by itself)
   Widget buildHomeworks(List<Homework> homeworks) {
     return ListView.builder(
+      padding: EdgeInsets.zero,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: homeworks.length,
