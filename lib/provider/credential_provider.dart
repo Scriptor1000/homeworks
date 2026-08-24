@@ -155,34 +155,37 @@ class CredentialProvider extends ChangeNotifier {
       return Future.error('Keine Anmeldedaten gefunden.');
     }
 
-    _credentials = storedCredentials;
-    await _createSession();
-    if (_sessionStatus != UntisSessionStatus.sessionAccomplished ||
-        _session == null) {
-      final String errorMessage;
-      if (_sessionStatus == UntisSessionStatus.invalidCredentials) {
-        errorMessage = 'Ungültige Anmeldedaten.';
-      } else if (_sessionStatus == UntisSessionStatus.error) {
-        errorMessage = 'Anmeldung fehlgeschlagen.';
-      } else {
-        // noCredentials, loading, or sessionAccomplished-with-null-session:
-        // none of these should be reachable here, since _credentials was
-        // just set and await _createSession() always resolves to a final status.
-        Sentry.logger.error(
-          'Unexpected UntisSessionStatus $_sessionStatus after '
-              '_createSession() in loadCredentialsOnline (session: $_session)',
-        );
-        errorMessage = 'Unbekannter Fehler bei der Anmeldung.';
+    try {
+      final res = await _itemFactory.createUntisSession(storedCredentials);
+      if (res.status != UntisSessionStatus.sessionAccomplished ||
+          res.session == null) {
+        switch (res.status) {
+          case UntisSessionStatus.invalidCredentials:
+            return Future.error('Ungültige Anmeldedaten.');
+          case UntisSessionStatus.error:
+            return Future.error('Anmeldung fehlgeschlagen.');
+          default:
+            Sentry.logger.error(
+              'Unexpected UntisSessionStatus ${res.status} in '
+                  'loadCredentialsOnline (session: ${res.session})',
+            );
+            return Future.error('Unbekannter Fehler bei der Anmeldung.');
+        }
       }
-      _credentials = null;
-      _session = null;
-      notifyListeners();
-      return Future.error(errorMessage);
+        _credentials = storedCredentials;
+        _session = res.session;
+        _sessionStatus = res.status;
+
+    } catch (error, stackTrace) {
+      Sentry.captureException(error, stackTrace: stackTrace);
+      return Future.error('Anmeldung fehlgeschlagen.');
     }
     await _saveCredentialsLocal();
+    notifyListeners();
     _loadOnlineStatus();
+  }
 
-    }
+
 
   /// Uploads the current credentials to Firestore.
   ///
