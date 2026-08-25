@@ -76,6 +76,7 @@ class _CreateHomeworkState extends State<CreateHomework> {
       _descriptionController.text = hw.description;
       selected = hw.type;
       toNextLesson = hw.toNextLesson;
+      selectedEmoji = hw.emoji;
       dueDate = hw.dueDate;
 
       /// Find the subject object from the provider

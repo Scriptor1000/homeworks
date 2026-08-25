@@ -204,6 +204,7 @@ class HomeworksProvider extends ChangeNotifier {
         homework.toNextLesson = updatedHomework.toNextLesson;
         homework.dueDate = updatedHomework.dueDate;
         homework.type = updatedHomework.type;
+        homework.emoji = updatedHomework.emoji;
       },
       mutateRemoteState: () async =>
           await _firestoreHomeworks.saveHomework(homework),
