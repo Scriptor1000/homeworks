@@ -153,6 +153,7 @@ class HomeworksProvider extends ChangeNotifier {
       dueDate: nextLesson,
       fromUntis: false,
       type: type,
+      emoji: null,
     );
     return _mutateState(
       mutateLocalState: () => _homeworks.add(homework),

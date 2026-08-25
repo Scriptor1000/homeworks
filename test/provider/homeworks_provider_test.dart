@@ -51,6 +51,7 @@ void main() {
         isCompleted: false,
         dueDate: now.add(const Duration(days: 1)),
         fromUntis: false,
+        emoji: HomeworkEmoji.crying,
       ),
       Homework(
         id: '2',
@@ -61,6 +62,7 @@ void main() {
         isCompleted: false,
         dueDate: now.subtract(const Duration(days: 1)),
         fromUntis: false,
+        emoji: HomeworkEmoji.happy,
       ),
       Homework(
         id: '3',
@@ -71,6 +73,7 @@ void main() {
         isCompleted: true,
         dueDate: now.add(const Duration(days: 1)),
         fromUntis: false,
+        emoji: HomeworkEmoji.hate,
       ),
       Homework(
         id: '4',
@@ -81,6 +84,7 @@ void main() {
         isCompleted: true,
         dueDate: now.subtract(const Duration(days: 1)),
         fromUntis: false,
+        emoji: HomeworkEmoji.serious,
       ),
       Homework(
         id: '5',
@@ -91,6 +95,7 @@ void main() {
         isCompleted: true,
         dueDate: now.subtract(const Duration(days: 1)),
         fromUntis: false,
+        emoji: HomeworkEmoji.hate,
       ),
     ];
 
@@ -169,6 +174,7 @@ void main() {
                 isCompleted: false,
                 dueDate: data[i].dueDate,
                 fromUntis: data[i].fromUntis,
+                emoji: HomeworkEmoji.crying,
               ),
             );
           }
@@ -282,6 +288,7 @@ void main() {
         isCompleted: completed ?? false,
         dueDate: dueDate ?? now.add(const Duration(days: 1)),
         fromUntis: false,
+        emoji: HomeworkEmoji.crying,
       );
       when(
         mockFirestoreHomeworks.loadAllHomeworks(),
@@ -324,6 +331,7 @@ void main() {
           isCompleted: false,
           dueDate: now,
           fromUntis: false,
+          emoji: HomeworkEmoji.crying,
         );
         final dueDate = now.add(const Duration(days: 5));
         // test
@@ -409,6 +417,7 @@ void main() {
         isCompleted: false,
         dueDate: now,
         fromUntis: false,
+        emoji: HomeworkEmoji.crying,
       );
       // test
       await homeworksProvider.createHomework(homework);
@@ -497,6 +506,7 @@ void main() {
         isCompleted: false,
         dueDate: now,
         fromUntis: false,
+        emoji: HomeworkEmoji.crying,
       );
       when(
         mockFirestoreHomeworks.loadAllHomeworks(),
@@ -533,6 +543,7 @@ void main() {
         isCompleted: false,
         dueDate: now,
         fromUntis: false,
+        emoji: HomeworkEmoji.crying,
       );
       // test
       expect(homeworksProvider.deleteHomework(homework.id), completes);
@@ -552,6 +563,7 @@ void main() {
         isCompleted: false,
         dueDate: now,
         fromUntis: false,
+        emoji: HomeworkEmoji.crying,
       );
 
       when(
@@ -578,6 +590,7 @@ void main() {
         isCompleted: false,
         dueDate: now,
         fromUntis: true,
+        emoji: HomeworkEmoji.crying,
       );
       when(
         mockFirestoreHomeworks.loadAllHomeworks(),

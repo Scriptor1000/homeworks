@@ -41,6 +41,9 @@ class Homework {
   /// The type of the homework, which can be a regular homework, an exam, or an appointment.
   HomeworkType type;
 
+  /// Optional emoji associated with the homework for visual representation.
+  HomeworkEmoji? emoji;
+
   Homework({
     String? id,
     required this.title,
@@ -49,6 +52,7 @@ class Homework {
     required this.toNextLesson,
     required this.isCompleted,
     required this.fromUntis,
+    required this.emoji,
     this.dueDate,
     this.type = HomeworkType.homework,
     DateTime? createdAt,
@@ -89,6 +93,9 @@ class Homework {
           ? (json['dueDate'] as Timestamp).toDate()
           : null,
       createdAt: (json['createdAt'] as Timestamp).toDate(),
+      emoji: json.containsKey('emoji')
+          ? HomeworkEmoji.values[json['emoji'] as int]
+          : null,
     );
   }
 
@@ -104,6 +111,7 @@ class Homework {
       'homeworkType': type.index,
       'subjectDocId': subjectDocId,
       if (dueDate != null) 'dueDate': Timestamp.fromDate(dueDate!),
+      if (emoji != null) 'emoji': emoji!.index,
       'createdAt': Timestamp.fromDate(createdAt),
     };
   }

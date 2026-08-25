@@ -63,6 +63,9 @@ class _CreateHomeworkState extends State<CreateHomework> {
   /// The due date of the task
   DateTime? dueDate;
 
+  /// The selected emoji for the homework, if any
+  HomeworkEmoji? selectedEmoji;
+
   @override
   void initState() {
     super.initState();
@@ -111,9 +114,13 @@ class _CreateHomeworkState extends State<CreateHomework> {
         lastCurrentSubject = currentSubject;
       });
     }
-
     return Scaffold(
-      appBar: AppBar(title: const Text('Hinzufügen'), elevation: 0),
+      appBar: AppBar(
+        title: Text(
+          widget.existingHomework == null ? 'Hinzufügen' : 'Bearbeiten',
+        ),
+        elevation: 0,
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16),
 
@@ -135,6 +142,8 @@ class _CreateHomeworkState extends State<CreateHomework> {
                 _buildDate(context),
                 standardGap(),
                 _buildTime(context),
+                standardGap(),
+                _buildEmojiPicker(),
                 standardGap(),
                 _buildDetails(),
                 buildFABGap(),
@@ -181,6 +190,7 @@ class _CreateHomeworkState extends State<CreateHomework> {
         homework.toNextLesson = toNextLesson;
         homework.dueDate = dueDate;
         homework.type = selected;
+        homework.emoji = selectedEmoji;
         context.read<HomeworksProvider>().updateHomework(homework);
       } else {
         // Create new homework
@@ -193,6 +203,7 @@ class _CreateHomeworkState extends State<CreateHomework> {
           dueDate: dueDate,
           fromUntis: false,
           type: selected,
+          emoji: selectedEmoji,
         );
         context.read<HomeworksProvider>().createHomework(homework);
       }
@@ -475,6 +486,35 @@ class _CreateHomeworkState extends State<CreateHomework> {
             return 'Bitte gib einen Namen ein';
           }
           return null;
+        },
+      ),
+    );
+  }
+
+  Widget _buildEmojiPicker() {
+    return SizedBox(
+      width: double.infinity,
+      child: SegmentedButton<HomeworkEmoji>(
+        emptySelectionAllowed: true,
+        multiSelectionEnabled: false,
+        showSelectedIcon: false,
+        segments: HomeworkEmoji.values
+            .map(
+              (e) => ButtonSegment<HomeworkEmoji>(
+                value: e,
+                label: Text(e.emoji, style: const TextStyle(fontSize: 24)),
+              ),
+            )
+            .toList(),
+        selected: selectedEmoji == null ? {} : {selectedEmoji!},
+        onSelectionChanged: (Set<HomeworkEmoji> newSelection) {
+          setState(() {
+            if (newSelection.isEmpty) {
+              selectedEmoji = null;
+              return;
+            }
+            selectedEmoji = newSelection.first;
+          });
         },
       ),
     );
