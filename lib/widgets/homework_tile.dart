@@ -1,16 +1,19 @@
 import 'package:collection/collection.dart';
+import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../database/models/homework.dart';
 import '../database/models/subject.dart';
 import '../provider/homeworks_provider.dart';
 import '../provider/subject_provider.dart';
+import '../utilities/constants.dart';
 import '../utilities/enums.dart';
 import '../utilities/global_snackbar.dart';
+import 'fab.dart';
 import 'subject_avatar.dart';
 import '../routes/typesafe_router.dart';
-import 'package:go_router/go_router.dart';
 
 /// A [ListTile] widget that displays homework information and allows marking it as completed.
 ///
@@ -91,134 +94,113 @@ class HomeworkTile extends StatelessWidget {
       ),
     );
 
+    Color backColor =
+        subject?.backColor.harmonizeWith(
+          Theme.of(context).colorScheme.primary,
+        ) ??
+        Theme.of(context).colorScheme.error;
+
     final dateText = dueDateText(homework.dueDate);
-    return ExpansionTile(
-      shape: const RoundedRectangleBorder(side: BorderSide.none),
-      leading: SubjectAvatar(subject: subject),
-      title: Text(
-        '${homework.type == HomeworkType.exam ? 'LK: ' : ''}${homework.title}',
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(BorderRadiusConstants.homeworks),
+        border: Border.all(color: backColor, width: 2),
+        color: homework.type == HomeworkType.exam
+            ? backColor.withAlpha(50)
+            : null,
       ),
-      subtitle: dateText != null ? Text(dateText) : null,
-      tilePadding: const EdgeInsets.symmetric(horizontal: 16),
-      backgroundColor: homework.type == HomeworkType.exam
-          ? Colors.transparent
-          : null,
+      child: ExpansionTile(
+        shape: const RoundedRectangleBorder(side: BorderSide.none),
+        leading: SubjectAvatar(subject: subject),
+        title: Text(
+          '${homework.type == HomeworkType.exam ? 'LK: ' : ''}${homework.title}',
+        ),
+        subtitle: dateText != null ? Text(dateText) : null,
+        tilePadding: const EdgeInsets.symmetric(horizontal: 16),
+        backgroundColor: homework.type == HomeworkType.exam
+            ? Colors.transparent
+            : null,
 
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
+        trailing: _buildTrailing(
+          subject,
+          context.read<HomeworksProvider>(),
+          Theme.of(context),
+        ),
+
         children: [
-          IconButton(
-            icon: const Icon(Icons.edit),
-            onPressed: () {
-              GoRouter.of(
-                context,
-              ).go(EditHomeworkRoute(homeworkId: homework.documentId).location);
-            },
-          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(top: kGapSize / 2),
+                  child: _buildDescription(),
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.edit),
+                          onPressed: () {
+                            EditHomeworkRoute(
+                              homeworkId: homework.documentId,
+                            ).go(context);
+                          },
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete, color: Colors.red),
+                          onPressed: () async {
+                            await context
+                                .read<HomeworksProvider>()
+                                .deleteHomework(homework.id);
+                            showSnackBar('Hausaufgabe gelöscht');
+                          },
+                        ),
+                      ],
+                    ),
 
-          if (homework.isCompleted)
-            IconButton(
-              icon: const Icon(Icons.check_circle, color: Colors.green),
-              onPressed: () {
-                context.read<HomeworksProvider>().toggleHomeworkCompletion(
-                  homework.id,
-                );
-                statusChange();
-              },
-            )
-          else
-            IconButton(
-              icon: const Icon(Icons.circle_outlined),
-              onPressed: () {
-                context.read<HomeworksProvider>().toggleHomeworkCompletion(
-                  homework.id,
-                );
-                statusChange();
-              },
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: Text(
+                        'Erstellt am ${DateFormat('dd.MM.yyyy').format(homework.createdAt)}',
+                      ),
+                    ),
+
+                    littleGap(),
+                  ],
+                ),
+              ],
             ),
+          ),
         ],
       ),
-
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(
-            top: 16,
-            right: 16,
-            bottom: 16,
-            left: 16,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              /*Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Beschreibung:',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),*/
-              Row(
-                children: [
-                  Text(
-                    'Beschreibung:',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    icon: const Icon(Icons.delete, color: Colors.red),
-                    onPressed: () async {
-                      await context.read<HomeworksProvider>().deleteHomework(
-                        homework.id,
-                      );
-                      showSnackBar('Hausaufgabe gelöscht');
-                    },
-                  ),
-                ],
-              ),
-
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  homework.description.isEmpty ? '—' : homework.description,
-                ),
-              ),
-
-              const SizedBox(height: 8),
-            ],
-          ),
-        ),
-      ],
-    );
-
-    /*
-    return ListTile(
-      leading: SubjectAvatar(subject: subject),
-      title: Text(
-        '${homework.type == HomeworkType.exam ? 'LK: ' : ''}${homework.title}',
-      ),
-      subtitle: dateText != null ? Text(dateText) : null,
-      tileColor: homework.type == HomeworkType.exam
-          ? backColor?.withAlpha(50)
-          : null,
-      // textColor: homework.isExam ? foreColor : null,
-      onLongPress: () async {
-        // Show options to edit or delete the homework
-        await homeworksProvider.deleteHomework(homework.id);
-        showSnackBar('Hausaufgabe gelöscht');
-      },
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(BorderRadiusConstants.homeworks),
-        side: BorderSide(color: backColor ?? theme.colorScheme.error, width: 3),
-      ),
-      trailing: _buildTrailing(subject, homeworksProvider, theme),
     );
   }
 
-  Widget? _buildTrailing(
+  Widget _buildDescription() {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(BorderRadiusConstants.homeworks),
+        color: Colors.grey.withAlpha(30),
+      ),
+      padding: const EdgeInsets.symmetric(
+        horizontal: kGapSize,
+        vertical: kGapSize / 2,
+      ),
+      child: Text(
+        homework.description.isNotEmpty
+            ? homework.description
+            : 'Keine genaueren Angaben verfügbar',
+        style: const TextStyle(fontSize: 16),
+      ),
+    );
+  }
+
+  Widget _buildTrailing(
     Subject? subject,
     HomeworksProvider homeworksProvider,
     ThemeData? theme,
@@ -233,45 +215,62 @@ class HomeworkTile extends StatelessWidget {
         color: Colors.grey,
       ),
     );
-    final rowWithRevive = Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (homework.dueDate != null &&
-            homework.dueDate!.isBefore(DateTime.now()) &&
-            !homework.isCompleted &&
-            subject != null &&
-            subject.nextLesson != null)
-          IconButton(
-            onPressed: () {
-              homeworksProvider.newDueDate(homework.id, subject.nextLesson!);
-            },
-            icon: Icon(Icons.replay_rounded),
-          ),
-        completeButton,
-      ],
-    );
+    Row finalRow({
+      required bool withReviveIfPossible,
+      required bool withEmoji,
+      required bool completeOnlyWhenDue,
+      required bool withTime,
+    }) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (withEmoji && homework.emoji != null)
+            Text(homework.emoji!.emoji, style: theme?.textTheme.headlineSmall),
+          if (withTime && homework.dueDate != null)
+            Text(
+              '${homework.dueDate!.hour.toString().padLeft(2, '0')}:'
+              '${homework.dueDate!.minute.toString().padLeft(2, '0')}',
+              style: theme?.textTheme.bodyLarge,
+            ),
+          if (withReviveIfPossible &&
+              (homework.dueDate != null &&
+                  homework.dueDate!.isBefore(DateTime.now()) &&
+                  !homework.isCompleted &&
+                  subject != null &&
+                  subject.nextLesson != null))
+            IconButton(
+              onPressed: () {
+                homeworksProvider.newDueDate(homework.id, subject.nextLesson!);
+              },
+              icon: Icon(Icons.replay_rounded),
+            ),
+          if (!completeOnlyWhenDue ||
+              homework.dueDate != null &&
+                  DateTime.now().isAfter(homework.dueDate!))
+            completeButton,
+        ],
+      );
+    }
+
     return switch (homework.type) {
-      HomeworkType.homework => rowWithRevive,
-      HomeworkType.exam =>
-        homework.dueDate != null && DateTime.now().isAfter(homework.dueDate!)
-            ? rowWithRevive
-            : null,
-      HomeworkType.appointment =>
-        homework.dueDate != null
-            ? Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    '${homework.dueDate!.hour.toString().padLeft(2, '0')}:'
-                    '${homework.dueDate!.minute.toString().padLeft(2, '0')}',
-                    style: theme?.textTheme.bodyLarge,
-                  ),
-                  completeButton,
-                ],
-              )
-            : null,
+      HomeworkType.homework => finalRow(
+        withReviveIfPossible: true,
+        withEmoji: true,
+        completeOnlyWhenDue: false,
+        withTime: false,
+      ),
+      HomeworkType.exam => finalRow(
+        withReviveIfPossible: true,
+        withEmoji: true,
+        completeOnlyWhenDue: true,
+        withTime: false,
+      ),
+      HomeworkType.appointment => finalRow(
+        withReviveIfPossible: false,
+        withEmoji: true,
+        completeOnlyWhenDue: true,
+        withTime: true,
+      ),
     };
-  }
-}*/
   }
 }
