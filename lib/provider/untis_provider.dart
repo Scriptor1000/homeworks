@@ -21,6 +21,7 @@ class UntisProvider extends ChangeNotifier {
   List<UntisPeriod> _todayPeriods = [];
   List<Subject> _untisSubjects = [];
   List<UntisTeacher> _untisTeachers = [];
+  Map<DateTime, List<UntisPeriod>> _timetableCache = {};
   UntisSubjectStatus _untisSubjectStatus = UntisSubjectStatus.untisUnavailable;
 
   final Duration _range;
@@ -87,6 +88,38 @@ class UntisProvider extends ChangeNotifier {
     return currentPeriod.subject?.id;
   }
 
+  /// Returns the timetable periods for a given date.
+  ///
+  /// The date is normalized to ensure that only the year, month, and day are considered, ignoring the time component.
+  List<UntisPeriod> getLessonsForDate(DateTime date) {
+    final normalizedDate = normalizeDate(date);
+    return _timetableCache[normalizedDate] ?? [];
+  }
+
+  /// Returns the start time of a subject on a given date, if it exists.
+  ///
+  /// If the subject is not scheduled for that date, or if it is cancelled or has no assigned teacher, this method returns `null`.
+  /// The date is normalized to ensure that only the year, month, and day are considered, ignoring the time component.
+  Duration? getTimeOfSubjectOnDay(DateTime date, Subject subject) {
+    if (!subject.fromUntis) {
+      return null;
+    }
+    final lessons = getLessonsForDate(date);
+    final lesson = lessons.firstWhereOrNull(
+      (period) =>
+          period.subject?.id.id == subject.id &&
+          !period.isCancelled &&
+          period.teacher != null,
+    );
+    if (lesson == null) {
+      return null;
+    }
+    return Duration(
+      hours: lesson.startDateTime.hour,
+      minutes: lesson.startDateTime.minute,
+    );
+  }
+
   /// Updates the Untis credentials and loads the timetable if the credentials has changed.
   ///
   /// This method should be called from the update Method of [ProxyProvider].
@@ -132,9 +165,7 @@ class UntisProvider extends ChangeNotifier {
         endDate: endDate,
       );
 
-      for (var period in timetable.periods) {
-        _parsePeriod(period);
-      }
+      timetable.periods.forEach(_parsePeriod);
 
       _untisSubjectStatus = UntisSubjectStatus.loaded;
     } catch (error, stackTrace) {
@@ -146,6 +177,10 @@ class UntisProvider extends ChangeNotifier {
     }
   }
 
+  DateTime normalizeDate(DateTime date) {
+    return DateTime(date.year, date.month, date.day);
+  }
+
   void _parsePeriod(UntisPeriod period) {
     DateTime now = DateTime.now();
     DateTime todayNight = DateTime(now.year, now.month, now.day + 1);
@@ -154,6 +189,10 @@ class UntisProvider extends ChangeNotifier {
     }
     // sometimes only teacher is removed but the period is not cancelled
     final isCancelled = period.isCancelled || period.teacher == null;
+
+    _timetableCache
+        .putIfAbsent(normalizeDate(period.startDateTime), () => [])
+        .add(period);
 
     // this is the subject from the list, if the subject is already in the list
     final listedSubject = _untisSubjects.firstWhereOrNull(

@@ -267,19 +267,28 @@ class _CreateHomeworkState extends State<CreateHomework> {
       confirmText: 'Bestätigen',
       locale: const Locale('de', 'DE'),
     );
+    if (!mounted || picked == null) return;
 
-    if (picked != null && picked != dueDate) {
+    Duration? timeOfSubjectOnDay = selectedSubject != null
+        ? context.read<UntisProvider>().getTimeOfSubjectOnDay(
+            picked,
+            selectedSubject!,
+          )
+        : null;
+
+    if (picked != dueDate) {
       setState(() {
         // The time in dueDate is used to determine if the homework can be deleted.
         // It is set to 18:00 here, so it is not automatically deleted too early in the day.
         dueDate = picked.add(
-          toNextLesson
-              ? const Duration(hours: 18)
-              : Duration(
-                  // keep the time on date change
-                  hours: dueDate?.hour ?? 18,
-                  minutes: dueDate?.minute ?? 0,
-                ),
+          timeOfSubjectOnDay ??
+              (toNextLesson
+                  ? const Duration(hours: 18)
+                  : Duration(
+                      // keep the time on date change
+                      hours: dueDate?.hour ?? 18,
+                      minutes: dueDate?.minute ?? 0,
+                    )),
         );
         toNextLesson = false;
       });
