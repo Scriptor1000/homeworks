@@ -5,15 +5,15 @@ import 'package:collection/collection.dart';
 
 import '../database/models/homework.dart';
 import '../database/models/subject.dart';
+import '../provider/config_provider.dart';
 import '../provider/homeworks_provider.dart';
 import '../provider/subject_provider.dart';
 import '../provider/untis_provider.dart';
 import '../routes/typesafe_router.dart';
-import '../utilities/constants.dart';
 import '../utilities/global_snackbar.dart';
 import '../utilities/homeworks_list.dart';
 import '../widgets/fab.dart';
-import '../widgets/homework_tile.dart';
+import '../widgets/homeworks_list.dart';
 
 /// Layout constants controlling spacing and border sizes for urgent homework UI
 const urgentContainerMargin = 12.0;
@@ -78,6 +78,9 @@ class _HomeState extends State<Home> {
   Widget build(BuildContext context) {
     /// Reads homework data from provider so UI stays updated
     final homeworkProvider = context.watch<HomeworksProvider>();
+    final widthThreshold = context.select(
+      (ConfigProvider p) => p.maxWidthThreshold,
+    );
 
     /// Separate homework into categories for UI presentation
     final urgentHomeworks = homeworkProvider.homeworks.urgent;
@@ -88,50 +91,57 @@ class _HomeState extends State<Home> {
     urgentHomeworks.sort((a, b) => a.dueDate!.compareTo(b.dueDate!));
     nonUrgentHomeworks.sort((a, b) => a.dueDate!.compareTo(b.dueDate!));
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Hausaufgaben'),
-        /*actions: [
-          IconButton(
-            iconSize: 32,
-            icon: const Icon(Icons.swap_horiz),
-            onPressed: () {
-              const TimetableRoute().go(context);
-            },
-          ),
-        ],*/
-      ),
-
-      /// Show spinner until initial homework load completes
-      body: !homeworkProvider.homeworksLoaded
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              child: Column(
-                children: [
-                  /// Urgent section
-                  if (urgentHomeworks.isNotEmpty)
-                    buildUrgentHomeworks(context, urgentHomeworks),
-
-                  /// Normal due-date homework section
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: horizontalPadding,
-                    ),
-                    child: buildHomeworks(nonUrgentHomeworks),
-                  ),
-
-                  /// Items without due date
-                  if (poorlyHomeworks.isNotEmpty)
-                    buildPoorlyHomeworks(context, poorlyHomeworks),
-
-                  buildFABGap(),
-                ],
-              ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth > widthThreshold) {
+          return const Center(
+            child: Text(
+              'Die App ist für große Bildschirme nicht optimiert.\n'
+              'Bitte nutze ein Smartphone oder Tablet.',
+              textAlign: TextAlign.center,
             ),
+          );
+        }
 
-      /// Adds a FAB row with quick add text field + button
-      floatingActionButton: buildFAB(),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+        return Scaffold(
+          appBar: AppBar(title: const Text('Hausaufgaben')),
+
+          /// Show spinner until initial homework load completes
+          body: !homeworkProvider.homeworksLoaded
+              ? const Center(child: CircularProgressIndicator())
+              : SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      /// Urgent section
+                      if (urgentHomeworks.isNotEmpty)
+                        buildUrgentHomeworks(context, urgentHomeworks),
+
+                      /// Normal due-date homework section
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: horizontalPadding,
+                        ),
+                        child: HomeworksList(
+                          homeworks: nonUrgentHomeworks,
+                          onCompleted: onCompleted,
+                        ),
+                      ),
+
+                      /// Items without due date
+                      if (poorlyHomeworks.isNotEmpty)
+                        buildPoorlyHomeworks(context, poorlyHomeworks),
+
+                      buildFABGap(),
+                    ],
+                  ),
+                ),
+
+          /// Adds a FAB row with quick add text field + button
+          floatingActionButton: buildFAB(),
+          floatingActionButtonLocation:
+              FloatingActionButtonLocation.centerFloat,
+        );
+      },
     );
   }
 
@@ -142,15 +152,15 @@ class _HomeState extends State<Home> {
 
   /// Builds the "urgent" decorated section
   Widget buildUrgentHomeworks(BuildContext context, Homeworks urgentHomeworks) {
-    return buildDecoratedHomeworks(
-      context: context,
-      borderColor: Theme.of(context).colorScheme.primary,
-      label: 'Dringlich!',
-      child: Column(
-        children: [
-          buildHomeworks(urgentHomeworks.notCompleted),
-          buildHomeworks(urgentHomeworks.completed),
-        ],
+    return HomeworksList(
+      homeworks: urgentHomeworks.notCompleted + urgentHomeworks.completed,
+      onCompleted: onCompleted,
+      decoration: (
+        containerMargin: horizontalPadding,
+        containerPadding: urgentContainerPadding,
+        containerBorderWidth: urgentContainerBorderWidth,
+        label: 'Dringlich!',
+        borderColor: Theme.of(context).colorScheme.primary,
       ),
     );
   }
@@ -160,82 +170,16 @@ class _HomeState extends State<Home> {
     BuildContext context,
     List<Homework> poorlyHomeworks,
   ) {
-    return buildDecoratedHomeworks(
-      context: context,
-      borderColor: Colors.grey,
-      label: 'Ohne Abgabedatum',
-      child: buildHomeworks(poorlyHomeworks),
-    );
-  }
-
-  /// Adds border, padding + label for homework category sections
-  Widget buildDecoratedHomeworks({
-    required BuildContext context,
-    required Color borderColor,
-    required String label,
-    required Widget child,
-  }) {
-    return Stack(
-      children: [
-        /// Main bordered container
-        Container(
-          margin: const EdgeInsets.symmetric(
-            horizontal: urgentContainerMargin,
-            vertical: 8,
-          ),
-          padding: const EdgeInsets.all(urgentContainerPadding),
-          decoration: BoxDecoration(
-            border: Border.all(
-              color: borderColor,
-              width: urgentContainerBorderWidth,
-            ),
-            borderRadius: BorderRadius.circular(
-              BorderRadiusConstants.homeworks,
-            ),
-          ),
-          child: child,
-        ),
-
-        /// Positioned category label floating over the border
-        Positioned(
-          left: 20,
-          top: 0,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            margin: EdgeInsets.zero,
-            height: 19,
-            color: Theme.of(context).scaffoldBackgroundColor,
-            child: Text(
-              label,
-              style: Theme.of(
-                context,
-              ).textTheme.labelMedium?.copyWith(color: borderColor),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  /// Renders a list of homework tiles (not scrollable by itself)
-  Widget buildHomeworks(List<Homework> homeworks) {
-    return ListView.builder(
-      padding: EdgeInsets.zero,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: homeworks.length,
-      itemBuilder: (context, index) {
-        final homework = homeworks[index];
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 6),
-          child: HomeworkTile(
-            homework: homework,
-            statusChange: () {
-              onCompleted(index);
-            },
-          ),
-        );
-      },
+    return HomeworksList(
+      homeworks: poorlyHomeworks,
+      onCompleted: onCompleted,
+      decoration: (
+        containerMargin: horizontalPadding,
+        containerPadding: urgentContainerPadding,
+        containerBorderWidth: urgentContainerBorderWidth,
+        label: 'Ohne Abgabedatum',
+        borderColor: Colors.grey,
+      ),
     );
   }
 
