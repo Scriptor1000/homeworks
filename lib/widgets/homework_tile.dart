@@ -8,6 +8,7 @@ import '../database/models/homework.dart';
 import '../database/models/subject.dart';
 import '../provider/homeworks_provider.dart';
 import '../provider/subject_provider.dart';
+import '../utilities/common.dart';
 import '../utilities/constants.dart';
 import '../utilities/enums.dart';
 import '../utilities/global_snackbar.dart';
@@ -42,17 +43,7 @@ class HomeworkTile extends StatelessWidget {
     final dayDifference = dueDay.difference(nowDate).inDays;
     final timeDifference = dueDateTime.difference(now);
 
-    // Wochentage auf Deutsch
-    const weekdays = [
-      'Montag',
-      'Dienstag',
-      'Mittwoch',
-      'Donnerstag',
-      'Freitag',
-      'Samstag',
-      'Sonntag',
-    ];
-    final weekday = weekdays[dueDay.weekday - 1];
+    final weekday = getWeekday(dueDateTime);
 
     String text;
 
@@ -69,16 +60,12 @@ class HomeworkTile extends StatelessWidget {
           text += ', in ${timeDifference.inMinutes} Minuten';
         }
       } else {
-        text +=
-            ', bis ${dueDateTime.hour.toString().padLeft(2, '0')}:'
-            '${dueDateTime.minute.toString().padLeft(2, '0')}';
+        text += ', bis ${formatHourMinute(dueDateTime)}';
       }
     } else if (dayDifference == 1) {
       text = 'Morgen';
       if (homework.type != HomeworkType.appointment) {
-        text +=
-            ', bis ${dueDateTime.hour.toString().padLeft(2, '0')}:'
-            '${dueDateTime.minute.toString().padLeft(2, '0')}';
+        text += ', bis ${formatHourMinute(dueDateTime)}';
       }
     } else {
       text = '$weekday, in $dayDifference Tagen';
@@ -166,7 +153,7 @@ class HomeworkTile extends StatelessWidget {
                     Align(
                       alignment: Alignment.centerRight,
                       child: Text(
-                        'Erstellt am ${DateFormat('dd.MM.yyyy').format(homework.createdAt)}',
+                        'Erstellt am ${getWeekday(homework.createdAt)}, ${DateFormat('dd.MM').format(homework.createdAt)}',
                       ),
                     ),
 

@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 
 import '../database/models/credentials.dart';
+import '../utilities/common.dart';
 import '../utilities/enums.dart';
 import '../database/models/subject.dart';
 
@@ -175,10 +176,6 @@ class UntisProvider extends ChangeNotifier {
     } finally {
       notifyListeners();
     }
-  }
-
-  DateTime normalizeDate(DateTime date) {
-    return DateTime(date.year, date.month, date.day);
   }
 
   void _parsePeriod(UntisPeriod period) {

@@ -6,6 +6,7 @@ import 'package:sentry_flutter/sentry_flutter.dart';
 
 import '../../provider/credential_provider.dart';
 import '../../provider/untis_provider.dart';
+import '../../utilities/common.dart';
 
 /// Screen to view the timetable of a teacher.
 class FindTeacher extends StatefulWidget {
@@ -119,16 +120,7 @@ class _FindTeacherState extends State<FindTeacher> {
   }
 
   Widget _formatDate(UntisPeriod period) {
-    String weekday = switch (period.startDateTime.weekday) {
-      1 => 'Montag',
-      2 => 'Dienstag',
-      3 => 'Mittwoch',
-      4 => 'Donnerstag',
-      5 => 'Freitag',
-      6 => 'Samstag',
-      7 => 'Sonntag',
-      _ => '',
-    };
+    String weekday = getWeekday(period.startDateTime);
 
     return Row(
       children: [
@@ -138,8 +130,7 @@ class _FindTeacherState extends State<FindTeacher> {
           child: Text(
             '$weekday - '
             '${period.startDateTime.day.toString().padLeft(2, '0')}'
-            '.${period.startDateTime.month.toString().padLeft(2, '0')}'
-            '.${period.startDateTime.year}',
+            '.${period.startDateTime.month.toString().padLeft(2, '0')}',
             style: Theme.of(context).textTheme.labelLarge?.copyWith(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
@@ -198,13 +189,9 @@ class _FindTeacherState extends State<FindTeacher> {
         style: isCanceled ? canceledStyle : null,
       ),
       trailing: Text(
-        '${_formatTime(period.startDateTime)} - ${_formatTime(period.endDateTime)}',
+        '${formatHourMinute(period.startDateTime)} - ${formatHourMinute(period.endDateTime)}',
         style: Theme.of(context).textTheme.bodySmall,
       ),
     );
-  }
-
-  String _formatTime(DateTime time) {
-    return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
   }
 }

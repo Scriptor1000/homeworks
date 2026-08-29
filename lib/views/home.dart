@@ -10,9 +10,11 @@ import '../provider/homeworks_provider.dart';
 import '../provider/subject_provider.dart';
 import '../provider/untis_provider.dart';
 import '../routes/typesafe_router.dart';
+import '../utilities/common.dart';
 import '../utilities/global_snackbar.dart';
 import '../utilities/homeworks_list.dart';
 import '../widgets/fab.dart';
+import '../widgets/home_day_card.dart';
 import '../widgets/homeworks_list.dart';
 
 /// Layout constants controlling spacing and border sizes for urgent homework UI
@@ -76,11 +78,52 @@ class _HomeState extends State<Home> {
 
   @override
   Widget build(BuildContext context) {
-    /// Reads homework data from provider so UI stays updated
-    final homeworkProvider = context.watch<HomeworksProvider>();
     final widthThreshold = context.select(
       (ConfigProvider p) => p.maxWidthThreshold,
     );
+    return Scaffold(
+      appBar: AppBar(title: const Text('Hausaufgaben')),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          return (constraints.maxWidth > widthThreshold)
+              ? buildTabletScreen(context)
+              : buildMobileScreen(context);
+        },
+      ),
+
+      /// Adds a FAB row with quick add text field + button
+      floatingActionButton: buildFAB(),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+    );
+  }
+
+  Widget buildTabletScreen(BuildContext context) {
+    final homeworkProvider = context.watch<HomeworksProvider>();
+
+    final urgentHomeworks = homeworkProvider.homeworks.urgent;
+    final nonUrgentHomeworks = homeworkProvider.homeworks.notUrgent.withDueDate;
+
+    final DateTime nextWorkday = getNextWorkday(DateTime.now());
+
+    return ListView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.only(
+        bottom: kFABHeight,
+        left: horizontalPadding,
+      ),
+      children: [
+        if (urgentHomeworks.isNotEmpty) HomeDayCard(),
+        if (nonUrgentHomeworks.getForDate(nextWorkday).isNotEmpty)
+          HomeDayCard(),
+        HomeDayCard(),
+        HomeDayCard(),
+      ],
+    );
+  }
+
+  Widget buildMobileScreen(BuildContext context) {
+    /// Reads homework data from provider so UI stays updated
+    final homeworkProvider = context.watch<HomeworksProvider>();
 
     /// Separate homework into categories for UI presentation
     final urgentHomeworks = homeworkProvider.homeworks.urgent;
@@ -91,58 +134,35 @@ class _HomeState extends State<Home> {
     urgentHomeworks.sort((a, b) => a.dueDate!.compareTo(b.dueDate!));
     nonUrgentHomeworks.sort((a, b) => a.dueDate!.compareTo(b.dueDate!));
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        if (constraints.maxWidth > widthThreshold) {
-          return const Center(
-            child: Text(
-              'Die App ist für große Bildschirme nicht optimiert.\n'
-              'Bitte nutze ein Smartphone oder Tablet.',
-              textAlign: TextAlign.center,
-            ),
-          );
-        }
+    /// Show spinner until initial homework load completes
+    return !homeworkProvider.homeworksLoaded
+        ? const Center(child: CircularProgressIndicator())
+        : SingleChildScrollView(
+            child: Column(
+              children: [
+                /// Urgent section
+                if (urgentHomeworks.isNotEmpty)
+                  buildUrgentHomeworks(context, urgentHomeworks),
 
-        return Scaffold(
-          appBar: AppBar(title: const Text('Hausaufgaben')),
-
-          /// Show spinner until initial homework load completes
-          body: !homeworkProvider.homeworksLoaded
-              ? const Center(child: CircularProgressIndicator())
-              : SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      /// Urgent section
-                      if (urgentHomeworks.isNotEmpty)
-                        buildUrgentHomeworks(context, urgentHomeworks),
-
-                      /// Normal due-date homework section
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: horizontalPadding,
-                        ),
-                        child: HomeworksList(
-                          homeworks: nonUrgentHomeworks,
-                          onCompleted: onCompleted,
-                        ),
-                      ),
-
-                      /// Items without due date
-                      if (poorlyHomeworks.isNotEmpty)
-                        buildPoorlyHomeworks(context, poorlyHomeworks),
-
-                      buildFABGap(),
-                    ],
+                /// Normal due-date homework section
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: horizontalPadding,
+                  ),
+                  child: HomeworksList(
+                    homeworks: nonUrgentHomeworks,
+                    onCompleted: onCompleted,
                   ),
                 ),
 
-          /// Adds a FAB row with quick add text field + button
-          floatingActionButton: buildFAB(),
-          floatingActionButtonLocation:
-              FloatingActionButtonLocation.centerFloat,
-        );
-      },
-    );
+                /// Items without due date
+                if (poorlyHomeworks.isNotEmpty)
+                  buildPoorlyHomeworks(context, poorlyHomeworks),
+
+                buildFABGap(),
+              ],
+            ),
+          );
   }
 
   /// Called when homework is marked done; currently logs only
