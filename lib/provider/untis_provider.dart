@@ -64,6 +64,15 @@ class UntisProvider extends ChangeNotifier {
       .map((period) => Subject.fromUntisSubject(period.subject!))
       .toList();
 
+  /// Whether the user has no further lessons today. This is determined by checking if all periods in [_todayPeriods] are either cancelled, have no teacher, have no subject, or start after the current time.
+  bool get hasFreeTime => _todayPeriods.every(
+    (period) =>
+        period.isCancelled ||
+        period.teacher == null ||
+        period.subject == null ||
+        period.endDateTime.isBefore(DateTime.now()),
+  );
+
   /// Whether the Untis subjects are loaded and available.
   bool get untisSubjectsLoaded =>
       _untisSubjectStatus == UntisSubjectStatus.loaded;

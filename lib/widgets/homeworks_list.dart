@@ -79,7 +79,6 @@ class HomeworksList extends StatelessWidget {
 
   Widget _buildList() {
     return ListView.builder(
-      padding: EdgeInsets.zero,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: homeworks.length,

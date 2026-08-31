@@ -6,6 +6,8 @@ class ConfigProvider extends ChangeNotifier {
   final FirebaseRemoteConfig _remoteConfig;
 
   int get maxWidthThreshold => _remoteConfig.getInt('maxWidthThreshold');
+  double get maxDayCardWidth => _remoteConfig.getDouble('maxDayCardWidth');
+  int get dayCardCount => _remoteConfig.getInt('dayCardCount');
 
   ConfigProvider({required FirebaseRemoteConfig remoteConfig})
     : _remoteConfig = remoteConfig;
@@ -18,7 +20,11 @@ class ConfigProvider extends ChangeNotifier {
       ),
     );
 
-    _remoteConfig.setDefaults(<String, dynamic>{'maxWidthThreshold': 600});
+    _remoteConfig.setDefaults(<String, dynamic>{
+      'maxWidthThreshold': 600,
+      'maxDayCardWidth': 400.0,
+      'dayCardCount': 3,
+    });
 
     await _remoteConfig.fetchAndActivate();
     notifyListeners();

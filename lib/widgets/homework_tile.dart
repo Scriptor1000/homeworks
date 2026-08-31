@@ -121,45 +121,47 @@ class HomeworkTile extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Padding(
-                  padding: const EdgeInsets.only(top: kGapSize / 2),
-                  child: _buildDescription(),
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Row(
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: kGapSize / 2),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        IconButton(
-                          icon: const Icon(Icons.edit),
-                          onPressed: () {
-                            EditHomeworkRoute(
-                              homeworkId: homework.documentId,
-                            ).go(context);
-                          },
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.red),
-                          onPressed: () async {
-                            await context
-                                .read<HomeworksProvider>()
-                                .deleteHomework(homework.id);
-                            showSnackBar('Hausaufgabe gelöscht');
-                          },
+                        _buildDescription(),
+                        littleGap(),
+
+                        Text(
+                          'Erstellt am ${getWeekday(homework.createdAt)}, ${DateFormat('dd.MM').format(homework.createdAt)}',
+                          style: Theme.of(context).textTheme.labelMedium,
                         ),
                       ],
                     ),
-
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: Text(
-                        'Erstellt am ${getWeekday(homework.createdAt)}, ${DateFormat('dd.MM').format(homework.createdAt)}',
-                      ),
+                  ),
+                ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.edit),
+                      onPressed: () {
+                        EditHomeworkRoute(
+                          homeworkId: homework.documentId,
+                        ).go(context);
+                      },
                     ),
-
-                    littleGap(),
+                    IconButton(
+                      icon: const Icon(Icons.delete, color: Colors.red),
+                      onPressed: () async {
+                        await context.read<HomeworksProvider>().deleteHomework(
+                          homework.id,
+                        );
+                        showSnackBar('Hausaufgabe gelöscht');
+                      },
+                    ),
                   ],
                 ),
+
+                littleGap(),
               ],
             ),
           ),
@@ -181,7 +183,7 @@ class HomeworkTile extends StatelessWidget {
       child: Text(
         homework.description.isNotEmpty
             ? homework.description
-            : 'Keine genaueren Angaben verfügbar',
+            : 'Keine Beschreibung vorhanden',
         style: const TextStyle(fontSize: 16),
       ),
     );

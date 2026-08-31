@@ -98,25 +98,35 @@ class _HomeState extends State<Home> {
   }
 
   Widget buildTabletScreen(BuildContext context) {
-    final homeworkProvider = context.watch<HomeworksProvider>();
+    int dayCardCount = context.select((ConfigProvider p) => p.dayCardCount);
+    bool hasFreeTime = context.select((UntisProvider p) => p.hasFreeTime);
 
-    final urgentHomeworks = homeworkProvider.homeworks.urgent;
-    final nonUrgentHomeworks = homeworkProvider.homeworks.notUrgent.withDueDate;
-
-    final DateTime nextWorkday = getNextWorkday(DateTime.now());
+    List<DateTime> upcomingWorkdays = [getNextWorkday(DateTime.now())];
+    for (int i = 0; i < dayCardCount - 1; i++) {
+      upcomingWorkdays.add(getNextWorkday(upcomingWorkdays[i]));
+    }
 
     return ListView(
       scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.only(
-        bottom: kFABHeight,
+      padding: EdgeInsets.only(
+        bottom:
+            kFABHeight +
+            MediaQuery.of(context).viewPadding.bottom +
+            2 * kGapSize,
         left: horizontalPadding,
       ),
       children: [
-        if (urgentHomeworks.isNotEmpty) HomeDayCard(),
-        if (nonUrgentHomeworks.getForDate(nextWorkday).isNotEmpty)
-          HomeDayCard(),
-        HomeDayCard(),
-        HomeDayCard(),
+        if (!hasFreeTime)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: HomeDayCard(date: DateTime.now()),
+          ),
+        ...upcomingWorkdays.map(
+          (date) => Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: HomeDayCard(date: date),
+          ),
+        ),
       ],
     );
   }

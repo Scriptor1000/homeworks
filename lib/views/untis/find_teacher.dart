@@ -122,6 +122,9 @@ class _FindTeacherState extends State<FindTeacher> {
   Widget _formatDate(UntisPeriod period) {
     String weekday = getWeekday(period.startDateTime);
 
+    final bool isToday =
+        normalizeDate(period.startDateTime) == normalizeDate(DateTime.now());
+
     return Row(
       children: [
         SizedBox(width: 30, child: Divider()),
@@ -130,7 +133,8 @@ class _FindTeacherState extends State<FindTeacher> {
           child: Text(
             '$weekday - '
             '${period.startDateTime.day.toString().padLeft(2, '0')}'
-            '.${period.startDateTime.month.toString().padLeft(2, '0')}',
+            '.${period.startDateTime.month.toString().padLeft(2, '0')}'
+            ' ${isToday ? ' (Heute)' : ''}',
             style: Theme.of(context).textTheme.labelLarge?.copyWith(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
