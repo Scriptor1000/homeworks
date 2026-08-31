@@ -24,13 +24,19 @@ class HomeworkTile extends StatelessWidget {
     super.key,
     required this.homework,
     required this.statusChange,
+    required this.withDateInfo,
   });
 
   final Homework homework;
   final VoidCallback statusChange;
 
+  final bool withDateInfo;
+
   String? dueDateText(DateTime? dueDateTime) {
     if (dueDateTime == null) return null;
+    if (!withDateInfo) {
+      return homework.type != .appointment ? formatHourMinute(dueDateTime) : '';
+    }
     // Formatierung des Datums für bessere Lesbarkeit
     final now = DateTime.now();
     final nowDate = DateTime(now.year, now.month, now.day);

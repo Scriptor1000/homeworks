@@ -9,6 +9,7 @@ import 'homework_tile.dart';
 class HomeworksList extends StatelessWidget {
   final ValueChanged<int> onCompleted;
   final List<Homework> homeworks;
+  final bool withDateInfo;
   final ({
     double containerMargin,
     double containerPadding,
@@ -23,6 +24,7 @@ class HomeworksList extends StatelessWidget {
     required this.onCompleted,
     required this.homeworks,
     this.decoration,
+    this.withDateInfo = false,
   });
 
   @override
@@ -87,6 +89,7 @@ class HomeworksList extends StatelessWidget {
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: kGapSize / 2),
           child: HomeworkTile(
+            withDateInfo: withDateInfo,
             homework: homework,
             statusChange: () {
               onCompleted(index);

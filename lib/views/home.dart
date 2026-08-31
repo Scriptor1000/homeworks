@@ -102,7 +102,7 @@ class _HomeState extends State<Home> {
     bool hasFreeTime = context.select((UntisProvider p) => p.hasFreeTime);
 
     List<DateTime> upcomingWorkdays = [getNextWorkday(DateTime.now())];
-    for (int i = 0; i < dayCardCount - 1; i++) {
+    for (int i = 0; i < dayCardCount - 2; i++) {
       upcomingWorkdays.add(getNextWorkday(upcomingWorkdays[i]));
     }
 
@@ -115,18 +115,11 @@ class _HomeState extends State<Home> {
             2 * kGapSize,
         left: horizontalPadding,
       ),
+
       children: [
-        if (!hasFreeTime)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: HomeDayCard(date: DateTime.now()),
-          ),
-        ...upcomingWorkdays.map(
-          (date) => Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: HomeDayCard(date: date),
-          ),
-        ),
+        if (!hasFreeTime) HomeDayCard(date: DateTime.now()),
+        ...upcomingWorkdays.map((date) => HomeDayCard(date: date)),
+        HomeDayCard(date: upcomingWorkdays.last, onlyHomeworksAfterDate: true),
       ],
     );
   }
