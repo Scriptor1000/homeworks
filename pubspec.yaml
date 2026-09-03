@@ -154,11 +154,15 @@ sentry:
 
 flutter_launcher_icons:
   android: true
-  image_path_android: assets/icon/icon.png
+  ios: true
+  image_path: assets/icon/icon.png
 
   adaptive_icon_foreground: assets/icon/icon.png
   adaptive_icon_background: "#FFFFFF" #8eb3e1
   adaptive_icon_foreground_inset: 16
+
+  remove_alpha_ios: true
+  background_color_ios: "#FFFFFF"
 
   web: 
     generate: true
