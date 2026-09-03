@@ -38,10 +38,10 @@ platform :ios do
     )
 
     build_app(
-      workspace: "ios/Runner.xcworkspace",
+      workspace: "../ios/Runner.xcworkspace",
       scheme: "Runner",
       export_method: "ad-hoc",
-      output_directory: "build/ios/ipa",
+      output_directory: "../build/ios/ipa",
       output_name: "app.ipa"
     )
   end

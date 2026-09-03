@@ -76,6 +76,7 @@ jobs:
         run: flutter pub get
       
       - name: Flutter Setup
+        if: false # To test this workflow, do not run long setup commands. REMOVE THIS LINE BEFORE MERGING TO MAIN BRANCH
         run: |
             dart run build_runner build
             dart run flutter_launcher_icons
