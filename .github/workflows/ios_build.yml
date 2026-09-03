@@ -58,24 +58,40 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.44.2'
-          cache: true
-      
-      - name: Install dependencies
-        run: |
-          flutter pub get
-          flutter build ios --config-only --no-codesign
-
-      - name: Cache Flutter dependencies
-        uses: actions/cache@v4
+          cache: true     
+          
+      - name: Restore Dependencies Cache
+        uses: actions/cache/restore@v4
+        id: flutter-deps-cache
         with:
           path: |
             ~/.pub-cache
+            ~/Library/Developer/Xcode/DerivedData/*/SourcePackages
+            ~/Library/Caches/org.swift.swiftpm
             .dart_tool
             .flutter-plugins
             .flutter-plugins-dependencies
           key: ${{ runner.os }}-flutter-dependencies-${{ hashFiles('**/pubspec.lock') }}
           restore-keys: |
             ${{ runner.os }}-flutter-dependencies
+      
+      - name: Install dependencies
+        run: |
+          flutter pub get
+          flutter build ios --config-only --no-codesign
+
+      - name: Save Cache Dependencies
+        uses: actions/cache/save@v4
+        if: steps.flutter-deps-cache.outputs.cache-hit != 'true'
+        with:
+          path: |
+            ~/.pub-cache
+            ~/Library/Developer/Xcode/DerivedData/*/SourcePackages
+            ~/Library/Caches/org.swift.swiftpm
+            .dart_tool
+            .flutter-plugins
+            .flutter-plugins-dependencies
+          key:  ${{ steps.flutter-deps-cache.outputs.cache-primary-key }}
       
       - name: Flutter Setup
         if: false # To test this workflow, do not run long setup commands. REMOVE THIS LINE BEFORE MERGING TO MAIN BRANCH
