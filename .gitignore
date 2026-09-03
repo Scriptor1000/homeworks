@@ -59,3 +59,9 @@ android/app/.cxx/
 
 # test coverage
 coverage/
+
+# Certificates should not be committed to source control, right?
+ios/fastlane/apple_distribution.certSigningRequest
+ios/fastlane/apple_distribution.key
+ios/fastlane/distribution.cer
+ios/fastlane/Homeworksprivatetest.mobileprovision
