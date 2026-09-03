@@ -37,10 +37,27 @@ platform :ios do
       path: ENV["IOS_PROFILE_PATH"]
     )
 
+    update_code_signing_settings(
+      use_automatic_signing: false,
+      path: "ios/Runner.xcodeproj",
+
+      team_id: ENV["APPLE_TEAM_ID"],
+      bundle_identifier: ENV["IOS_BUNDLE_ID"],
+      profile_name: ENV["IOS_PROFILE_NAME"],
+
+      code_sign_identity: "Apple Distribution"
+    )
+
     build_app(
       workspace: "../ios/Runner.xcworkspace",
       scheme: "Runner",
       export_method: "ad-hoc",
+      export_team_id: ENV["APPLE_TEAM_ID"],
+      export_options: {
+      provisioningProfiles: {
+          ENV["IOS_BUNDLE_ID"] => ENV["IOS_PROFILE_NAME"]
+        }
+      },
       output_directory: "../build/ios/ipa",
       output_name: "app.ipa"
     )
