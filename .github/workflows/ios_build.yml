@@ -239,7 +239,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: android-app
-          path: build/app/outputs/flutter-apk/release/app-release.apk
+          path: build/app/outputs/flutter-apk/app-release.apk
 
   deploy:
     name: Deploy to Firebase App Distribution
