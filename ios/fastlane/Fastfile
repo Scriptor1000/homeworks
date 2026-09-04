@@ -63,7 +63,9 @@ platform :ios do
         }
       },
       output_directory: "../build/ios/ipa",
-      output_name: "app.ipa"
+      output_name: "app.ipa",
+      
+      buildlog_path: "../buildlogs"
     )
   end
 end
