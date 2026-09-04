@@ -33,6 +33,8 @@ platform :ios do
       keychain_password: ENV["IOS_KEYCHAIN_PASSWORD"]
     )
 
+    sh("security default-keychain")
+    sh("security list-keychains")
     sh("security find-identity -v -p codesigning")
 
     install_provisioning_profile(
