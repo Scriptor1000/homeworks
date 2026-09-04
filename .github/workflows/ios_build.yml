@@ -145,6 +145,12 @@ jobs:
         run: |
           cd ios
           bundle exec fastlane ios build
+
+      - name: Upload Sourcemap to Sentry
+        env:
+            SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_TOKEN }}
+            SENTRY_RELEASE: ${{ env.SENTRY_RELEASE }}
+        run: dart run sentry_dart_plugin 
       
       - name: Upload IPA as GitHub artifact
         uses: actions/upload-artifact@v4

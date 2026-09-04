@@ -8,6 +8,13 @@
                     "fileOutput": "android/app/google-services.json"
                 }
             },
+            "ios": {
+                "default": {
+                    "projectId": "homework-manager-untis",
+                    "appId": "1:626284965826:ios:a0380d8279a58f25d1f05b",
+                    "uploadDebugSymbols": true
+                }
+            },
             "dart": {
                 "lib/firebase_options.dart": {
                     "projectId": "homework-manager-untis",
