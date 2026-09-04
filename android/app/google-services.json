@@ -38,6 +38,13 @@
             {
               "client_id": "626284965826-iovj6s0lvft551f3d6ahdr6qkoc53njg.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "626284965826-a7rr1a2bd50reag0civmrtihdd6m2stj.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "de.seminarfach.homeworks"
+              }
             }
           ]
         }
