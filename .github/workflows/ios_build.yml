@@ -48,6 +48,9 @@ jobs:
     # needs: test # do not wait for test when testing this workflow
     # CHANGE THIS LINE BEFORE MERGING TO MAIN BRANCH 
     runs-on: macos-latest
+    env:      
+      IOS_P12_PATH: ${{ runner.temp }}/distribution.p12
+      IOS_PROFILE_PATH: ${{ runner.temp }}/profile.mobileprovision
 
     steps:
       - uses: actions/checkout@v5
@@ -118,7 +121,7 @@ jobs:
             | base64 --decode > "$RUNNER_TEMP/distribution.key"
 
           echo -n "$IOS_PROVISIONING_PROFILE_BASE64" \
-            | base64 --decode > "$RUNNER_TEMP/profile.mobileprovision"
+            | base64 --decode > "$IOS_PROFILE_PATH"
 
           openssl x509 \
             -inform DER \
@@ -128,17 +131,15 @@ jobs:
           openssl pkcs12 -export \
             -inkey "$RUNNER_TEMP/distribution.key" \
             -in "$RUNNER_TEMP/distribution.pem" \
-            -out "$RUNNER_TEMP/distribution.p12" \
+            -out "$IOS_P12_PATH" \
             -passout env:IOS_P12_PASSWORD
 
 
       - name: Verify iOS signing files
-        env: 
-          IOS_P12_PASSWORD: ${{ env.IOS_P12_PASSWORD }}
         run: |
           echo "Opening the P12 file ..."
           openssl pkcs12 \
-            -in "$RUNNER_TEMP/distribution.p12" \
+            -in "$IOS_P12_PATH" \
             -passin env:IOS_P12_PASSWORD \
             -noout
           
@@ -161,19 +162,19 @@ jobs:
           bundler-cache: true
 
       - name: Install Fastlane
-        run: gem install fastlane
+        run: |
+          cd ios
+          gem install fastlane
         
 
       - name: Build signed iOS IPA
         env:
-          IOS_P12_PATH: ${{ runner.temp }}/distribution.p12
-          IOS_PROFILE_PATH: ${{ runner.temp }}/profile.mobileprovision
-          IOS_P12_PASSWORD: ${{ env.IOS_P12_PASSWORD }}
-          IOS_KEYCHAIN_PASSWORD: ${{ secrets.IOS_KEYCHAIN_PASSWORD }}
+          # IOS_KEYCHAIN_PASSWORD: ${{ secrets.IOS_KEYCHAIN_PASSWORD }}
           APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
           IOS_BUNDLE_ID: ${{ vars.IOS_BUNDLE_ID }}
           IOS_PROFILE_NAME: ${{ vars.IOS_PROFILE_NAME }}
         run: |
+          export IOS_KEYCHAIN_PASSWORD="$(openssl rand -hex 32)" 
           cd ios
           bundle exec fastlane ios build_adhoc
 
@@ -183,3 +184,15 @@ jobs:
           name: ios-adhoc
           path: build/ios/ipa/app.ipa
 
+  cache-flutter:
+    name: Install Flutter for caching
+    # needs: test # do not wait for test when testing this workflow
+    # CHANGE THIS LINE BEFORE MERGING TO MAIN BRANCH 
+    runs-on: macos-latest
+
+    steps:
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.2'
+          cache: true     
