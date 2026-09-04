@@ -16,8 +16,8 @@
 default_platform(:ios)
 
 platform :ios do
-  desc "Deploy IOS build"
-  lane :build_adhoc do
+  desc "Build IOS App"
+  lane :build do
     create_keychain(
       name: "ci-signing",
       password: ENV["IOS_KEYCHAIN_PASSWORD"],
@@ -68,6 +68,24 @@ platform :ios do
       buildlog_path: "../buildlogs",
       result_bundle: true,
       result_bundle_path: "../build/ios/Runner.xcresult"
+    )
+  end
+
+  desc "Deploy IOS App zu Testflight"
+  lane :deploy_testflight do
+    build    
+
+    app_store_connect_api_key(
+      key_id: ENV["APP_STORE_CONNECT_KEY_ID"],
+      issuer_id: ENV["APP_STORE_CONNECT_ISSUER_ID"],
+      key_content: ENV["APP_STORE_CONNECT_API_KEY"],
+      is_key_content_base64: true
+    )
+
+
+    upload_to_testflight(
+      ipa: "../build/ios/ipa/app.ipa",
+      skip_waiting_for_build_processing: true
     )
   end
 end

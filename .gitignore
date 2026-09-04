@@ -64,4 +64,4 @@ coverage/
 ios/fastlane/apple_distribution.certSigningRequest
 ios/fastlane/apple_distribution.key
 ios/fastlane/distribution.cer
-ios/fastlane/Homeworksprivatetest.mobileprovision
+ios/fastlane/*.mobileprovision

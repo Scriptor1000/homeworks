@@ -66,10 +66,12 @@ class AuthenticationProvider extends ChangeNotifier {
   /// - On web, listens to Google authentication events
   Future<void> initialize() async {
     if (_googleSupported.isCompleted) return;
-    await _googleSignIn.initialize(clientId: kIsWeb ? webClientId : null);
     try {
+      await _googleSignIn.initialize(clientId: kIsWeb ? webClientId : null);
+
       if (_googleSignIn.supportsAuthenticate()) {
         googleSignInState = GoogleSignInState.supported;
+        notifyListeners();
         return _googleSupported.complete(true);
       } else if (kIsWeb) {
         // Web button authentication: events must be listened to manually
