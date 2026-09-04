@@ -48,9 +48,6 @@ jobs:
     # needs: test # do not wait for test when testing this workflow
     # CHANGE THIS LINE BEFORE MERGING TO MAIN BRANCH 
     runs-on: macos-latest
-    env:      
-      IOS_P12_PATH: ${{ runner.temp }}/distribution.p12
-      IOS_PROFILE_PATH: ${{ runner.temp }}/profile.mobileprovision
 
     steps:
       - uses: actions/checkout@v5
@@ -110,10 +107,14 @@ jobs:
           IOS_PROVISIONING_PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
           # IOS_P12_PASSWORD: ${{ secrets.IOS_P12_PASSWORD }}
         run: |
+          echo "Create Password and set Paths for iOS signing files ..."
           export IOS_P12_PASSWORD="$(openssl rand -hex 32)"
-          echo "::add-mask::$IOS_P12_PASSWORD"
           echo "IOS_P12_PASSWORD=$IOS_P12_PASSWORD" >> "$GITHUB_ENV"
+          echo "IOS_P12_PATH=$RUNNER_TEMP/distribution.p12" >> "$GITHUB_ENV"
+          echo "IOS_PROFILE_PATH=$RUNNER_TEMP/profile.mobileprovision" >> "$GITHUB_ENV"
 
+
+          echo "Decoding iOS signing files ..."
           echo -n "$IOS_CERTIFICATE_BASE64" \
             | base64 --decode > "$RUNNER_TEMP/distribution.cer"
 
@@ -122,7 +123,8 @@ jobs:
 
           echo -n "$IOS_PROVISIONING_PROFILE_BASE64" \
             | base64 --decode > "$IOS_PROFILE_PATH"
-
+          
+          echo "Creating P12 file from certificate and private key ..."
           openssl x509 \
             -inform DER \
             -in "$RUNNER_TEMP/distribution.cer" \
