@@ -70,7 +70,18 @@ platform :ios do
       result_bundle_path: "../build/ios/Runner.xcresult"
     )
 
+    crashlytics_binary = Dir.glob(
+    File.expand_path( 
+        "~/Library/Developer/Xcode/DerivedData/**/SourcePackages/checkouts/firebase-ios-sdk/Crashlytics/upload-symbols"
+      )
+    ).max_by { |path| File.mtime(path) }
+
+    UI.user_error!(
+      "Could not find Firebase Crashlytics upload-symbols binary"
+    ) unless crashlytics_binary
+
     upload_symbols_to_crashlytics(
+      binary_path: crashlytics_binary,
       dsym_path: lane_context[SharedValues::DSYM_OUTPUT_PATH],
       app_id: "1:626284965826:ios:a0380d8279a58f25d1f05b"
     )
