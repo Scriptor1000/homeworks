@@ -100,6 +100,13 @@ jobs:
             dart run flutter_launcher_icons
             dart run flutter_native_splash:create
 
+      - name: Setup signing file env
+        run: |          
+          echo "IOS_P12_PASSWORD=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "IOS_KEYCHAIN_PASSWORD=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "IOS_P12_PATH=$RUNNER_TEMP/distribution.p12" >> "$GITHUB_ENV"
+          echo "IOS_PROFILE_PATH=$RUNNER_TEMP/profile.mobileprovision" >> "$GITHUB_ENV"
+
       - name: Restore iOS signing files
         env:
           IOS_CERTIFICATE_BASE64: ${{ secrets.IOS_CERTIFICATE_BASE64 }}
@@ -107,13 +114,6 @@ jobs:
           IOS_PROVISIONING_PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
           # IOS_P12_PASSWORD: ${{ secrets.IOS_P12_PASSWORD }}
         run: |
-          echo "Create Password and set Paths for iOS signing files ..."
-          export IOS_P12_PASSWORD="$(openssl rand -hex 32)"
-          echo "IOS_P12_PASSWORD=$IOS_P12_PASSWORD" >> "$GITHUB_ENV"
-          echo "IOS_P12_PATH=$RUNNER_TEMP/distribution.p12" >> "$GITHUB_ENV"
-          echo "IOS_PROFILE_PATH=$RUNNER_TEMP/profile.mobileprovision" >> "$GITHUB_ENV"
-
-
           echo "Decoding iOS signing files ..."
           echo -n "$IOS_CERTIFICATE_BASE64" \
             | base64 --decode > "$RUNNER_TEMP/distribution.cer"
@@ -176,7 +176,6 @@ jobs:
           IOS_BUNDLE_ID: ${{ vars.IOS_BUNDLE_ID }}
           IOS_PROFILE_NAME: ${{ vars.IOS_PROFILE_NAME }}
         run: |
-          export IOS_KEYCHAIN_PASSWORD="$(openssl rand -hex 32)" 
           cd ios
           bundle exec fastlane ios build_adhoc
 
