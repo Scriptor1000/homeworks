@@ -183,7 +183,20 @@ jobs:
 
       - name: Print Xcode logs
         if: failure()
-        run: cat buildlogs/*
+        run: tail -n 1000 buildlogs/*
+      
+      - name: Show Xcode build result
+        if: failure()
+        run: |
+          xcrun xcresulttool get build-results \
+            --path build/ios/Runner.xcresult
+
+      - name: Upload Xcode result
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xcode-result
+          path: build/ios/Runner.xcresult
 
       - name: Upload IPA as GitHub artifact
         uses: actions/upload-artifact@v4

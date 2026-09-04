@@ -65,7 +65,9 @@ platform :ios do
       output_directory: "../build/ios/ipa",
       output_name: "app.ipa",
       
-      buildlog_path: "../buildlogs"
+      buildlog_path: "../buildlogs",
+      result_bundle: true,
+      result_bundle_path: "../build/ios/Runner.xcresult"
     )
   end
 end
