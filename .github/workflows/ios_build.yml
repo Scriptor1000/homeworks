@@ -182,10 +182,10 @@ jobs:
           bundle exec fastlane ios build_adhoc
 
       - name: Print Xcode logs
-          if: failure()
-          run: |
-            cat "$HOME/Library/Logs/gym/Runner-Runner.log"
-            cat buildlogs/*
+        if: failure()
+        run: |
+          cat "$HOME/Library/Logs/gym/Runner-Runner.log"
+          cat buildlogs/*
 
       - name: Upload IPA as GitHub artifact
         uses: actions/upload-artifact@v4
