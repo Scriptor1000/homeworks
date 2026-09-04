@@ -131,6 +131,7 @@ jobs:
             -out "$RUNNER_TEMP/distribution.pem"
 
           openssl pkcs12 -export \
+            -legacy \
             -inkey "$RUNNER_TEMP/distribution.key" \
             -in "$RUNNER_TEMP/distribution.pem" \
             -out "$IOS_P12_PATH" \
@@ -141,6 +142,7 @@ jobs:
         run: |
           echo "Opening the P12 file ..."
           openssl pkcs12 \
+            -legacy \
             -in "$IOS_P12_PATH" \
             -passin env:IOS_P12_PASSWORD \
             -noout
@@ -186,9 +188,8 @@ jobs:
           path: build/ios/ipa/app.ipa
 
   cache-flutter:
+    if: false
     name: Install Flutter for caching
-    # needs: test # do not wait for test when testing this workflow
-    # CHANGE THIS LINE BEFORE MERGING TO MAIN BRANCH 
     runs-on: macos-latest
 
     steps:
