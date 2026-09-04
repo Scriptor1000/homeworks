@@ -43,7 +43,7 @@ jobs:
       - name: Run tests
         run: flutter test
     
-  build:
+  build-ios:
     name: Build iOS App
     # needs: test # do not wait for test when testing this workflow
     # CHANGE THIS LINE BEFORE MERGING TO MAIN BRANCH 
@@ -60,7 +60,7 @@ jobs:
           flutter-version: '3.44.2'
           cache: true     
           
-      - name: Restore Dependencies Cache
+      - name: Dependencies Cache
         uses: actions/cache@v4
         id: flutter-deps-cache
         with:
@@ -75,16 +75,12 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-flutter-dependencies
       
-      - name: Install dependencies
+      - name: Prepare Flutter for iOS build
         run: |
-          flutter pub get
           flutter build ios --config-only --no-codesign --build-number="${GITHUB_RUN_NUMBER}"
-      
-      - name: Flutter Setup
-        run: |
-            dart run build_runner build
-            dart run flutter_launcher_icons
-            dart run flutter_native_splash:create
+          dart run build_runner build
+          dart run flutter_launcher_icons
+          dart run flutter_native_splash:create
 
       - name: Setup signing file env
         run: |          
@@ -144,13 +140,7 @@ jobs:
           #APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
         run: |
           cd ios
-          bundle exec fastlane ios build
-
-      - name: Upload Sourcemap to Sentry
-        env:
-            SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_TOKEN }}
-            SENTRY_RELEASE: ${{ env.SENTRY_RELEASE }}
-        run: dart run sentry_dart_plugin 
+          bundle exec fastlane ios build 
       
       - name: Upload IPA as GitHub artifact
         uses: actions/upload-artifact@v4
@@ -196,5 +186,89 @@ jobs:
           name: xcode-result
           path: build/ios/Runner.xcresult
 
-      
+  build-android:
+    name: Build Android App
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.2'
+          cache: true     
+          
+      - name: Dependencies Cache
+        uses: actions/cache@v4
+        id: flutter-deps-cache
+        with:
+          path: |
+            ~/.pub-cache
+            .dart_tool
+            .flutter-plugins
+            .flutter-plugins-dependencies
+          key: ${{ runner.os }}-flutter-dependencies-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-flutter-dependencies
+
+      - name: Prepare Flutter for Android build
+        run: |
+          flutter pub get
+          dart run build_runner build
+          dart run flutter_launcher_icons
+          dart run flutter_native_splash:create
+
+      - name: Restore Android signing files
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/upload-keystore.jks
+
+          cat > android/key.properties <<EOF
+          storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          keyPassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
+          storeFile=upload-keystore.jks
+          EOF
+
+      - name: Build signed Android APK
+        run: flutter build apk --release --build-number="${GITHUB_RUN_NUMBER}"
+
+      - name: Upload APK as GitHub artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-app
+          path: build/app/outputs/flutter-apk/release/app-release.apk
+
+  deploy:
+    name: Deploy to Firebase App Distribution
+    needs: [build-ios, build-android]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v5
+        with:
+          name: android-app
+          path: artifacts/android
+
+      - uses: actions/download-artifact@v5
+        with:
+          name: ios-app
+          path: artifacts/ios
+
+      - name: Upload Android
+        uses: wzieba/Firebase-Distribution-Github-Action@v1.7.1
+        with:
+          appId: ${{ vars.ANDROID_APP_ID }}
+          serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_CREDENTIALS_CONTENT }}
+          groups: all
+          file: artifacts/android/app-release.apk
+
+      - name: Upload iOS
+        uses: wzieba/Firebase-Distribution-Github-Action@v1.7.1
+        with:
+          appId: ${{ vars.IOS_APP_ID }}
+          serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_CREDENTIALS_CONTENT }}
+          groups: all
+          file: artifacts/ios/app.ipa
       
