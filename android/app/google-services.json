@@ -23,6 +23,14 @@
           }
         },
         {
+          "client_id": "626284965826-ta04oqjv7vhm3cq5p78j9nctou2rj8ua.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.max.homeworks",
+            "certificate_hash": "db55ac70732ee9b3a7f1d11791dadaf1c305297f"
+          }
+        },
+        {
           "client_id": "626284965826-iovj6s0lvft551f3d6ahdr6qkoc53njg.apps.googleusercontent.com",
           "client_type": 3
         }
