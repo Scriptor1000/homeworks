@@ -23,10 +23,7 @@ class DefaultFirebaseOptions {
       case TargetPlatform.android:
         return android;
       case TargetPlatform.iOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for ios - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return ios;
       case TargetPlatform.macOS:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for macos - '
@@ -69,5 +66,19 @@ class DefaultFirebaseOptions {
     databaseURL:
         'https://homework-manager-untis-default-rtdb.europe-west1.firebasedatabase.app',
     storageBucket: 'homework-manager-untis.firebasestorage.app',
+  );
+  static const FirebaseOptions ios = FirebaseOptions(
+    apiKey: 'AIzaSyBXokjgbD2bPhDGmcsGu_M5kIrXCghb1KE',
+    appId: '1:626284965826:ios:a0380d8279a58f25d1f05b',
+    messagingSenderId: '626284965826',
+    projectId: 'homework-manager-untis',
+    databaseURL:
+        'https://homework-manager-untis-default-rtdb.europe-west1.firebasedatabase.app',
+    storageBucket: 'homework-manager-untis.firebasestorage.app',
+    androidClientId:
+        '626284965826-nbmgdpvv5c8pfo3qqddiu44ei6v6cp7d.apps.googleusercontent.com',
+    iosClientId:
+        '626284965826-a7rr1a2bd50reag0civmrtihdd6m2stj.apps.googleusercontent.com',
+    iosBundleId: 'de.seminarfach.homeworks',
   );
 }

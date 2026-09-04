@@ -42,7 +42,7 @@ class AuthenticationProvider extends ChangeNotifier {
   User? get user => _firebaseAuth.currentUser;
 
   /// Client ID for the Google Sign-In.
-  static const clientId =
+  static const webClientId =
       '626284965826-iovj6s0lvft551f3d6ahdr6qkoc53njg.apps.googleusercontent.com';
 
   /// Creates a new [AuthenticationProvider].
@@ -66,7 +66,7 @@ class AuthenticationProvider extends ChangeNotifier {
   /// - On web, listens to Google authentication events
   Future<void> initialize() async {
     if (_googleSupported.isCompleted) return;
-    await _googleSignIn.initialize(clientId: clientId);
+    await _googleSignIn.initialize(clientId: kIsWeb ? webClientId : null);
     try {
       if (_googleSignIn.supportsAuthenticate()) {
         googleSignInState = GoogleSignInState.supported;

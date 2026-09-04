@@ -15,11 +15,11 @@
       },
       "oauth_client": [
         {
-          "client_id": "626284965826-ra90km7h0l4378c3b2kfn2etb6ajvrut.apps.googleusercontent.com",
+          "client_id": "626284965826-nbmgdpvv5c8pfo3qqddiu44ei6v6cp7d.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.max.homeworks",
-            "certificate_hash": "d088b4f7657a9ae2798ab151ddf470ca035e38cf"
+            "certificate_hash": "16d41dd174abeafac1b115b239cd0106d9c259a6"
           }
         },
         {

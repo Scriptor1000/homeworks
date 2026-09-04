@@ -68,5 +68,25 @@
 		</array>
 		<key>UIStatusBarHidden</key>
 		<false/>
+
+		<key>GIDClientID</key>
+		
+		<!-- Copied from GoogleService-Info.plist key CLIENT_ID -->
+		<string>626284965826-a7rr1a2bd50reag0civmrtihdd6m2stj.apps.googleusercontent.com</string>
+
+		<!-- Google Sign-in Section -->
+		<key>CFBundleURLTypes</key>
+		<array>
+			<dict>
+				<key>CFBundleTypeRole</key>
+				<string>Editor</string>
+				<key>CFBundleURLSchemes</key>
+				<array>
+					<!-- Copied from GoogleService-Info.plist key REVERSED_CLIENT_ID -->
+					<string>com.googleusercontent.apps.626284965826-a7rr1a2bd50reag0civmrtihdd6m2stj</string>
+				</array>
+			</dict>
+		</array>
+		<!-- End of the Google Sign-in Section -->
 	</dict>
 </plist>
