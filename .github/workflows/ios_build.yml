@@ -87,13 +87,15 @@ jobs:
           echo "IOS_P12_PASSWORD=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
           echo "IOS_KEYCHAIN_PASSWORD=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
           echo "IOS_P12_PATH=$RUNNER_TEMP/distribution.p12" >> "$GITHUB_ENV"
-          echo "IOS_PROFILE_PATH=$RUNNER_TEMP/profile.mobileprovision" >> "$GITHUB_ENV"
+          echo "IOS_ADHOC_PROFILE_PATH=$RUNNER_TEMP/adhoc.mobileprovision" >> "$GITHUB_ENV"
+          echo "IOS_TESTFLIGHT_PROFILE_PATH=$RUNNER_TEMP/testflight.mobileprovision" >> "$GITHUB_ENV"
 
       - name: Restore iOS signing files
         env:
           IOS_CERTIFICATE_BASE64: ${{ secrets.IOS_CERTIFICATE_BASE64 }}
           IOS_PRIVATE_KEY_BASE64: ${{ secrets.IOS_PRIVATE_KEY_BASE64 }}
-          IOS_PROVISIONING_PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
+          IOS_ADHOC_PROVISIONING_PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
+          IOS_TESTFLIGHT_PROVISIONING_PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_TESTFLIGHT_BASE64 }}
         run: |
           echo "Decoding iOS signing files ..."
           echo -n "$IOS_CERTIFICATE_BASE64" \
@@ -102,8 +104,11 @@ jobs:
           echo -n "$IOS_PRIVATE_KEY_BASE64" \
             | base64 --decode > "$RUNNER_TEMP/distribution.key"
 
-          echo -n "$IOS_PROVISIONING_PROFILE_BASE64" \
-            | base64 --decode > "$IOS_PROFILE_PATH"
+          echo -n "$IOS_ADHOC_PROVISIONING_PROFILE_BASE64" \
+            | base64 --decode > "$IOS_ADHOC_PROFILE_PATH"
+
+          echo -n "$IOS_TESTFLIGHT_PROVISIONING_PROFILE_BASE64" \
+            | base64 --decode > "$IOS_TESTFLIGHT_PROFILE_PATH"
           
           echo "Creating P12 file from certificate and private key ..."
           openssl x509 \
@@ -132,8 +137,9 @@ jobs:
       - name: Build signed iOS IPA
         env:
           APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
-          IOS_PROFILE_NAME: ${{ vars.IOS_PROFILE_NAME }}
           IOS_BUNDLE_ID: ${{ vars.IOS_BUNDLE_ID }}
+          IOS_ADHOC_PROFILE_NAME: ${{ vars.IOS_ADHOC_PROFILE_NAME }}
+          IOS_TESTFLIGHT_PROFILE_NAME: ${{ vars.IOS_TESTFLIGHT_PROFILE_NAME }}
 
           #APP_STORE_CONNECT_API_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY_BASE64 }}
           #APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
@@ -146,7 +152,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ios-app
-          path: build/ios/ipa/app.ipa
+          path: build/ios/ipa/app-adhoc.ipa
 
       - name: Verify iOS signing files [DEBUG]
         if: failure()
@@ -270,5 +276,5 @@ jobs:
           appId: ${{ vars.IOS_APP_ID }}
           serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_CREDENTIALS_CONTENT }}
           groups: all
-          file: artifacts/ios/app.ipa
+          file: artifacts/ios/app-adhoc.ipa
       
