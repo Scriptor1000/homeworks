@@ -25,6 +25,10 @@ DateTime getNextWorkday(DateTime date) {
   return nextDate;
 }
 
+bool isWeekend(DateTime date) {
+  return date.weekday == DateTime.saturday || date.weekday == DateTime.sunday;
+}
+
 String formatHourMinute(DateTime dateTime) {
   return '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
 }

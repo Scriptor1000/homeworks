@@ -29,31 +29,38 @@ class HomeDayCard extends StatelessWidget {
         ? homeworksProvider.homeworks.getForAfterDate(date)
         : homeworksProvider.homeworks.getForDate(date);
 
+    bool hasNoHomeworks =
+        homeworksForDate.isEmpty && homeworksProvider.homeworksLoaded;
+
+    double width_factor = hasNoHomeworks ? 1 / 2 : 1;
+
+    TextStyle? dateStyle = Theme.of(context).textTheme.headlineSmall;
+
     return SizedBox(
-      width: maxDayCardWidth,
+      width: maxDayCardWidth * width_factor,
       child: Card(
         margin: const EdgeInsets.symmetric(horizontal: kGapSize / 2),
         elevation: 6,
         child: Padding(
           padding: const EdgeInsets.all(kGapSize),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                onlyHomeworksAfterDate
-                    ? 'Alles nach ${getWeekday(date)}'
-                    : '${getWeekday(date)}, ${date.day}.${date.month}.${date.year}',
-                style: Theme.of(context).textTheme.headlineSmall,
-              ),
-              Divider(),
-              !homeworksProvider.homeworksLoaded
-                  ? const Center(child: CircularProgressIndicator())
-                  : homeworksForDate.isNotEmpty
-                  ? buildHomeworksList(homeworksForDate)
-                  : buildEmptyState(),
-            ],
-          ),
+          child: hasNoHomeworks
+              ? buildEmptyState(dateStyle)
+              : Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text(
+                      onlyHomeworksAfterDate
+                          ? 'Alles nach ${getWeekday(date)}'
+                          : '${getWeekday(date)}, ${date.day}.${date.month}.${date.year}',
+                      style: dateStyle,
+                    ),
+                    Divider(),
+                    homeworksProvider.homeworksLoaded
+                        ? buildHomeworksList(homeworksForDate)
+                        : const Center(child: CircularProgressIndicator()),
+                  ],
+                ),
         ),
       ),
     );
@@ -72,12 +79,27 @@ class HomeDayCard extends StatelessWidget {
     );
   }
 
-  Widget buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [Text('Keine Hausaufgaben')],
-      ),
+  Widget buildEmptyState(TextStyle? dateStyle) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Text(
+          onlyHomeworksAfterDate
+              ? 'Alles nach ${getWeekday(date)}'
+              : getWeekday(date),
+          style: dateStyle,
+        ),
+        Divider(),
+        Expanded(
+          child: Center(
+            child: RotatedBox(
+              quarterTurns: 1,
+              child: Text('Keine Hausaufgaben🎉', style: dateStyle),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

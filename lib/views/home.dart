@@ -98,12 +98,19 @@ class _HomeState extends State<Home> {
   }
 
   Widget buildTabletScreen(BuildContext context) {
+    const oneDay = Duration(days: 1);
+
     int dayCardCount = context.select((ConfigProvider p) => p.dayCardCount);
     bool hasFreeTime = context.select((UntisProvider p) => p.hasFreeTime);
+    Homeworks homeworks = context.select((HomeworksProvider p) => p.homeworks);
 
-    List<DateTime> upcomingWorkdays = [getNextWorkday(DateTime.now())];
-    for (int i = 0; i < dayCardCount - 2; i++) {
-      upcomingWorkdays.add(getNextWorkday(upcomingWorkdays[i]));
+    DateTime nextDay = normalizeDate(DateTime.now());
+    List<DateTime> upcomingWorkdays = [];
+    while (upcomingWorkdays.length < dayCardCount - 1) {
+      nextDay = nextDay.add(oneDay);
+      if (!isWeekend(nextDay) || homeworks.getForDate(nextDay).isNotEmpty) {
+        upcomingWorkdays.add(nextDay);
+      }
     }
 
     return ListView(
@@ -119,7 +126,11 @@ class _HomeState extends State<Home> {
       children: [
         if (!hasFreeTime) HomeDayCard(date: DateTime.now()),
         ...upcomingWorkdays.map((date) => HomeDayCard(date: date)),
-        HomeDayCard(date: upcomingWorkdays.last, onlyHomeworksAfterDate: true),
+        if (homeworks.getForAfterDate(upcomingWorkdays.last).isNotEmpty)
+          HomeDayCard(
+            date: upcomingWorkdays.last,
+            onlyHomeworksAfterDate: true,
+          ),
       ],
     );
   }
