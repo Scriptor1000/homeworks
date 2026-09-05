@@ -3,6 +3,7 @@ import 'package:dynamic_color/dynamic_color.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -39,21 +40,27 @@ void main() async {
 
   FlutterNativeSplash.remove();
   if (kReleaseMode) {
-    await SentryFlutter.init((options) {
-      options.dsn =
-          'https://2937d7b0e20d869f78933ba866a6c078@o4510119803092992.ingest.de.sentry.io/4510119812661328';
-      options.enableAutoSessionTracking = true;
+    FlutterError.onError = (errorDetails) {
+      FirebaseCrashlytics.instance.recordFlutterFatalError(errorDetails);
+    };
+    PlatformDispatcher.instance.onError = (error, stack) {
+      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+      return true;
+    };
+    // await SentryFlutter.init((options) {
+    //   options.dsn =
+    //       'https://2937d7b0e20d869f78933ba866a6c078@o4510119803092992.ingest.de.sentry.io/4510119812661328';
+    //   options.enableAutoSessionTracking = true;
 
-      if (sentryReleaseName.isNotEmpty) {
-        options.release = sentryReleaseName;
-        options.environment = sentryReleaseName.split('@').first == 'main'
-            ? 'production'
-            : 'staging';
-      }
-    }, appRunner: () => runApp(SentryWidget(child: const MainApp())));
-  } else {
-    runApp(const MainApp());
+    //   if (sentryReleaseName.isNotEmpty) {
+    //     options.release = sentryReleaseName;
+    //     options.environment = sentryReleaseName.split('@').first == 'main'
+    //         ? 'production'
+    //         : 'staging';
+    //   }
+    // }, appRunner: () => runApp(SentryWidget(child: const MainApp())));
   }
+  runApp(const MainApp());
 }
 
 /// Root widget of the application.

@@ -1,0 +1,161 @@
+# This file contains the fastlane.tools configuration
+# You can find the documentation at https://docs.fastlane.tools
+#
+# For a list of all available actions, check out
+#
+#     https://docs.fastlane.tools/actions
+#
+# For a list of all available plugins, check out
+#
+#     https://docs.fastlane.tools/plugins/available-plugins
+#
+
+# Uncomment the line if you want fastlane to automatically update itself
+# update_fastlane
+
+default_platform(:ios)
+
+platform :ios do
+  ARCHIVE_PATH = "../build/ios/Runner.xcarchive"
+
+  private_lane :setup_signing do
+    create_keychain(
+      name: "ci-signing",
+      password: ENV["IOS_KEYCHAIN_PASSWORD"],
+      default_keychain: true,
+      unlock: true,
+      timeout: 3600
+    )
+
+    import_certificate(
+      certificate_path: ENV["IOS_P12_PATH"],
+      certificate_password: ENV["IOS_P12_PASSWORD"],
+      keychain_name: "ci-signing",
+      keychain_password: ENV["IOS_KEYCHAIN_PASSWORD"]
+    )
+
+    install_provisioning_profile(
+      path: ENV["IOS_ADHOC_PROFILE_PATH"]
+    )
+
+    install_provisioning_profile(
+      path: ENV["IOS_TESTFLIGHT_PROFILE_PATH"]
+    )
+  end
+
+  private_lane :build_archive do
+    update_code_signing_settings(
+      use_automatic_signing: false,
+      path: "../ios/Runner.xcodeproj",
+
+      team_id: ENV["APPLE_TEAM_ID"],
+      bundle_identifier: ENV["IOS_BUNDLE_ID"],
+
+      # Profil nur für den Archive-Build
+      profile_name: ENV["IOS_TESTFLIGHT_PROFILE_NAME"],
+
+      code_sign_identity: "Apple Distribution"
+    )
+
+    build_app(
+      workspace: "../ios/Runner.xcworkspace",
+      scheme: "Runner",
+
+      archive_path: ARCHIVE_PATH,
+      skip_package_ipa: true,
+
+      buildlog_path: "../buildlogs",
+      result_bundle: true,
+      result_bundle_path: "../build/ios/Runner.xcresult"
+    )
+
+    crashlytics_binary = Dir.glob(
+    File.expand_path( 
+        "~/Library/Developer/Xcode/DerivedData/**/SourcePackages/checkouts/firebase-ios-sdk/Crashlytics/upload-symbols"
+      )
+    ).max_by { |path| File.mtime(path) }
+
+    UI.user_error!(
+      "Could not find Firebase Crashlytics upload-symbols binary"
+    ) unless crashlytics_binary
+
+    dsym_zip(
+      archive_path: ARCHIVE_PATH,
+      all: true
+    )
+
+    upload_symbols_to_crashlytics(
+      binary_path: crashlytics_binary,
+      dsym_path: lane_context[SharedValues::DSYM_ZIP_PATH],
+      app_id: "1:626284965826:ios:a0380d8279a58f25d1f05b"
+    )
+
+    ARCHIVE_PATH
+  end
+
+  private_lane :export_adhoc do |options|
+    build_app(
+      archive_path: options[:archive_path],
+      skip_build_archive: true,
+      skip_profile_detection: true,
+
+      export_method: "ad-hoc",
+      export_team_id: ENV["APPLE_TEAM_ID"],
+      export_options: {
+        method: "ad-hoc",
+        signingStyle: "manual",
+        teamID: ENV["APPLE_TEAM_ID"],
+        provisioningProfiles: {
+          ENV["IOS_BUNDLE_ID"] => ENV["IOS_ADHOC_PROFILE_NAME"]
+        }
+      },
+
+      output_directory: "../build/ios/ipa",
+      output_name: "app-adhoc.ipa"
+    )
+  end
+
+  private_lane :export_testflight do |options|
+    build_app(
+      archive_path: options[:archive_path],
+      skip_build_archive: true,
+
+      export_method: "app-store",
+      export_team_id: ENV["APPLE_TEAM_ID"],
+      export_options: {
+        method: "app-store",
+        signingStyle: "manual",
+        teamID: ENV["APPLE_TEAM_ID"],
+        provisioningProfiles: {
+          ENV["IOS_BUNDLE_ID"] => ENV["IOS_TESTFLIGHT_PROFILE_NAME"]
+        }
+      },
+
+      output_directory: "../build/ios/ipa",
+      output_name: "app-testflight.ipa"
+    )
+  end
+
+  desc "Build IOS App adhoc and for Testflight"
+  lane :build do
+    setup_signing
+    archive_path = build_archive
+    export_adhoc(archive_path: archive_path)
+    export_testflight(archive_path: archive_path)
+  end
+
+  desc "Deploy IOS App zu Testflight"
+  private_lane :deploy_testflight do
+    app_store_connect_api_key(
+      key_id: ENV["APP_STORE_CONNECT_KEY_ID"],
+      issuer_id: ENV["APP_STORE_CONNECT_ISSUER_ID"],
+      key_content: ENV["APP_STORE_CONNECT_API_KEY"],
+      is_key_content_base64: true
+    )
+
+    upload_to_testflight(
+      ipa: "../build/ios/ipa/app-testflight.ipa",
+      skip_waiting_for_build_processing: true
+    )
+  end
+end

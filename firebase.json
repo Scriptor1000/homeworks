@@ -1,1 +1,30 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"homework-manager-untis","appId":"1:626284965826:android:fb5237955242d6f1d1f05b","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"homework-manager-untis","configurations":{"android":"1:626284965826:android:fb5237955242d6f1d1f05b","web":"1:626284965826:web:ed0ab9c6a5c2ee9ed1f05b"}}}}}}
+{
+    "flutter": {
+        "platforms": {
+            "android": {
+                "default": {
+                    "projectId": "homework-manager-untis",
+                    "appId": "1:626284965826:android:fb5237955242d6f1d1f05b",
+                    "fileOutput": "android/app/google-services.json"
+                }
+            },
+            "ios": {
+                "default": {
+                    "projectId": "homework-manager-untis",
+                    "appId": "1:626284965826:ios:a0380d8279a58f25d1f05b",
+                    "uploadDebugSymbols": true
+                }
+            },
+            "dart": {
+                "lib/firebase_options.dart": {
+                    "projectId": "homework-manager-untis",
+                    "configurations": {
+                        "android": "1:626284965826:android:fb5237955242d6f1d1f05b",
+                        "ios": "1:626284965826:ios:a0380d8279a58f25d1f05b",
+                        "web": "1:626284965826:web:ed0ab9c6a5c2ee9ed1f05b"
+                    }
+                }
+            }
+        }
+    }
+}
