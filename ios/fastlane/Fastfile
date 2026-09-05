@@ -97,10 +97,14 @@ platform :ios do
     build_app(
       archive_path: options[:archive_path],
       skip_build_archive: true,
+      skip_profile_detection: true,
 
       export_method: "ad-hoc",
       export_team_id: ENV["APPLE_TEAM_ID"],
       export_options: {
+        method: "ad-hoc",
+        signingStyle: "manual",
+        teamID: ENV["APPLE_TEAM_ID"],
         provisioningProfiles: {
           ENV["IOS_BUNDLE_ID"] => ENV["IOS_ADHOC_PROFILE_NAME"]
         }
@@ -119,6 +123,9 @@ platform :ios do
       export_method: "app-store",
       export_team_id: ENV["APPLE_TEAM_ID"],
       export_options: {
+        method: "app-store",
+        signingStyle: "manual",
+        teamID: ENV["APPLE_TEAM_ID"],
         provisioningProfiles: {
           ENV["IOS_BUNDLE_ID"] => ENV["IOS_TESTFLIGHT_PROFILE_NAME"]
         }
