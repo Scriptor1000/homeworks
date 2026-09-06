@@ -147,7 +147,7 @@ class _UserContainerState extends State<UserContainer> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
+                  FaIcon(
                     FontAwesomeIcons.google,
                     color: hasGoogle
                         ? Colors.green
@@ -237,7 +237,7 @@ class _UserContainerState extends State<UserContainer> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
+                FaIcon(
                   FontAwesomeIcons.google,
                   color: hasGoogle
                       ? Colors.green

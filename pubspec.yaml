@@ -48,7 +48,7 @@ dependencies:
   # ui related packages
   animations: ^2.0.11
   dynamic_color: ^1.7.0
-  font_awesome_flutter: ^10.8.0
+  font_awesome_flutter: ^11.0.0
   gap: ^3.0.1
   flutter_native_splash: ^2.4.7
 
