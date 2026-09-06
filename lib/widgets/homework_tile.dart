@@ -1,5 +1,4 @@
 import 'package:collection/collection.dart';
-import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -7,14 +6,15 @@ import '../database/models/homework.dart';
 import '../database/models/subject.dart';
 import '../provider/homeworks_provider.dart';
 import '../provider/subject_provider.dart';
-import '../utilities/constants.dart';
 import '../utilities/enums.dart';
 import '../utilities/global_snackbar.dart';
 import 'subject_avatar.dart';
+import '../routes/typesafe_router.dart';
+import 'package:go_router/go_router.dart';
 
 /// A [ListTile] widget that displays homework information and allows marking it as completed.
 ///
-/// When the homework is completed or uncompleted, the [statusChange] callback is triggered.
+/// When the homework is completed, the [onCompleted] callback is triggered.
 class HomeworkTile extends StatelessWidget {
   const HomeworkTile({
     super.key,
@@ -47,7 +47,7 @@ class HomeworkTile extends StatelessWidget {
       'Donnerstag',
       'Freitag',
       'Samstag',
-      'Sonntag',
+      'Sonntag'
     ];
     final weekday = weekdays[dueDay.weekday - 1];
 
@@ -90,15 +90,114 @@ class HomeworkTile extends StatelessWidget {
         (s) => s.documentId == homework.subjectDocId,
       ),
     );
-    final homeworksProvider = context.read<HomeworksProvider>();
 
-    final backColor = subject?.backColor.harmonizeWith(
-      Theme.of(context).primaryColor,
-    );
-    final theme = Theme.of(context);
 
     final dateText = dueDateText(homework.dueDate);
+    return ExpansionTile(
+      shape: const RoundedRectangleBorder(
+        side: BorderSide.none,
+      ),
+      leading: SubjectAvatar(subject: subject),
+      title: Text('${homework.type == HomeworkType.exam ? 'LK: ' : ''}${homework.title}'),
+      subtitle: dateText != null ? Text(dateText) : null,
+      tilePadding: const EdgeInsets.symmetric(horizontal: 16),
+      backgroundColor:
+      homework.type == HomeworkType.exam ? Colors.transparent : null,
 
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            icon: const Icon(Icons.edit),
+            onPressed: () {
+              GoRouter.of(context).go(
+                EditHomeworkRoute(homeworkId: homework.documentId).location,
+              );
+            },
+          ),
+
+          if (homework.isCompleted)
+            IconButton(
+              icon: const Icon(Icons.check_circle, color: Colors.green),
+              onPressed: () {
+                context
+                    .read<HomeworksProvider>()
+                    .toggleHomeworkCompletion(homework.id);
+                statusChange();
+              },
+            )
+          else
+            IconButton(
+              icon: const Icon(Icons.circle_outlined),
+              onPressed: () {
+                context
+                    .read<HomeworksProvider>()
+                    .toggleHomeworkCompletion(homework.id);
+                statusChange();
+              },
+            ),
+
+
+        ],
+      ),
+
+      children: [
+        Padding(
+    padding: const EdgeInsets.only(
+      top: 16,
+      right: 16,
+      bottom: 16,
+      left: 16
+    ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              /*Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Beschreibung:',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),*/
+              Row(
+                children: [
+                  Text(
+                    'Beschreibung:',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    icon: const Icon(Icons.delete, color: Colors.red),
+                    onPressed: () async {
+                      await context
+                          .read<HomeworksProvider>()
+                          .deleteHomework(homework.id);
+                      showSnackBar('Hausaufgabe gelöscht');
+                    },
+                  ),
+                ],
+              ),
+
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  homework.description.isEmpty ? '—' : homework.description,
+                ),
+              ),
+
+              const SizedBox(height: 8),
+
+            ],
+          ),
+        ),
+      ],
+    );
+
+/*
     return ListTile(
       leading: SubjectAvatar(subject: subject),
       title: Text(
@@ -175,5 +274,7 @@ class HomeworkTile extends StatelessWidget {
               )
             : null,
     };
+  }
+}*/
   }
 }

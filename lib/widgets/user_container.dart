@@ -9,12 +9,12 @@ import '../utilities/enums.dart';
 import '../utilities/global_snackbar.dart';
 import '../web_authentication/web_authentication.dart' as web;
 import 'fab.dart';
-
+import 'package:firebase_auth/firebase_auth.dart';
 /// A widget that displays user information and allows account management.
 ///
 /// Shows the user's profile picture, name, email, and linked accounts.
 /// It provides options to link or unlink Google accounts and manage email/password credentials.
-/// Also it shows a sign-out button wich additionally deletes all local data.
+/// Also it shows a sign-out button which additionally deletes all local data.
 class UserContainer extends StatefulWidget {
   const UserContainer({super.key});
 
@@ -147,7 +147,7 @@ class _UserContainerState extends State<UserContainer> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
+                  FaIcon(
                     FontAwesomeIcons.google,
                     color: hasGoogle
                         ? Colors.green
@@ -184,7 +184,7 @@ class _UserContainerState extends State<UserContainer> {
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Theme.of(
                       context,
-                    ).colorScheme.onSurface.withOpacity(0.6),
+                    ).colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
                 ),
               const SizedBox(height: 12),
@@ -214,7 +214,7 @@ class _UserContainerState extends State<UserContainer> {
                   style: FilledButton.styleFrom(
                     backgroundColor: Theme.of(
                       context,
-                    ).colorScheme.outline.withOpacity(0.12),
+                    ).colorScheme.outline.withValues(alpha: 0.12),
                     foregroundColor: Theme.of(context).colorScheme.outline,
                   ),
                 )
@@ -237,7 +237,7 @@ class _UserContainerState extends State<UserContainer> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
+                FaIcon(
                   FontAwesomeIcons.google,
                   color: hasGoogle
                       ? Colors.green
@@ -274,7 +274,7 @@ class _UserContainerState extends State<UserContainer> {
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: Theme.of(
                     context,
-                  ).colorScheme.onSurface.withOpacity(0.6),
+                  ).colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
               ),
             const SizedBox(height: 12),
@@ -304,7 +304,7 @@ class _UserContainerState extends State<UserContainer> {
                 style: FilledButton.styleFrom(
                   backgroundColor: Theme.of(
                     context,
-                  ).colorScheme.outline.withOpacity(0.12),
+                  ).colorScheme.outline.withValues(alpha: 0.12),
                   foregroundColor: Theme.of(context).colorScheme.outline,
                 ),
               )
@@ -377,7 +377,7 @@ class _UserContainerState extends State<UserContainer> {
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: Theme.of(
                     context,
-                  ).colorScheme.onSurface.withOpacity(0.6),
+                  ).colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
               ),
             const SizedBox(height: 12),
@@ -464,14 +464,57 @@ class _UserContainerState extends State<UserContainer> {
   }
 
   Future<void> _changeEmailPassword() async {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text("Passwort zurücksetzen"),
+        content: Text("Wenn Sie ihr Passwort ändern wollen, wird Ihnen eine E-Mail zum Zurücksetzen ihres Passworts geschickt."),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text("Abbrechen"),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _sendResetEmail();
+            },
+            child: Text("E-Mail senden"),
+          ),
+        ],
+      )
+    );
     // TODO: Implementiere Passwort-Änderung
     // Diese Funktion sollte einen Dialog öffnen, in dem der Benutzer
     // sein aktuelles Passwort bestätigt und ein neues festlegt.
     // Verwende FirebaseAuth.updatePassword() nach Re-Authentifizierung
-    showSnackBar('Passwort-Änderung noch nicht implementiert');
-    print('TODO: Passwort-Änderung implementieren');
   }
+Future <void> _sendResetEmail() async {
+    String nachricht;
 
+    final email = context.read<AuthenticationProvider>().user?.email;
+
+    if (email == null || email.trim().isEmpty) {
+      nachricht = "Für dieses Konto ist keine E-Mail-Adresse hinterlegt. Bitte hinterlegen Sie zuerst eine E-Mail-Adresse.";
+    } else {
+      try {
+        await FirebaseAuth.instance.sendPasswordResetEmail(
+          email: email,
+        );
+        nachricht = "E-Mail gesendet. Falls sie nicht eingetroffen ist, bitte Spam-Ordner und die eingegebene E-Mail überprüfen.";
+      } on FirebaseAuthException catch (e) {
+        nachricht = "Fehler beim Senden der E-Mail";
+      }
+      }
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(nachricht),
+      ),
+    );
+  }
   Future<void> _signOut() async {
     await context.read<CredentialProvider>().clearCredentialsLocal();
     await context.read<AuthenticationProvider>().signOut();

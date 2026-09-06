@@ -540,6 +540,66 @@ void main() {
       verifyNever(mockFirestoreHomeworks.deleteHomework(homework.documentId));
       verifyZeroInteractions(mockAnalyticsService);
     });
+
+    test('should return homework when id exists', () async {
+      // setup
+      final homework = Homework(
+        id: '1',
+        title: 'title',
+        description: 'des',
+        subjectDocId: 'sub',
+        toNextLesson: false,
+        isCompleted: false,
+        dueDate: now,
+        fromUntis: false,
+      );
+
+      when(mockFirestoreHomeworks.loadAllHomeworks())
+          .thenAnswer((_) async => [homework]);
+
+      await homeworksProvider.initialize();
+
+      // test
+      final result = homeworksProvider.getById(homework.documentId);
+
+      // verify
+      expect(result, isNotNull);
+      expect(result, equals(homework));
+    });
+    test('should return imported homework when documentId exists', () async {
+      // setup
+      final homework = Homework(
+        id: '1',
+        title: 'title',
+        description: 'des',
+        subjectDocId: 'sub',
+        toNextLesson: false,
+        isCompleted: false,
+        dueDate: now,
+        fromUntis: true,
+      );
+      when(mockFirestoreHomeworks.loadAllHomeworks())
+          .thenAnswer((_) async => [homework]);
+      await homeworksProvider.initialize();
+      // test
+      final result = homeworksProvider.getById(homework.documentId);
+      // verify
+      expect(result, isNotNull);
+      expect(result, equals(homework));
+    });
+    test('should return null when id does not exist', () async {
+      // setup
+      when(mockFirestoreHomeworks.loadAllHomeworks())
+          .thenAnswer((_) async => []);
+
+      await homeworksProvider.initialize();
+
+      // test
+      final result = homeworksProvider.getById('non_existing_id');
+
+      // verify
+      expect(result, isNull);
+    });
   });
 }
 

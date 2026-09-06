@@ -47,7 +47,7 @@ void main() {
         when(mockHomeworks[i].documentId).thenReturn('homework-$i');
         when(mockHomeworks[i].toDocument()).thenReturn({
           'homeworkId': i,
-          'done': i % 2 == 0,
+          'isCompleted': i % 2 == 0,
           'dueDate': i < 2
               ? Timestamp.fromDate(now.add(Duration(days: 2)))
               : Timestamp.fromDate(now.subtract(Duration(days: 2))),
@@ -55,7 +55,7 @@ void main() {
         when(
           mockItemFactory.homeworkFromDocument({
             'homeworkId': i,
-            'done': i % 2 == 0,
+            'isCompleted': i % 2 == 0,
             'dueDate': i < 2
                 ? Timestamp.fromDate(now.add(Duration(days: 2)))
                 : Timestamp.fromDate(now.subtract(Duration(days: 2))),

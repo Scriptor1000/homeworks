@@ -21,20 +21,24 @@ class CredentialProvider extends ChangeNotifier {
   final FirestoreCredentials _firestoreCredentials;
   final ItemFactory _itemFactory;
 
-  UntisCredentials? _credentials;
-  UntisSession? _session;
+  UntisCredentials? _credentials; // locally stored credentials
+  UntisSession? _session; // current Untis session
   UntisSessionStatus _sessionStatus = UntisSessionStatus.noCredentials;
+  bool _isLoadingCredentials = false;
 
   CredentialsOnlineStatus _credentialsOnlineStatus =
       CredentialsOnlineStatus.loading;
 
-  CredentialProvider({
-    required FirestoreCredentials firestoreCredentials,
-    required ItemFactory itemFactory,
-    required FlutterSecureStorage storage,
-  }) : _firestoreCredentials = firestoreCredentials,
-       _itemFactory = itemFactory,
-       _storage = storage;
+  CredentialProvider(
+      {required FirestoreCredentials firestoreCredentials,
+      required ItemFactory itemFactory,
+      required FlutterSecureStorage storage})
+      : _firestoreCredentials = firestoreCredentials,
+        _itemFactory = itemFactory,
+        _storage = storage;
+
+  /// Wheter the credentials are currently being loaded or the loading process is finished.
+  bool get isLoading => _isLoadingCredentials;
 
   /// Whether the credentials are available.
   bool get hasCredentials => _credentials != null;
@@ -55,10 +59,20 @@ class CredentialProvider extends ChangeNotifier {
   /// This method should be called at the start of the application to ensure credentials are loaded or
   /// to refresh the the credentials and their onlineStatus.
   Future<void> initialize() async {
+    _isLoadingCredentials = true;
+    notifyListeners();
     await _loadCredentialsLocal();
+    _isLoadingCredentials = false;
+    if (kDebugMode) {
+      debugPrint(
+        'Loaded credentials from secure storage: ${_credentials != null ? 'present' : 'absent'}',
+      );
+    }
+
     await _loadOnlineStatus();
   }
 
+  /// Sets the current credentials, saves locally, and creates a session
   Future<void> setCredentials(UntisCredentials credentials) async {
     final res = await _itemFactory.createUntisSession(credentials);
     if (res.status == UntisSessionStatus.error) {
@@ -76,6 +90,7 @@ class CredentialProvider extends ChangeNotifier {
     _loadOnlineStatus();
   }
 
+  /// Loads credentials from local secure storage
   Future<void> _loadCredentialsLocal() async {
     _sessionStatus = UntisSessionStatus.loading;
     notifyListeners();
@@ -87,16 +102,32 @@ class CredentialProvider extends ChangeNotifier {
       _sessionStatus = res.status;
     } else {
       _sessionStatus = UntisSessionStatus.noCredentials;
+      notifyListeners();
+      await _createSession();
+    }
+  }
+
+  /// Creates a Untis session using current credentials
+  Future<void> _createSession() async {
+    if (_credentials == null) return;
+    _sessionStatus = UntisSessionStatus.loading;
+    notifyListeners();
+    try {
+      final res = await _itemFactory.createUntisSession(_credentials!);
+      _session = res.session;
+      _sessionStatus = res.status;
+    } catch (e) {
+      _sessionStatus = UntisSessionStatus.error;
+      print('Error creating session: $e');
     }
     notifyListeners();
   }
 
+  /// Saves the current credentials to local secure storage
   Future<void> _saveCredentialsLocal() async {
     if (_credentials != null) {
       await _storage.write(
-        key: credentialsKey,
-        value: _credentials!.toJsonString(),
-      );
+          key: credentialsKey, value: _credentials!.toJsonString());
     }
   }
 
@@ -124,8 +155,37 @@ class CredentialProvider extends ChangeNotifier {
       return Future.error('Keine Anmeldedaten gefunden.');
     }
 
-    return setCredentials(storedCredentials);
+    try {
+      final res = await _itemFactory.createUntisSession(storedCredentials);
+      if (res.status != UntisSessionStatus.sessionAccomplished ||
+          res.session == null) {
+        switch (res.status) {
+          case UntisSessionStatus.invalidCredentials:
+            return Future.error('Ungültige Anmeldedaten.');
+          case UntisSessionStatus.error:
+            return Future.error('Anmeldung fehlgeschlagen.');
+          default:
+            Sentry.logger.error(
+              'Unexpected UntisSessionStatus ${res.status} in '
+                  'loadCredentialsOnline (session: ${res.session})',
+            );
+            return Future.error('Unbekannter Fehler bei der Anmeldung.');
+        }
+      }
+        _credentials = storedCredentials;
+        _session = res.session;
+        _sessionStatus = res.status;
+
+    } catch (error, stackTrace) {
+      Sentry.captureException(error, stackTrace: stackTrace);
+      return Future.error('Anmeldung fehlgeschlagen.');
+    }
+    await _saveCredentialsLocal();
+    notifyListeners();
+    _loadOnlineStatus();
   }
+
+
 
   /// Uploads the current credentials to Firestore.
   ///
@@ -139,6 +199,7 @@ class CredentialProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Loads the online status of credentials by comparing local and online hashes
   Future<void> _loadOnlineStatus() async {
     _credentialsOnlineStatus = CredentialsOnlineStatus.loading;
     notifyListeners();

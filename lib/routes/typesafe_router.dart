@@ -8,6 +8,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
+import 'package:provider/provider.dart';
 
 import '../auth/login.dart';
 import '../database/models/subject.dart';
@@ -21,22 +22,27 @@ import '../views/untis/load_credentials.dart';
 import '../views/untis/untis_login.dart';
 import '../views/untis/upload_credentials.dart';
 import '../views/untis_view.dart';
+//import '../views/timetable_view.dart';
 import 'navigation_shell.dart';
 import 'provider_shell.dart';
-
+import '../provider/homeworks_provider.dart';
 part 'typesafe_router.g.dart';
 
-final _refreshStream = GoRouterRefreshStream(
-  FirebaseAuth.instance.authStateChanges(),
-);
+/// Stream that triggers GoRouter refresh when FirebaseAuth state changes
+final _refreshStream =
+    GoRouterRefreshStream(FirebaseAuth.instance.authStateChanges());
 
+/// Shortcut getters for route locations
+//String get _timetableLocation => const TimetableRoute().location;
 String get _homeLocation => const HomeRoute().location;
 String get _untisLocation => const UntisRoute().location;
 String get _accountLocation => const AccountRoute().location;
-
 String get _authLocation => const AuthRoute().location;
 
+/// Main app router using GoRouter
+
 final appRouter = GoRouter(
+  // Initial location depends on whether user is logged in
   initialLocation: FirebaseAuth.instance.currentUser == null
       ? _authLocation
       : _homeLocation,
@@ -50,20 +56,23 @@ final appRouter = GoRouter(
     final bool isOnAuth = state.matchedLocation == _authLocation;
     final bool isOnRoot = state.matchedLocation == '/';
 
+    // Redirect to login if not logged in
     if (!isLoggedIn && !isOnAuth) {
       return _authLocation;
     }
+    // Redirect logged in user away from login/root to home
     if (isLoggedIn && (isOnAuth || isOnRoot)) {
       return _homeLocation;
     }
     return null;
   },
-  onException: (context, state, router) {
-    router.go(_authLocation);
-  },
+
   routes: $appRoutes,
 );
+/// Route for timetable demo page
 
+
+/// Route for authentication screen
 @TypedGoRoute<AuthRoute>(path: '/auth')
 class AuthRoute extends GoRouteData with $AuthRoute {
   const AuthRoute();
@@ -86,15 +95,18 @@ class AuthRoute extends GoRouteData with $AuthRoute {
   }
 }
 
+/// Shell route for bottom navigation bar and nested navigation
 @TypedShellRoute<NavigationShellRoute>(
   routes: <TypedRoute<RouteData>>[
     TypedGoRoute<HomeRoute>(
       path: '/home',
       routes: <TypedRoute<RouteData>>[
         TypedGoRoute<CreateHomeworkRoute>(path: 'createHomework'),
+        TypedGoRoute<EditHomeworkRoute>(path: 'editHomework'),
         TypedGoRoute<SubjectSelectionRoute>(path: 'subjectSelection'),
       ],
     ),
+    //TypedGoRoute<TimetableRoute>(path: '/timetable'),
     TypedGoRoute<UntisRoute>(
       path: '/untis',
       routes: <TypedRoute<RouteData>>[
@@ -118,6 +130,7 @@ class NavigationShellRoute extends ShellRouteData {
   ) {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
+      // Redirect to auth page if not logged in
       WidgetsBinding.instance.addPostFrameCallback((_) {
         GoRouter.of(context).go(_authLocation);
       });
@@ -133,9 +146,13 @@ class NavigationShellRoute extends ShellRouteData {
     }
     return CustomTransitionPage(
       key: state.pageKey,
+      // Wrap child with ProviderShell for access to providers
       child: ProviderShell(
         uid: user.uid,
-        child: NavigationShell(state: state, child: navigator),
+        child: NavigationShell(
+          state: state,
+          child: navigator,
+        ),
       ),
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
         return SharedAxisTransition(
@@ -156,7 +173,10 @@ class HomeRoute extends GoRouteData with $HomeRoute {
 
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
-    return NoTransitionPage(key: state.pageKey, child: const Home());
+    return NoTransitionPage(
+      key: state.pageKey,
+      child: const Home(),
+    );
   }
 }
 
@@ -168,6 +188,38 @@ class CreateHomeworkRoute extends GoRouteData with $CreateHomeworkRoute {
     return const CreateHomework();
   }
 }
+
+/*class TimetableRoute extends GoRouteData with $TimetableRoute {
+  const TimetableRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    return const TimetableView();
+  }
+}*/
+
+class EditHomeworkRoute extends GoRouteData with $EditHomeworkRoute {
+  const EditHomeworkRoute({required this.homeworkId});
+
+  final String homeworkId;
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    // Fetch the Homework object from your provider
+    final homework = context.read<HomeworksProvider>().getById(homeworkId);
+
+    if (homework == null) {
+      return Scaffold(
+        body: Center(
+          child: Text('Homework not found'),
+        ),
+      );
+    }
+
+    return CreateHomework(existingHomework: homework);
+  }
+}
+
 
 class SubjectSelectionRoute extends GoRouteData with $SubjectSelectionRoute {
   /// Callback wich is called when a subject is selected.
@@ -181,7 +233,9 @@ class SubjectSelectionRoute extends GoRouteData with $SubjectSelectionRoute {
 
   @override
   Widget build(BuildContext context, GoRouterState state) {
-    return SubjectSelection(onSubjectSelected: $extra);
+    return SubjectSelection(
+      onSubjectSelected: $extra,
+    );
   }
 
   @override
@@ -200,7 +254,10 @@ class UntisRoute extends GoRouteData with $UntisRoute {
 
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
-    return NoTransitionPage(key: state.pageKey, child: const UntisView());
+    return NoTransitionPage(
+      key: state.pageKey,
+      child: const UntisView(),
+    );
   }
 }
 
@@ -249,7 +306,10 @@ class AccountRoute extends GoRouteData with $AccountRoute {
 
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
-    return NoTransitionPage(key: state.pageKey, child: const AccountView());
+    return NoTransitionPage(
+      key: state.pageKey,
+      child: const AccountView(),
+    );
   }
 }
 
@@ -261,6 +321,7 @@ class GoRouterRefreshStream extends ChangeNotifier {
   GoRouterRefreshStream(Stream<User?> stream) {
     _subscription = stream.listen((user) async {
       if (user != null) {
+        // Ensure user document exists in Firestore
         final firestoreUser = FirestoreUser(
           uid: user.uid,
           firestore: FirebaseFirestore.instance,
@@ -289,15 +350,21 @@ class DestinationsManager {
   /// Returns the index of the bottom navigation bar based on the current route.
   static int getNavigationIndex(GoRouterState state) {
     final location = state.matchedLocation;
+    //if (location.startsWith(_timetableLocation)) return 0;
+    if (location.startsWith(_homeLocation)) return 0;
     if (location.startsWith(_untisLocation)) return 1;
     if (location.startsWith(_accountLocation)) return 2;
-    if (location.startsWith(_homeLocation)) return 0;
-    return 0;
+    return 1;
   }
 
   /// Navigation destinations for bottom navigation bar
   static List<NavigationDestination> get bottomNavigationDestinations {
     return [
+      /*const NavigationDestination(
+        icon: Icon(Icons.edit_calendar_outlined),
+        selectedIcon: Icon(Icons.edit_calendar),
+        label: 'Timetable',
+      ),*/
       const NavigationDestination(
         icon: Icon(Icons.home_outlined),
         selectedIcon: Icon(Icons.home),

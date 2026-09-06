@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
+import 'package:collection/collection.dart';
 
 import '../database/models/homework.dart';
 import '../database/models/subject.dart';
@@ -13,17 +14,19 @@ import '../utilities/global_snackbar.dart';
 import '../utilities/homeworks_list.dart';
 import '../widgets/fab.dart';
 import '../widgets/homework_tile.dart';
-import 'home/create_homework.dart';
 
+/// Layout constants controlling spacing and border sizes for urgent homework UI
 const urgentContainerMargin = 12.0;
 const urgentContainerPadding = 8.0;
 const urgentContainerBorderWidth = 3.0;
 
+/// Combined padding value used for positioning homeworks UI sections
 const horizontalPadding =
     urgentContainerMargin + urgentContainerPadding + urgentContainerBorderWidth;
 
-/// The main view wich shows the homeworks and exams.
-/// It also provides a quick way to add new homeworks or to open [CreateHomework].
+/// The main screen that displays all existing homeworks & exams.
+/// It also provides fast creation, detailed creation navigation,
+/// and groups items into categories such as urgent and no due date.
 class Home extends StatefulWidget {
   const Home({super.key});
 
@@ -32,9 +35,13 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
+  /// Allows entering "quick add" text for homework
   final TextEditingController _textController = TextEditingController();
+
+  /// Used to detect focus for layout/animation behavior
   final FocusNode _textFocus = FocusNode();
 
+  /// True when the quick-add textbox is focused
   bool focused = false;
 
   @override
@@ -46,6 +53,7 @@ class _HomeState extends State<Home> {
 
   @override
   void initState() {
+    /// Listen for focus changes so UI can animate the FAB
     _textFocus.addListener(() {
       setState(() {
         focused = _textFocus.hasFocus;
@@ -54,6 +62,8 @@ class _HomeState extends State<Home> {
     super.initState();
   }
 
+  /// If text was typed -> fast create homework.
+  /// Otherwise -> open full CreateHomework page.
   void _handleAddAction() {
     final text = _textController.text;
     if (text.isNotEmpty) {
@@ -66,45 +76,73 @@ class _HomeState extends State<Home> {
 
   @override
   Widget build(BuildContext context) {
+    /// Reads homework data from provider so UI stays updated
     final homeworkProvider = context.watch<HomeworksProvider>();
 
+    /// Separate homework into categories for UI presentation
     final urgentHomeworks = homeworkProvider.homeworks.urgent;
     final nonUrgentHomeworks = homeworkProvider.homeworks.notUrgent.withDueDate;
     final poorlyHomeworks = homeworkProvider.homeworks.withoutDueDate;
 
-    urgentHomeworks.sort((a, b) => a.dueDate!.compareTo(b.dueDate!));
-    nonUrgentHomeworks.sort((a, b) => a.dueDate!.compareTo(b.dueDate!));
+    /// Sort urgent & non-urgent homeworks chronologically
+    urgentHomeworks.sort(
+          (a, b) => a.dueDate!.compareTo(b.dueDate!),
+    );
+    nonUrgentHomeworks.sort(
+          (a, b) => a.dueDate!.compareTo(b.dueDate!),
+    );
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Hausaufgaben')),
+      appBar: AppBar(
+        title: const Text('Hausaufgaben'),
+        /*actions: [
+          IconButton(
+            iconSize: 32,
+            icon: const Icon(Icons.swap_horiz),
+            onPressed: () {
+              const TimetableRoute().go(context);
+            },
+          ),
+        ],*/
+      ),
+
+      /// Show spinner until initial homework load completes
       body: !homeworkProvider.homeworksLoaded
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
-              child: Column(
-                children: [
-                  if (urgentHomeworks.isNotEmpty)
-                    buildUrgentHomeworks(context, urgentHomeworks),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: horizontalPadding,
-                    ),
-                    child: buildHomeworks(nonUrgentHomeworks),
-                  ),
-                  if (poorlyHomeworks.isNotEmpty)
-                    buildPoorlyHomeworks(context, poorlyHomeworks),
-                  buildFABGap(),
-                ],
-              ),
-            ),
+        child: Column(
+          children: [
+            /// Urgent section
+            if (urgentHomeworks.isNotEmpty)
+              buildUrgentHomeworks(context, urgentHomeworks),
+
+            /// Normal due-date homework section
+            Padding(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: horizontalPadding),
+                child: buildHomeworks(nonUrgentHomeworks)),
+
+            /// Items without due date
+            if (poorlyHomeworks.isNotEmpty)
+              buildPoorlyHomeworks(context, poorlyHomeworks),
+
+            buildFABGap()
+          ],
+        ),
+      ),
+
+      /// Adds a FAB row with quick add text field + button
       floatingActionButton: buildFAB(),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 
-  void statusChange(int index) {
-    // this is just for possible future animations, etc.
+  /// Called when homework is marked done; currently logs only
+  void onCompleted(int index) {
+    Sentry.logger.info('Homework at index $index completed');
   }
 
+  /// Builds the "urgent" decorated section
   Widget buildUrgentHomeworks(BuildContext context, Homeworks urgentHomeworks) {
     return buildDecoratedHomeworks(
       context: context,
@@ -119,18 +157,17 @@ class _HomeState extends State<Home> {
     );
   }
 
+  /// Builds "no due date" decorated section
   Widget buildPoorlyHomeworks(
-    BuildContext context,
-    List<Homework> poorlyHomeworks,
-  ) {
+      BuildContext context, List<Homework> poorlyHomeworks) {
     return buildDecoratedHomeworks(
-      context: context,
-      borderColor: Colors.grey,
-      label: 'Ohne Abgabedatum',
-      child: buildHomeworks(poorlyHomeworks),
-    );
+        context: context,
+        borderColor: Colors.grey,
+        label: 'Ohne Abgabedatum',
+        child: buildHomeworks(poorlyHomeworks));
   }
 
+  /// Adds border, padding + label for homework category sections
   Widget buildDecoratedHomeworks({
     required BuildContext context,
     required Color borderColor,
@@ -139,23 +176,23 @@ class _HomeState extends State<Home> {
   }) {
     return Stack(
       children: [
+        /// Main bordered container
         Container(
           margin: const EdgeInsets.symmetric(
-            horizontal: urgentContainerMargin,
-            vertical: 8,
-          ),
+              horizontal: urgentContainerMargin, vertical: 8),
           padding: const EdgeInsets.all(urgentContainerPadding),
           decoration: BoxDecoration(
             border: Border.all(
               color: borderColor,
               width: urgentContainerBorderWidth,
             ),
-            borderRadius: BorderRadius.circular(
-              BorderRadiusConstants.homeworks,
-            ),
+            borderRadius:
+                BorderRadius.circular(BorderRadiusConstants.homeworks),
           ),
           child: child,
         ),
+
+        /// Positioned category label floating over the border
         Positioned(
           left: 20,
           top: 0,
@@ -176,6 +213,7 @@ class _HomeState extends State<Home> {
     );
   }
 
+  /// Renders a list of homework tiles (not scrollable by itself)
   Widget buildHomeworks(List<Homework> homeworks) {
     return ListView.builder(
       shrinkWrap: true,
@@ -188,7 +226,7 @@ class _HomeState extends State<Home> {
           child: HomeworkTile(
             homework: homework,
             statusChange: () {
-              statusChange(index);
+              onCompleted(index);
             },
           ),
         );
@@ -196,6 +234,8 @@ class _HomeState extends State<Home> {
     );
   }
 
+  /// Floating input bar to quickly add homework
+  /// → includes text field + animated FAB
   Widget buildFAB() {
     Duration duration = const Duration(milliseconds: 300);
     return Padding(
@@ -203,6 +243,7 @@ class _HomeState extends State<Home> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
+          /// Type here to quickly add
           Expanded(
             child: TextField(
               controller: _textController,
@@ -217,17 +258,17 @@ class _HomeState extends State<Home> {
                 _textFocus.unfocus();
               },
               decoration: InputDecoration(
-                hintText: 'Schnell hinzufügen...',
-                fillColor: Theme.of(context).colorScheme.surface,
-                filled: true,
-              ),
+                  hintText: 'Schnell hinzufügen...',
+                  fillColor: Theme.of(context).colorScheme.surface,
+                  filled: true),
             ),
           ),
+
+          /// Animated add button that shrinks/expands when textfield focused
           AnimatedPadding(
             duration: duration,
-            padding: EdgeInsets.only(
-              left: focused ? 10 : 2 * horizontalPadding,
-            ),
+            padding:
+            EdgeInsets.only(left: focused ? 10 : 2 * horizontalPadding),
             child: AnimatedScale(
               alignment: Alignment.centerRight,
               duration: duration,
@@ -244,19 +285,19 @@ class _HomeState extends State<Home> {
     );
   }
 
+  /// Creates a quick homework entry using the currently active subject (if any)
   Future<void> fastCreate() async {
     final untisProvider = context.read<UntisProvider>();
-    final currentSubjectID = untisProvider.getCurrentSubject();
+    var currentSubjectID = untisProvider.getCurrentSubject();
 
     if (currentSubjectID == null) {
-      // This is pushed because it should not be shown in the URL
+      // This is pushed because it should not be showed in the URL
       // and it should always navigate back to this page.
       SubjectSelectionRoute($extra: onSubjectForFastCreate).push(context);
     } else {
-      final subjectProvider = context.read<SubjectProvider>();
       final homeworkProvider = context.read<HomeworksProvider>();
-      final currentSubject = subjectProvider.getSubjectByUntisId(
-        currentSubjectID,
+      final currentSubject = context.read<SubjectProvider>().subjects.firstWhereOrNull(
+            (s) => s.id == currentSubjectID.id,
       );
       if (currentSubject == null) {
         Sentry.logger.warn(
@@ -278,6 +319,7 @@ class _HomeState extends State<Home> {
     }
   }
 
+  /// Callback for subject selection after fast create
   void onSubjectForFastCreate(Subject? subject) async {
     if (subject == null) {
       showSnackBar('Es wurde kein Fach erkannt, du musst eines auswählen.');
