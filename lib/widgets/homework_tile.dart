@@ -186,12 +186,20 @@ class HomeworkTile extends StatelessWidget {
         horizontal: kGapSize,
         vertical: kGapSize / 2,
       ),
-      child: Text(
-        homework.description.isNotEmpty
-            ? homework.description
-            : 'Keine Beschreibung vorhanden',
-        style: const TextStyle(fontSize: 16),
-      ),
+      child: homework.description.isNotEmpty
+          ? Text(homework.description, style: const TextStyle(fontSize: 16))
+          : Row(
+              children: [
+                Text(' '),
+                Expanded(
+                  child: Divider(
+                    thickness: 2,
+                    color: Colors.grey.withAlpha(100),
+                  ),
+                ),
+                Text(' '),
+              ],
+            ),
     );
   }
 
