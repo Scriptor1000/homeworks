@@ -93,7 +93,7 @@ class _FindTeacherState extends State<FindTeacher> {
             return const Center(child: CircularProgressIndicator());
           }
           final result = snapshot.data!;
-          return _buildResult(result);
+          return withConstrainedWidth(context, child: _buildResult(result));
         },
       ),
     );

@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 const _defaults = <String, dynamic>{
   'maxWidthThreshold': 600,
+  'maxWidthOnTablet': 800,
   'maxDayCardWidth': 400.0,
   'dayCardCount': 5,
 };
@@ -19,6 +20,7 @@ class ConfigProvider extends ChangeNotifier {
 
   int get maxWidthThreshold => getValue<int>('maxWidthThreshold');
   double get maxDayCardWidth => getValue<double>('maxDayCardWidth');
+  double get maxWidthOnTablet => getValue<double>('maxWidthOnTablet');
   int get dayCardCount => getValue<int>('dayCardCount');
 
   set dayCardCount(int value) {

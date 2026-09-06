@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../database/models/subject.dart';
 import '../../provider/subject_provider.dart';
+import '../../widgets/search_screen.dart';
 import '../../widgets/subject_tile.dart';
 
 /// A screen that allows users to choose a [Subject].
@@ -43,96 +44,64 @@ class _SubjectSelectionState extends State<SubjectSelection> {
               subject.shortName.toLowerCase().contains(query.toLowerCase()));
     }).toList();
 
+    // IDEA: Perhaps a special section for "today's subjects" could be added?
+    // final untisProvider = context.watch<UntisProvider>();
+    // final todaySubjectIds = untisProvider.untisSubjectsLoaded
+    //     ? untisProvider.todaySubjects
+    //           .map((subject) => subject.documentId)
+    //           .toSet()
+    //     : <String>{};
+    // final todaySubjects = filteredSubjects
+    //     .where((subject) => todaySubjectIds.contains(subject.documentId))
+    //     .toList();
+
     return Scaffold(
       appBar: AppBar(title: const Text('Fach auswählen')),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Stack(
-          children: [
-            Column(
-              children: [
-                // TODO: Add "Today's subjects" section
-                Expanded(
-                  child: filteredSubjects.isEmpty
-                      ? Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                subjects.isEmpty
-                                    ? Icons.library_books_outlined
-                                    : Icons.search_off,
-                                size: 48,
-                                color: Theme.of(context).colorScheme.outline,
-                              ),
-                              const Gap(12),
-                              Text(
-                                subjects.isEmpty
-                                    ? 'Keine Fächer vorhanden'
-                                    : 'Kein Fach gefunden für „$query"',
-                                style: Theme.of(context).textTheme.bodyMedium
-                                    ?.copyWith(
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.outline,
-                                    ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ],
-                          ),
-                        )
-                      : ListView.builder(
-                          itemCount: filteredSubjects.length + 1,
-                          itemBuilder: (context, index) {
-                            if (index == filteredSubjects.length) {
-                              return const Gap(56 + 16);
-                            }
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 4),
-                              child: SubjectTile(
-                                subject: filteredSubjects[index],
-                                onTap: () {
-                                  widget.onSubjectSelected?.call(
-                                    filteredSubjects[index],
-                                  );
-                                  Navigator.pop(context);
-                                },
-                              ),
-                            );
-                          },
-                        ),
-                ),
-              ],
-            ),
-
-            /// Bottom SearchBar overlay
-            Container(
-              alignment: Alignment.bottomCenter,
-              margin: const EdgeInsets.only(bottom: 16),
-              child: SearchBar(
-                autoFocus: true,
-
-                /// Called whenever text changes → update filter
-                onChanged: (query) {
-                  setState(() {
-                    this.query = query;
-                  });
+        child: filteredSubjects.isEmpty
+            ? _buildEmpty(subjects, context)
+            : SearchScreen(
+                searchableItems: filteredSubjects,
+                searchHint: "Fach suchen...",
+                getQueryString: (Subject subject) =>
+                    '${subject.name} ${subject.shortName}'.toLowerCase(),
+                buildTile:
+                    (
+                      BuildContext context,
+                      Subject subject,
+                      void Function() onTap,
+                    ) => SubjectTile(subject: subject, onTap: onTap),
+                onSelected: (Subject subject) {
+                  widget.onSubjectSelected?.call(subject);
+                  Navigator.pop(context);
                 },
-
-                /// If exactly one match → auto-select
-                onSubmitted: (query) {
-                  if (filteredSubjects.length == 1) {
-                    widget.onSubjectSelected?.call(filteredSubjects[0]);
-                    Navigator.pop(context);
-                  }
-                },
-
-                leading: const Icon(Icons.search),
-                hintText: 'Fach suchen...', // "Search subject..."
               ),
+      ),
+    );
+  }
+
+  Center _buildEmpty(List<Subject> subjects, BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            subjects.isEmpty ? Icons.library_books_outlined : Icons.search_off,
+            size: 48,
+            color: Theme.of(context).colorScheme.outline,
+          ),
+          const Gap(12),
+          Text(
+            subjects.isEmpty
+                ? 'Keine Fächer vorhanden'
+                : 'Kein Fach gefunden für „$query"',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.outline,
             ),
-          ],
-        ),
+            textAlign: TextAlign.center,
+          ),
+        ],
       ),
     );
   }

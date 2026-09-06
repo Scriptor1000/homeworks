@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../provider/credential_provider.dart';
+import '../../utilities/common.dart';
 import '../../utilities/enums.dart';
 import '../../widgets/credential_form.dart';
 import '../../widgets/fab.dart';
@@ -89,91 +90,94 @@ class _UploadCredentialsState extends State<UploadCredentials> {
       // GestureDetector beibehalten, um die Tastatur auszublenden
       body: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              /// Loading indicator
-              OwnProgressIndicator(
-                active: loading,
-                backgroundColor: Theme.of(context).colorScheme.surface,
-              ),
+        child: withConstrainedWidth(
+          context,
+          child: Form(
+            key: _formKey,
+            child: Column(
+              children: [
+                /// Loading indicator
+                OwnProgressIndicator(
+                  active: loading,
+                  backgroundColor: Theme.of(context).colorScheme.surface,
+                ),
 
-              /// Main scrollable content
-              Expanded(
-                child: SingleChildScrollView(
-                  physics: const ClampingScrollPhysics(),
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      /// Show info if already uploaded
-                      if (alreadyUploaded)
+                /// Main scrollable content
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const ClampingScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        /// Show info if already uploaded
+                        if (alreadyUploaded)
+                          const InfoBox(
+                            title: 'Achtung!',
+                            paragraphs: [
+                              'Es sind bereits Anmeldedaten in deiner Cloud gespeichert. Durch das Hochladen werden diese unwiderruflich überschrieben.',
+                              'Dein alter Schlüssel wird durch diesen Vorgang ungültig. Du kannst ausschließlich mit dem neuen Schlüssel auf deine Anmeldedaten zugreifen.',
+                            ],
+                            icon: Icons.warning,
+                            accentColor: Colors.orange,
+                          ),
+
+                        if (alreadyUploaded) standardGap(),
+
+                        const Text(
+                          'Gib einen geheimen Schlüssel ein, um deine Anmeldedaten sicher online zu speichern.',
+                          style: TextStyle(fontSize: 16),
+                        ),
+                        standardGap(),
+
+                        /// Secret key input
+                        UserPasswordField(
+                          controller: _secretController,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Dein geheimer Schlüssel darf nicht leer sein';
+                            }
+                            return null;
+                          },
+                        ),
+
+                        standardGap(),
+                        const Text(
+                          'Deine aktuellen Untis-Anmeldedaten:',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+
+                        standardGap(),
+
+                        /// Disabled credential form for display only
+                        CredentialForm(
+                          usernameController: _usernameController,
+                          passwordController: _passwordController,
+                          schoolController: _schoolController,
+                          serverController: _serverController,
+                          disabled: true,
+                        ),
+                        standardGap(),
+
+                        /// Info box about encryption
                         const InfoBox(
-                          title: 'Achtung!',
+                          title: 'Deine Daten sind sicher!',
                           paragraphs: [
-                            'Es sind bereits Anmeldedaten in deiner Cloud gespeichert. Durch das Hochladen werden diese unwiderruflich überschrieben.',
-                            'Dein alter Schlüssel wird durch diesen Vorgang ungültig. Du kannst ausschließlich mit dem neuen Schlüssel auf deine Anmeldedaten zugreifen.',
+                            'Deine Anmeldedaten werden mit diesem Schlüssel lokal verschlüsselt und nur in dieser verschlüsselten Form online gespeichert. Der Schlüssel selbst wird niemals übertragen.',
+                            'Du benötigst diesen identischen Schlüssel für jeden zukünftigen Zugriff auf diese Daten. Bitte merke ihn dir gut oder speichere ihn sicher an einem anderen Ort.',
                           ],
-                          icon: Icons.warning,
-                          accentColor: Colors.orange,
+                          icon: Icons.info_outline,
                         ),
-
-                      if (alreadyUploaded) standardGap(),
-
-                      const Text(
-                        'Gib einen geheimen Schlüssel ein, um deine Anmeldedaten sicher online zu speichern.',
-                        style: TextStyle(fontSize: 16),
-                      ),
-                      standardGap(),
-
-                      /// Secret key input
-                      UserPasswordField(
-                        controller: _secretController,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Dein geheimer Schlüssel darf nicht leer sein';
-                          }
-                          return null;
-                        },
-                      ),
-
-                      standardGap(),
-                      const Text(
-                        'Deine aktuellen Untis-Anmeldedaten:',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-
-                      standardGap(),
-
-                      /// Disabled credential form for display only
-                      CredentialForm(
-                        usernameController: _usernameController,
-                        passwordController: _passwordController,
-                        schoolController: _schoolController,
-                        serverController: _serverController,
-                        disabled: true,
-                      ),
-                      standardGap(),
-
-                      /// Info box about encryption
-                      const InfoBox(
-                        title: 'Deine Daten sind sicher!',
-                        paragraphs: [
-                          'Deine Anmeldedaten werden mit diesem Schlüssel lokal verschlüsselt und nur in dieser verschlüsselten Form online gespeichert. Der Schlüssel selbst wird niemals übertragen.',
-                          'Du benötigst diesen identischen Schlüssel für jeden zukünftigen Zugriff auf diese Daten. Bitte merke ihn dir gut oder speichere ihn sicher an einem anderen Ort.',
-                        ],
-                        icon: Icons.info_outline,
-                      ),
-                      buildFABGap(),
-                    ],
+                        buildFABGap(),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

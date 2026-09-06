@@ -45,6 +45,7 @@ class NavigationShell extends StatelessWidget {
   }
 
   Widget _buildLargeLayout(BuildContext context) {
+    EdgeInsets padding = MediaQuery.of(context).padding;
     return Scaffold(
       body: Row(
         children: [
@@ -56,7 +57,10 @@ class NavigationShell extends StatelessWidget {
             labelType: NavigationRailLabelType.all,
             destinations: DestinationsManager.navigationRailDestinations,
           ),
-          const VerticalDivider(thickness: 1, width: 1),
+          Padding(
+            padding: EdgeInsets.only(top: padding.top, bottom: padding.bottom),
+            child: const VerticalDivider(thickness: 1, width: 1),
+          ),
           Expanded(child: child),
         ],
       ),
