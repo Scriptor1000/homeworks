@@ -1,7 +1,7 @@
 name: IOS Build
 
 on:
-  workflow_dispatch:
+  push:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -9,7 +9,6 @@ concurrency:
 
 jobs:
   test:
-    if: false # To test this workflow, do not run tests. REMOVE THIS LINE BEFORE MERGING TO MAIN BRANCH
     name: Run Tests
     runs-on: ubuntu-latest
     
