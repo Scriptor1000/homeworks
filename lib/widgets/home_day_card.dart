@@ -94,7 +94,7 @@ class HomeDayCard extends StatelessWidget {
         Expanded(
           child: Center(
             child: RotatedBox(
-              quarterTurns: 1,
+              quarterTurns: 3,
               child: Text('Keine Hausaufgaben🎉', style: dateStyle),
             ),
           ),

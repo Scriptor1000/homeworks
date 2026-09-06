@@ -4,6 +4,7 @@ import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../database/credentials.dart';
 import '../database/homeworks.dart';
@@ -27,6 +28,14 @@ class ProviderShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Config provider for remote config
+    final configProvider = ConfigProvider(
+      remoteConfig: FirebaseRemoteConfig.instance,
+      sharedPreferences: (SharedPreferencesWithCacheOptions options) async {
+        return SharedPreferencesWithCache.create(cacheOptions: options);
+      },
+    );
+
     final firestore = FirebaseFirestore.instance;
     final analytics = FirebaseAnalytics.instance;
     // this could be a constant or config
@@ -57,13 +66,14 @@ class ProviderShell extends StatelessWidget {
       firestoreUser: firestoreUser,
       itemFactory: itemFactory,
     );
-    // Config provider for remote config
-    final configProvider = ConfigProvider(
-      remoteConfig: FirebaseRemoteConfig.instance,
-    );
 
     return MultiProvider(
       providers: [
+        // Provides configuration values from Settings and Remote Config
+        ChangeNotifierProvider(
+          create: (_) => configProvider..initialize(),
+          lazy: false,
+        ),
         // Provides local and online credentials
         ChangeNotifierProvider(
           create: (_) => CredentialProvider(
@@ -103,10 +113,6 @@ class ProviderShell extends StatelessWidget {
           update: (_, untisAPIProvider, previous) =>
               (previous?..updateUntisSubjects(untisAPIProvider)) ??
               SubjectProvider(firestoreSubjects: firestoreSubjects),
-          lazy: false,
-        ),
-        ChangeNotifierProvider(
-          create: (_) => configProvider..initialize(),
           lazy: false,
         ),
 

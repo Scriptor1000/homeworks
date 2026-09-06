@@ -24,7 +24,7 @@ class HomeworksList extends StatelessWidget {
     required this.onCompleted,
     required this.homeworks,
     this.decoration,
-    this.withDateInfo = false,
+    this.withDateInfo = true,
   });
 
   @override

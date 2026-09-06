@@ -1,16 +1,56 @@
 import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+const _defaults = <String, dynamic>{
+  'maxWidthThreshold': 600,
+  'maxDayCardWidth': 400.0,
+  'dayCardCount': 5,
+};
 
 /// A provider for accessing Firebase Remote Config values.
 class ConfigProvider extends ChangeNotifier {
   final FirebaseRemoteConfig _remoteConfig;
+  final Future<SharedPreferencesWithCache> Function(
+    SharedPreferencesWithCacheOptions options,
+  )
+  _sharedPreferencesFactory;
+  SharedPreferencesWithCache? _sharedPreferences;
 
-  int get maxWidthThreshold => _remoteConfig.getInt('maxWidthThreshold');
-  double get maxDayCardWidth => _remoteConfig.getDouble('maxDayCardWidth');
-  int get dayCardCount => _remoteConfig.getInt('dayCardCount');
+  int get maxWidthThreshold => getValue<int>('maxWidthThreshold');
+  double get maxDayCardWidth => getValue<double>('maxDayCardWidth');
+  int get dayCardCount => getValue<int>('dayCardCount');
 
-  ConfigProvider({required FirebaseRemoteConfig remoteConfig})
-    : _remoteConfig = remoteConfig;
+  set dayCardCount(int value) {
+    _sharedPreferences?.setInt('dayCardCount', value);
+    notifyListeners();
+  }
+
+  ConfigProvider({
+    required FirebaseRemoteConfig remoteConfig,
+    required Future<SharedPreferencesWithCache> Function(
+      SharedPreferencesWithCacheOptions options,
+    )
+    sharedPreferences,
+  }) : _remoteConfig = remoteConfig,
+       _sharedPreferencesFactory = sharedPreferences {
+    _remoteConfig.setDefaults(_defaults);
+  }
+
+  T getValue<T>(String key) {
+    T Function(String key) getFromRemote = switch (T) {
+      const (int) => (key) => _remoteConfig.getInt(key) as T,
+      const (double) => (key) => _remoteConfig.getDouble(key) as T,
+      const (bool) => (key) => _remoteConfig.getBool(key) as T,
+      const (String) => (key) => _remoteConfig.getString(key) as T,
+      _ => throw Exception('Unsupported type $T'),
+    };
+
+    if (_sharedPreferences != null && _sharedPreferences!.containsKey(key)) {
+      return _sharedPreferences!.get(key) as T;
+    }
+    return getFromRemote(key);
+  }
 
   Future<void> initialize() async {
     await _remoteConfig.setConfigSettings(
@@ -19,14 +59,13 @@ class ConfigProvider extends ChangeNotifier {
         minimumFetchInterval: const Duration(hours: 6),
       ),
     );
-
-    _remoteConfig.setDefaults(<String, dynamic>{
-      'maxWidthThreshold': 600,
-      'maxDayCardWidth': 400.0,
-      'dayCardCount': 3,
-    });
-
     await _remoteConfig.fetchAndActivate();
+
+    SharedPreferencesWithCacheOptions sharedPreferencesOptions =
+        SharedPreferencesWithCacheOptions(allowList: _defaults.keys.toSet());
+    _sharedPreferences = await _sharedPreferencesFactory(
+      sharedPreferencesOptions,
+    );
     notifyListeners();
 
     _remoteConfig.onConfigUpdated.listen((event) {
