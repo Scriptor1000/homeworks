@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../database/models/subject.dart';
 import '../../provider/subject_provider.dart';
+import '../../utilities/common.dart';
 import '../../widgets/search_screen.dart';
 import '../../widgets/subject_tile.dart';
 
@@ -57,26 +58,29 @@ class _SubjectSelectionState extends State<SubjectSelection> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Fach auswählen')),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: filteredSubjects.isEmpty
-            ? _buildEmpty(subjects, context)
-            : SearchScreen(
-                searchableItems: filteredSubjects,
-                searchHint: 'Fach suchen...',
-                getQueryString: (Subject subject) =>
-                    '${subject.name} ${subject.shortName}'.toLowerCase(),
-                buildTile:
-                    (
-                      BuildContext context,
-                      Subject subject,
-                      void Function() onTap,
-                    ) => SubjectTile(subject: subject, onTap: onTap),
-                onSelected: (Subject subject) {
-                  widget.onSubjectSelected?.call(subject);
-                  Navigator.pop(context);
-                },
-              ),
+      body: withConstrainedWidth(
+        context,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: filteredSubjects.isEmpty
+              ? _buildEmpty(subjects, context)
+              : SearchScreen(
+                  searchableItems: filteredSubjects,
+                  searchHint: 'Fach suchen...',
+                  getQueryString: (Subject subject) =>
+                      '${subject.name} ${subject.shortName}'.toLowerCase(),
+                  buildTile:
+                      (
+                        BuildContext context,
+                        Subject subject,
+                        void Function() onTap,
+                      ) => SubjectTile(subject: subject, onTap: onTap),
+                  onSelected: (Subject subject) {
+                    widget.onSubjectSelected?.call(subject);
+                    Navigator.pop(context);
+                  },
+                ),
+        ),
       ),
     );
   }

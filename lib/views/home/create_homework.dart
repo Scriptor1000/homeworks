@@ -11,6 +11,7 @@ import '../../database/models/subject.dart';
 import '../../provider/homeworks_provider.dart';
 import '../../provider/untis_provider.dart';
 import '../../routes/typesafe_router.dart';
+import '../../utilities/common.dart';
 import '../../utilities/enums.dart';
 import '../../utilities/global_snackbar.dart';
 import '../../widgets/fab.dart';
@@ -122,32 +123,35 @@ class _CreateHomeworkState extends State<CreateHomework> {
         ),
         elevation: 0,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: SingleChildScrollView(
-          child: Form(
-            key: _formKey,
+      body: withConstrainedWidth(
+        context,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: SingleChildScrollView(
+            child: Form(
+              key: _formKey,
 
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildTitleInput(context),
-                standardGap(),
-                _buildTypeInput(),
-                standardGap(),
-                _buildSubjectSelection(context),
-                standardGap(),
-                _buildNextLessonSwitch(context),
-                standardGap(),
-                _buildDate(context),
-                standardGap(),
-                _buildTime(context),
-                standardGap(),
-                _buildEmojiPicker(),
-                standardGap(),
-                _buildDetails(),
-                buildFABGap(),
-              ],
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildTitleInput(context),
+                  standardGap(),
+                  _buildTypeInput(),
+                  standardGap(),
+                  _buildSubjectSelection(context),
+                  standardGap(),
+                  _buildNextLessonSwitch(context),
+                  standardGap(),
+                  _buildDate(context),
+                  standardGap(),
+                  _buildTime(context),
+                  standardGap(),
+                  _buildEmojiPicker(),
+                  standardGap(),
+                  _buildDetails(),
+                  buildFABGap(),
+                ],
+              ),
             ),
           ),
         ),

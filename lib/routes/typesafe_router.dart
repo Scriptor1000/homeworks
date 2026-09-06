@@ -13,7 +13,6 @@ import 'package:provider/provider.dart';
 import '../auth/login.dart';
 import '../database/models/subject.dart';
 import '../database/user.dart';
-import '../utilities/common.dart';
 import '../views/account.dart';
 import '../views/home.dart';
 import '../views/home/create_homework.dart';
@@ -181,7 +180,7 @@ class CreateHomeworkRoute extends GoRouteData with $CreateHomeworkRoute {
 
   @override
   Widget build(BuildContext context, GoRouterState state) {
-    return withConstrainedWidth(context, child: const CreateHomework());
+    return const CreateHomework();
   }
 }
 
@@ -208,10 +207,7 @@ class EditHomeworkRoute extends GoRouteData with $EditHomeworkRoute {
       return Scaffold(body: Center(child: Text('Homework not found')));
     }
 
-    return withConstrainedWidth(
-      context,
-      child: CreateHomework(existingHomework: homework),
-    );
+    return CreateHomework(existingHomework: homework);
   }
 }
 
@@ -227,10 +223,7 @@ class SubjectSelectionRoute extends GoRouteData with $SubjectSelectionRoute {
 
   @override
   Widget build(BuildContext context, GoRouterState state) {
-    return withConstrainedWidth(
-      context,
-      child: SubjectSelection(onSubjectSelected: $extra),
-    );
+    return SubjectSelection(onSubjectSelected: $extra);
   }
 
   @override
@@ -249,10 +242,7 @@ class UntisRoute extends GoRouteData with $UntisRoute {
 
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
-    return NoTransitionPage(
-      key: state.pageKey,
-      child: withConstrainedWidth(context, child: const UntisView()),
-    );
+    return NoTransitionPage(key: state.pageKey, child: const UntisView());
   }
 }
 
@@ -261,7 +251,7 @@ class EnterCredentialsRoute extends GoRouteData with $EnterCredentialsRoute {
 
   @override
   Widget build(BuildContext context, GoRouterState state) {
-    return withConstrainedWidth(context, child: const UntisLogin());
+    return const UntisLogin();
   }
 }
 
@@ -270,7 +260,7 @@ class UploadCredentialsRoute extends GoRouteData with $UploadCredentialsRoute {
 
   @override
   Widget build(BuildContext context, GoRouterState state) {
-    return withConstrainedWidth(context, child: const UploadCredentials());
+    return const UploadCredentials();
   }
 }
 
@@ -280,7 +270,7 @@ class DownloadCredentialsRoute extends GoRouteData
 
   @override
   Widget build(BuildContext context, GoRouterState state) {
-    return withConstrainedWidth(context, child: const LoadCredentials());
+    return const LoadCredentials();
   }
 }
 
@@ -291,10 +281,7 @@ class FindTeacherRoute extends GoRouteData with $FindTeacherRoute {
   @override
   Widget build(BuildContext context, GoRouterState state) {
     final descriptor = UntisElementDescriptor(.teacher, id);
-    return withConstrainedWidth(
-      context,
-      child: FindTeacher(teacher: descriptor),
-    );
+    return FindTeacher(teacher: descriptor);
   }
 }
 
@@ -304,10 +291,7 @@ class AccountRoute extends GoRouteData with $AccountRoute {
 
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
-    return NoTransitionPage(
-      key: state.pageKey,
-      child: withConstrainedWidth(context, child: const AccountView()),
-    );
+    return NoTransitionPage(key: state.pageKey, child: const AccountView());
   }
 }
 
