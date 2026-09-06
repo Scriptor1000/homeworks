@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 
-import '../utilities/common.dart';
-
 /// A generic search screen widget
 ///
 /// This widget provides a search interface for a list of items of type [T].
@@ -52,53 +50,47 @@ class _SearchScreenState<T> extends State<SearchScreen<T>> {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Stack(
         children: [
-          withConstrainedWidth(
-            context,
-            child: Column(
-              children: [
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: filtered.length + 1,
-                    itemBuilder: (context, index) {
-                      if (index == filtered.length) {
-                        // This could be improved
-                        return const Gap(56 + 16);
-                      }
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: widget.buildTile(
-                          context,
-                          filtered[index],
-                          () => widget.onSelected(filtered[index]),
-                        ),
-                      );
-                    },
-                  ),
+          Column(
+            children: [
+              Expanded(
+                child: ListView.builder(
+                  itemCount: filtered.length + 1,
+                  itemBuilder: (context, index) {
+                    if (index == filtered.length) {
+                      // This could be improved
+                      return const Gap(56 + 16);
+                    }
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: widget.buildTile(
+                        context,
+                        filtered[index],
+                        () => widget.onSelected(filtered[index]),
+                      ),
+                    );
+                  },
                 ),
-              ],
-            ),
-          ),
-          withConstrainedWidth(
-            context,
-            child: Container(
-              alignment: Alignment.bottomCenter,
-              margin: const EdgeInsets.only(bottom: 16),
-              // decoration: BoxDecoration(color: Colors.transparent),
-              child: SearchBar(
-                autoFocus: true,
-                onChanged: (query) {
-                  setState(() {
-                    this.query = query;
-                  });
-                },
-                onSubmitted: (query) {
-                  if (filtered.length == 1) {
-                    widget.onSelected(filtered[0]);
-                  }
-                },
-                leading: const Icon(Icons.search),
-                hintText: widget.searchHint,
               ),
+            ],
+          ),
+          Container(
+            alignment: Alignment.bottomCenter,
+            margin: const EdgeInsets.only(bottom: 16),
+            // decoration: BoxDecoration(color: Colors.transparent),
+            child: SearchBar(
+              autoFocus: true,
+              onChanged: (query) {
+                setState(() {
+                  this.query = query;
+                });
+              },
+              onSubmitted: (query) {
+                if (filtered.length == 1) {
+                  widget.onSelected(filtered[0]);
+                }
+              },
+              leading: const Icon(Icons.search),
+              hintText: widget.searchHint,
             ),
           ),
         ],

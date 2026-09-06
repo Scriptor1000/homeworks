@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 
 import '../../provider/credential_provider.dart';
 import '../../database/models/credentials.dart';
-import '../../utilities/common.dart';
 import '../../utilities/global_snackbar.dart';
 import '../../widgets/credential_form.dart';
 import '../../widgets/fab.dart';
@@ -94,65 +93,62 @@ class _UntisLoginState extends State<UntisLogin> {
     final provider = context.watch<CredentialProvider>();
     return Scaffold(
       appBar: AppBar(title: const Text('Untis Anmeldung')),
-      body: withConstrainedWidth(
-        context,
-        child: Column(
-          children: [
-            /// Top progress indicator (also driven by override checkbox)
-            OwnProgressIndicator(
-              active: _isLoading,
-              backgroundColor: Theme.of(context).colorScheme.surface,
-            ),
+      body: Column(
+        children: [
+          /// Top progress indicator (also driven by override checkbox)
+          OwnProgressIndicator(
+            active: _isLoading,
+            backgroundColor: Theme.of(context).colorScheme.surface,
+          ),
 
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      if (provider.sessionStatus == .sessionAccomplished)
-                        InfoBox(
-                          paragraphs: [
-                            'Du hast bereits gültige Anmeldedaten für Untis angegeben.',
-                            'Wenn du fortfährst, werden deine vorhandenen Anmeldedaten unwiderruflich überschrieben.',
-                          ],
-                          title: 'Achtung',
-                          icon: Icons.warning,
-                          accentColor: Colors.orange,
-                        ),
-                      if (provider.sessionStatus == .sessionAccomplished)
-                        standardGap(),
-                      const Text(
-                        'Gebe deine Anmeldedaten für Untis ein.',
-                        style: TextStyle(fontSize: 16),
-                      ),
-                      standardGap(),
-
-                      /// Form fields for credentials
-                      CredentialForm(
-                        formKey: _formKey,
-                        usernameController: _usernameController,
-                        passwordController: _passwordController,
-                        schoolController: _schoolController,
-                        serverController: _serverController,
-                      ),
-
-                      standardGap(),
-                      const InfoBox(
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    if (provider.sessionStatus == .sessionAccomplished)
+                      InfoBox(
                         paragraphs: [
-                          'Die Anmeldedaten werden lokal gespeichert und '
-                              'können später für die Synchronisation mit der '
-                              'Cloud verwendet werden.',
+                          'Du hast bereits gültige Anmeldedaten für Untis angegeben.',
+                          'Wenn du fortfährst, werden deine vorhandenen Anmeldedaten unwiderruflich überschrieben.',
                         ],
-                        title: 'Hinweis',
+                        title: 'Achtung',
+                        icon: Icons.warning,
+                        accentColor: Colors.orange,
                       ),
-                    ],
-                  ),
+                    if (provider.sessionStatus == .sessionAccomplished)
+                      standardGap(),
+                    const Text(
+                      'Gebe deine Anmeldedaten für Untis ein.',
+                      style: TextStyle(fontSize: 16),
+                    ),
+                    standardGap(),
+
+                    /// Form fields for credentials
+                    CredentialForm(
+                      formKey: _formKey,
+                      usernameController: _usernameController,
+                      passwordController: _passwordController,
+                      schoolController: _schoolController,
+                      serverController: _serverController,
+                    ),
+
+                    standardGap(),
+                    const InfoBox(
+                      paragraphs: [
+                        'Die Anmeldedaten werden lokal gespeichert und '
+                            'können später für die Synchronisation mit der '
+                            'Cloud verwendet werden.',
+                      ],
+                      title: 'Hinweis',
+                    ),
+                  ],
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
 
       /// Button for submitting the form & saving credentials locally

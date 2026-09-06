@@ -7,7 +7,6 @@ import '../database/models/subject.dart';
 import '../provider/credential_provider.dart';
 import '../provider/subject_provider.dart';
 import '../routes/typesafe_router.dart';
-import '../utilities/common.dart';
 import '../utilities/enums.dart';
 import '../widgets/bottom_sheet_list.dart';
 import '../widgets/fab.dart';
@@ -34,34 +33,30 @@ class _UntisViewState extends State<UntisView> {
     final CredentialProvider credentialProvider = context.watch();
     return Scaffold(
       appBar: AppBar(title: const Text('Untis Verknüpfung')),
-      body: withConstrainedWidth(
-        context,
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Column(
-              children: [
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Column(
+            children: [
+              const Divider(),
+              const StatusCheck(),
+              if (credentialProvider.sessionStatus == .sessionAccomplished) ...[
                 const Divider(),
-                const StatusCheck(),
-                if (credentialProvider.sessionStatus ==
-                    .sessionAccomplished) ...[
-                  const Divider(),
-                  const FindTeacherTile(),
-                ],
-                const Divider(),
-                Consumer(
-                  builder: (_, SubjectProvider provider, _) {
-                    return SubjectOverview(
-                      untisSubjects: provider.untisSubjects,
-                      firestoreSubjects: provider.subjects,
-                      subjectStatus: provider.untisSubjectStatus,
-                    );
-                  },
-                ),
-                const Divider(),
-                // Hier könnten weitere Elemente hinzugefügt werden
+                const FindTeacherTile(),
               ],
-            ),
+              const Divider(),
+              Consumer(
+                builder: (_, SubjectProvider provider, _) {
+                  return SubjectOverview(
+                    untisSubjects: provider.untisSubjects,
+                    firestoreSubjects: provider.subjects,
+                    subjectStatus: provider.untisSubjectStatus,
+                  );
+                },
+              ),
+              const Divider(),
+              // Hier könnten weitere Elemente hinzugefügt werden
+            ],
           ),
         ),
       ),

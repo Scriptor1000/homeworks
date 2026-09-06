@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../utilities/common.dart';
 import '../widgets/user_container.dart';
 
 /// A widget for displaying the account actions and information.
@@ -12,17 +11,14 @@ class AccountView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Konto')),
-      body: withConstrainedWidth(
-        context,
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: EdgeInsets.all(16.0),
-            child: Column(
-              children: [
-                UserContainer(),
-                // Hier kann später weiterer Inhalt für die Account-Seite eingefügt werden
-              ],
-            ),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: EdgeInsets.all(16.0),
+          child: Column(
+            children: [
+              UserContainer(),
+              // Hier kann später weiterer Inhalt für die Account-Seite eingefügt werden
+            ],
           ),
         ),
       ),
