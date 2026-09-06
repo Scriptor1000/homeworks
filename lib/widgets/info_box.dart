@@ -29,7 +29,7 @@ class InfoBox extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceVariant.withValues(alpha: 0.5),
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(BorderRadiusConstants.infoBox),
         border: Border.all(
           color: theme.colorScheme.outline.withValues(alpha: 0.3),

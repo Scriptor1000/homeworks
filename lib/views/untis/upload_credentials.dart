@@ -219,10 +219,11 @@ class _UploadCredentialsState extends State<UploadCredentials> {
       );
       Sentry.captureException(error, stackTrace: stackTrace);
     } finally {
-      if (!mounted) return;
-      setState(() {
-        loading = false;
-      });
+      if (mounted) {
+        setState(() {
+          loading = false;
+        });
+      }
     }
   }
 }

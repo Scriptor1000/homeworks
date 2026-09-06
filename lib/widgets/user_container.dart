@@ -407,7 +407,7 @@ class _UserContainerState extends State<UserContainer> {
     try {
       await context.read<AuthenticationProvider>().authenticateWithGoogle();
     } catch (e) {
-      print('Fehler beim Verknüpfen mit Google: $e');
+      showSnackBar('Fehler bei der Verknüpfung: $e');
     } finally {
       setState(() {
         isGoogleLoading = false;
@@ -461,7 +461,6 @@ class _UserContainerState extends State<UserContainer> {
     // in der der Benutzer ein Passwort für seine E-Mail-Adresse festlegen kann.
     // Verwende FirebaseAuth.linkWithCredential() mit EmailAuthProvider.credential()
     showSnackBar('E-Mail/Passwort-Einrichtung noch nicht implementiert');
-    print('TODO: E-Mail/Passwort-Einrichtung implementieren');
   }
 
   Future<void> _changeEmailPassword() async {

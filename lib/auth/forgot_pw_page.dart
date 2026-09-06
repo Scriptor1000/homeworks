@@ -29,23 +29,24 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   Future<void> _sendResetEmail() async {
     setState(() => _isLoading = true);
 
-    String nachricht;
+    String message;
     try {
       await FirebaseAuth.instance.sendPasswordResetEmail(
         email: _emailController.text.trim(),
       );
-      nachricht =
+      message =
           'E-Mail gesendet. Falls sie nicht eingetroffen ist, bitte Spam-Ordner und die eingegebene E-Mail überprüfen.';
     } on FirebaseAuthException catch (e) {
-      nachricht = _getErrorMessage(e.code);
+      message = _getErrorMessage(e.code);
     } finally {
-      if (!mounted) return;
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
 
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(nachricht)));
+    if (mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
+    }
   }
 
   String _getErrorMessage(String code) {
@@ -103,7 +104,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                       const SizedBox(height: 24),
 
                       Text(
-                        "Passwort zurücksetzen",
+                        'Passwort zurücksetzen',
                         style: TextStyle(
                           fontSize: 32,
                           fontWeight: FontWeight.bold,
@@ -187,7 +188,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                                       ),
                                     )
                                   : const Text(
-                                      "E-Mail senden",
+                                      'E-Mail senden',
                                       style: TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold,
@@ -202,7 +203,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                                 Navigator.pop(context);
                               },
                               child: Text(
-                                "Zurück",
+                                'Zurück',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   fontSize: 14,

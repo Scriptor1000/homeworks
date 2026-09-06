@@ -63,7 +63,7 @@ class _SubjectSelectionState extends State<SubjectSelection> {
             ? _buildEmpty(subjects, context)
             : SearchScreen(
                 searchableItems: filteredSubjects,
-                searchHint: "Fach suchen...",
+                searchHint: 'Fach suchen...',
                 getQueryString: (Subject subject) =>
                     '${subject.name} ${subject.shortName}'.toLowerCase(),
                 buildTile:

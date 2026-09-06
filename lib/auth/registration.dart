@@ -40,7 +40,7 @@ class _RegistrationState extends State<Registration> {
   Future<void> _register() async {
     if (_passwordController.text != _passwordController2.text) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Die Passwörter stimmen nicht überein.")),
+        const SnackBar(content: Text('Die Passwörter stimmen nicht überein.')),
       );
       return;
     }
@@ -53,7 +53,7 @@ class _RegistrationState extends State<Registration> {
     );
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(error ?? "Registrierung erfolgreich!")),
+      SnackBar(content: Text(error ?? 'Registrierung erfolgreich!')),
     );
     setState(() => _isLoading = false);
   }
@@ -150,7 +150,7 @@ class _RegistrationState extends State<Registration> {
                             buildPasswordField(
                               colorScheme,
                               _passwordController,
-                              "Passwort",
+                              'Passwort',
                             ),
                             const SizedBox(height: 24),
 
@@ -158,7 +158,7 @@ class _RegistrationState extends State<Registration> {
                             buildPasswordField(
                               colorScheme,
                               _passwordController2,
-                              "Passwort bestätigen",
+                              'Passwort bestätigen',
                             ),
                             const SizedBox(height: 24),
 
@@ -170,7 +170,7 @@ class _RegistrationState extends State<Registration> {
                                 Navigator.pop(context);
                               },
                               child: Text(
-                                "Zurück",
+                                'Zurück',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   fontSize: 14,

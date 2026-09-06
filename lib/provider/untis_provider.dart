@@ -2,10 +2,10 @@ import 'dart:async';
 
 import 'package:collection/collection.dart';
 import 'package:dart_untis_mobile/dart_untis_mobile.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:sentry_flutter/sentry_flutter.dart';
 
 import '../database/models/credentials.dart';
 import '../utilities/common.dart';
@@ -22,7 +22,7 @@ class UntisProvider extends ChangeNotifier {
   List<UntisPeriod> _todayPeriods = [];
   List<Subject> _untisSubjects = [];
   List<UntisTeacher> _untisTeachers = [];
-  Map<DateTime, List<UntisPeriod>> _timetableCache = {};
+  final Map<DateTime, List<UntisPeriod>> _timetableCache = {};
   UntisSubjectStatus _untisSubjectStatus = UntisSubjectStatus.untisUnavailable;
 
   final Duration _range;
@@ -180,8 +180,7 @@ class UntisProvider extends ChangeNotifier {
       _untisSubjectStatus = UntisSubjectStatus.loaded;
     } catch (error, stackTrace) {
       _untisSubjectStatus = UntisSubjectStatus.error;
-      print('Error loading timetable: $error');
-      Sentry.captureException(error, stackTrace: stackTrace);
+      FirebaseCrashlytics.instance.recordError(error, stackTrace);
     } finally {
       notifyListeners();
     }

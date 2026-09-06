@@ -32,12 +32,12 @@ class HomeDayCard extends StatelessWidget {
     bool hasNoHomeworks =
         homeworksForDate.isEmpty && homeworksProvider.homeworksLoaded;
 
-    double width_factor = hasNoHomeworks ? 1 / 2 : 1;
+    double widthFactor = hasNoHomeworks ? 1 / 2 : 1;
 
     TextStyle? dateStyle = Theme.of(context).textTheme.headlineSmall;
 
     return SizedBox(
-      width: maxDayCardWidth * width_factor,
+      width: maxDayCardWidth * widthFactor,
       child: Card(
         margin: const EdgeInsets.symmetric(horizontal: kGapSize / 2),
         elevation: 6,

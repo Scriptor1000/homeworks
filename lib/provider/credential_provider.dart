@@ -1,7 +1,7 @@
 import 'package:cryptography/cryptography.dart';
 import 'package:dart_untis_mobile/dart_untis_mobile.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 
@@ -118,7 +118,6 @@ class CredentialProvider extends ChangeNotifier {
       _sessionStatus = res.status;
     } catch (e) {
       _sessionStatus = UntisSessionStatus.error;
-      print('Error creating session: $e');
     }
     notifyListeners();
   }
@@ -220,8 +219,7 @@ class CredentialProvider extends ChangeNotifier {
       }
     } catch (error, stackTrace) {
       _credentialsOnlineStatus = CredentialsOnlineStatus.error;
-      print('Error checking credentials online status: $error');
-      Sentry.captureException(error, stackTrace: stackTrace);
+      FirebaseCrashlytics.instance.recordError(error, stackTrace);
     } finally {
       notifyListeners();
     }

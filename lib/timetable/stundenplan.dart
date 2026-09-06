@@ -182,7 +182,7 @@ class TimetableWidget extends StatelessWidget {
               ),
             ),
           ),
-          ...days.map((d) => _buildHeaderCell(d)).toList(),
+          ...days.map((d) => _buildHeaderCell(d)),
         ],
       ),
     );

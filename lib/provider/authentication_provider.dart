@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
@@ -104,11 +105,11 @@ class AuthenticationProvider extends ChangeNotifier {
     try {
       await _firebaseAuth.sendPasswordResetEmail(email: email.trim());
 
-      showSnackBar("Eine E-Mail zum Zurücksetzen wurde gesendet.");
+      showSnackBar('Eine E-Mail zum Zurücksetzen wurde gesendet.');
     } on FirebaseAuthException catch (e) {
-      showSnackBar("${_getErrorMessage(e)}");
+      showSnackBar(_getErrorMessage(e));
     } catch (e) {
-      showSnackBar("$e");
+      showSnackBar('$e');
     }
   }
 
@@ -132,7 +133,7 @@ class AuthenticationProvider extends ChangeNotifier {
     } on FirebaseAuthException catch (e) {
       return _getErrorMessage(e);
     } catch (e) {
-      return "$e";
+      return '$e';
     }
   }
 
@@ -174,7 +175,6 @@ class AuthenticationProvider extends ChangeNotifier {
       final allowed = await _allowedEmails.isEmailAllowed(googleUser.email);
 
       if (!allowed) {
-        print('Email not allowed: ${googleUser.email}');
         showSnackBar(
           'Kein Zugang mit dieser Email (${googleUser.email}) möglich.'
           ' Bitte wende dich an den Administrator.',
@@ -200,9 +200,8 @@ class AuthenticationProvider extends ChangeNotifier {
 
       notifyListeners();
     } catch (error, stackTrace) {
-      print('Google Sign-In Fehler: $error');
+      FirebaseCrashlytics.instance.recordError(error, stackTrace);
       // TODO Future.error
-      Sentry.captureException(error, stackTrace: stackTrace);
 
       await _googleSignIn.disconnect();
       await _firebaseAuth.signOut();
@@ -219,7 +218,6 @@ class AuthenticationProvider extends ChangeNotifier {
   Future<void> _linkWithGoogle(GoogleSignInAccount googleUser) async {
     final user = _firebaseAuth.currentUser;
     if (user == null) {
-      print('No user logged in; cannot link.');
       return;
     }
 
@@ -244,8 +242,7 @@ class AuthenticationProvider extends ChangeNotifier {
 
       notifyListeners();
     } catch (error, stackTrace) {
-      Sentry.captureException(error, stackTrace: stackTrace);
-      print('Google Verknüpfungsfehler: $error');
+      FirebaseCrashlytics.instance.recordError(error, stackTrace);
       showSnackBar('Fehler bei der Verknüpfung: $error');
     }
   }
@@ -258,7 +255,6 @@ class AuthenticationProvider extends ChangeNotifier {
   Future<void> unlinkFromGoogle() async {
     final user = _firebaseAuth.currentUser;
     if (user == null) {
-      print('No user logged in; cannot unlink.');
       return;
     }
 
@@ -296,7 +292,6 @@ class AuthenticationProvider extends ChangeNotifier {
     try {
       await _firebaseAuth.signInWithCredential(credentials);
     } catch (e) {
-      print('Error logging in with email: $e');
       showSnackBar(
         'Anmeldung fehlgeschlagen: ${e is FirebaseAuthException ? _getErrorMessage(e) : e.toString()}',
       );

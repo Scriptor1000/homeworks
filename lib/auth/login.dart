@@ -5,7 +5,7 @@ import '../web_authentication/web_authentication.dart' as web;
 import '../provider/authentication_provider.dart';
 import '../utilities/enums.dart';
 import 'forgot_pw_page.dart';
-import 'registrierung.dart';
+import 'registration.dart';
 
 /// A simple authentication screen that allows users to log in with email/password or Google.
 class Authentication extends StatefulWidget {
@@ -174,7 +174,7 @@ class _AuthenticationState extends State<Authentication> {
                                   child: GestureDetector(
                                     onTap: _isLoading ? null : _register,
                                     child: Text(
-                                      "Konto erstellen",
+                                      'Konto erstellen',
                                       textAlign: TextAlign.center,
                                       style: TextStyle(
                                         fontSize: 14,
@@ -209,7 +209,7 @@ class _AuthenticationState extends State<Authentication> {
                                       );
                                     },
                                     child: Text(
-                                      "Passwort vergessen?",
+                                      'Passwort vergessen?',
                                       textAlign: TextAlign.center,
                                       style: TextStyle(
                                         fontSize: 14,
