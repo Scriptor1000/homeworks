@@ -10,6 +10,7 @@ class HomeworksList extends StatelessWidget {
   final ValueChanged<int> onCompleted;
   final List<Homework> homeworks;
   final bool withDateInfo;
+  final EdgeInsetsGeometry? padding;
   final ({
     double containerMargin,
     double containerPadding,
@@ -25,6 +26,7 @@ class HomeworksList extends StatelessWidget {
     required this.homeworks,
     this.decoration,
     this.withDateInfo = true,
+    this.padding,
   });
 
   @override
@@ -82,6 +84,7 @@ class HomeworksList extends StatelessWidget {
   Widget _buildList() {
     return ListView.builder(
       shrinkWrap: true,
+      padding: padding,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: homeworks.length,
       itemBuilder: (context, index) {

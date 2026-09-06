@@ -124,8 +124,14 @@ class _HomeState extends State<Home> {
       ),
 
       children: [
-        if (!hasFreeTime) HomeDayCard(date: DateTime.now()),
-        ...upcomingWorkdays.map((date) => HomeDayCard(date: date)),
+        if (!hasFreeTime)
+          HomeDayCard(date: DateTime.now(), includeOverdueHomeworks: true),
+        ...upcomingWorkdays.mapIndexed(
+          (i, date) => HomeDayCard(
+            date: date,
+            includeOverdueHomeworks: hasFreeTime && i == 0,
+          ),
+        ),
         if (homeworks.getForAfterDate(upcomingWorkdays.last).isNotEmpty)
           HomeDayCard(
             date: upcomingWorkdays.last,

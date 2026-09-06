@@ -37,6 +37,12 @@ class Homeworks extends ListBase<Homework> {
   Homeworks get withoutDueDate =>
       Homeworks(homeworks: _homeworks.where((h) => h.dueDate == null).toList());
 
+  Homeworks get overdue => Homeworks(
+    homeworks: _homeworks
+        .where((h) => h.dueDate != null && h.dueDate!.isBefore(DateTime.now()))
+        .toList(),
+  );
+
   List<DateTime> get dueDates =>
       _homeworks
           .where((h) => h.dueDate != null)
