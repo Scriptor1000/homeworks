@@ -137,11 +137,14 @@ platform :ios do
   end
 
   desc "Build IOS App adhoc and for Testflight"
-  lane :build do
+  lane :build do |options|
     setup_signing
     archive_path = build_archive
     export_adhoc(archive_path: archive_path)
-    export_testflight(archive_path: archive_path)
+    if options[:testflight]
+      export_testflight(archive_path: archive_path)
+      deploy_testflight
+    end
   end
 
   desc "Deploy IOS App zu Testflight"

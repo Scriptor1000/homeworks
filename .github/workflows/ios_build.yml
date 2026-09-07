@@ -141,12 +141,12 @@ jobs:
           IOS_ADHOC_PROFILE_NAME: ${{ vars.IOS_ADHOC_PROFILE_NAME }}
           IOS_TESTFLIGHT_PROFILE_NAME: ${{ vars.IOS_TESTFLIGHT_PROFILE_NAME }}
 
-          #APP_STORE_CONNECT_API_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY_BASE64 }}
-          #APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
-          #APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_API_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY_BASE64 }}
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
         run: |
           cd ios
-          bundle exec fastlane ios build 
+          bundle exec fastlane ios build testflight:true
       
       - name: Upload IPA as GitHub artifact
         uses: actions/upload-artifact@v4

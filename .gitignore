@@ -61,7 +61,8 @@ android/app/.cxx/
 coverage/
 
 # Certificates should not be committed to source control, right?
-ios/fastlane/apple_distribution.certSigningRequest
-ios/fastlane/apple_distribution.key
-ios/fastlane/distribution.cer
+ios/fastlane/*.certSigningRequest
+ios/fastlane/*.key
+ios/fastlane/*.cer
 ios/fastlane/*.mobileprovision
+ios/fastlane/*.p8
