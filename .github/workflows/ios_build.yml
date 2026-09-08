@@ -94,7 +94,7 @@ jobs:
         env:
           IOS_CERTIFICATE_BASE64: ${{ secrets.IOS_CERTIFICATE_BASE64 }}
           IOS_PRIVATE_KEY_BASE64: ${{ secrets.IOS_PRIVATE_KEY_BASE64 }}
-          IOS_ADHOC_PROVISIONING_PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
+          IOS_ADHOC_PROVISIONING_PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_ADHOC_BASE64 }}
           IOS_TESTFLIGHT_PROVISIONING_PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_TESTFLIGHT_BASE64 }}
         run: |
           echo "Decoding iOS signing files ..."
@@ -146,7 +146,7 @@ jobs:
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
         run: |
           cd ios
-          bundle exec fastlane ios build testflight:true
+          bundle exec fastlane ios build testflight:false
       
       - name: Upload IPA as GitHub artifact
         uses: actions/upload-artifact@v4
