@@ -1,12 +1,17 @@
 import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 
 import 'enums.dart';
 
 class AnalyticsService {
   final FirebaseAnalytics _analytics;
+  final FirebaseCrashlytics _crashlytics;
 
-  AnalyticsService({required FirebaseAnalytics analytics})
-    : _analytics = analytics;
+  AnalyticsService({
+    required FirebaseAnalytics analytics,
+    required FirebaseCrashlytics crashlytics,
+  }) : _analytics = analytics,
+       _crashlytics = crashlytics;
 
   /// Logs the event of updating due dates.
   ///
@@ -120,6 +125,14 @@ class AnalyticsService {
       name: 'revive_homework',
       parameters: {'type': type.name},
     );
+  }
+
+  Future<void> logError(dynamic exception, StackTrace? stackTrace) async {
+    await _crashlytics.recordError(exception, stackTrace);
+  }
+
+  Future<void> logMessage(String message) async {
+    await _crashlytics.log(message);
   }
 
   Map<String, Object> _buildParameter({

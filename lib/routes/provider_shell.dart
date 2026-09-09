@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -38,6 +39,7 @@ class ProviderShell extends StatelessWidget {
 
     final firestore = FirebaseFirestore.instance;
     final analytics = FirebaseAnalytics.instance;
+    final crashlytics = FirebaseCrashlytics.instance;
     // this could be a constant or config
     final range = const Duration(days: 30);
 
@@ -46,7 +48,10 @@ class ProviderShell extends StatelessWidget {
     // Factory to create data models
     final itemFactory = ItemFactory();
     final storage = FlutterSecureStorage();
-    final analyticsService = AnalyticsService(analytics: analytics);
+    final analyticsService = AnalyticsService(
+      analytics: analytics,
+      crashlytics: crashlytics,
+    );
 
     // Create service instances
     final firestoreUser = FirestoreUser(firestore: firestore, uid: uid);

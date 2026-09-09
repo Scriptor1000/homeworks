@@ -341,6 +341,8 @@ void main() {
         verifyNever(
           mockAnalyticsService.reviveHomework(type: HomeworkType.homework),
         );
+        verify(mockAnalyticsService.logMessage(any)).called(1);
+        verifyNoMoreInteractions(mockAnalyticsService);
       },
     );
 
@@ -474,7 +476,8 @@ void main() {
         );
         // verify
         verifyZeroInteractions(mockFirestoreHomeworks);
-        verifyZeroInteractions(mockAnalyticsService);
+        verify(mockAnalyticsService.logMessage(any)).called(1);
+        verifyNoMoreInteractions(mockAnalyticsService);
       },
     );
 
@@ -549,7 +552,8 @@ void main() {
       expect(homeworksProvider.deleteHomework(homework.id), completes);
       // verify
       verifyNever(mockFirestoreHomeworks.deleteHomework(homework.documentId));
-      verifyZeroInteractions(mockAnalyticsService);
+      verify(mockAnalyticsService.logMessage(any)).called(1);
+      verifyNoMoreInteractions(mockAnalyticsService);
     });
 
     test('should return homework when id exists', () async {

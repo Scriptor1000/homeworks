@@ -1,5 +1,4 @@
 import 'package:collection/collection.dart';
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
 
 import '../database/homeworks.dart';
@@ -190,7 +189,7 @@ class HomeworksProvider extends ChangeNotifier {
           hw.id == updatedHomework.id,
     );
     if (homework == null) {
-      FirebaseCrashlytics.instance.log(
+      _analyticsService.logMessage(
         'Homework with id ${updatedHomework.id} not found for updating. '
         'Current homeworks ID: ${_homeworks.map((hw) => hw.id).join(', ')}',
       );
@@ -233,7 +232,7 @@ class HomeworksProvider extends ChangeNotifier {
         ),
       );
     } else {
-      FirebaseCrashlytics.instance.log(
+      _analyticsService.logMessage(
         'Homework with id $homeworkID not found for deleting. '
         'Current homeworks ID: ${_homeworks.map((hw) => hw.id).join(', ')}',
       );
@@ -256,7 +255,7 @@ class HomeworksProvider extends ChangeNotifier {
             _analyticsService.reviveHomework(type: homework.type),
       );
     } else {
-      FirebaseCrashlytics.instance.log(
+      _analyticsService.logMessage(
         'Homework with id $homeworkID not found for new due date. '
         'Current homeworks ID: ${_homeworks.map((hw) => hw.id).join(', ')}',
       );
@@ -277,7 +276,7 @@ class HomeworksProvider extends ChangeNotifier {
         return _completeHomework(homework);
       }
     } else {
-      FirebaseCrashlytics.instance.log(
+      _analyticsService.logMessage(
         'Homework with id $homeworkID not found for changing status. '
         'Current homeworks ID: ${_homeworks.map((hw) => hw.id).join(', ')}',
       );
