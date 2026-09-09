@@ -11,7 +11,6 @@ import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:provider/provider.dart';
-import 'package:sentry_flutter/sentry_flutter.dart';
 
 import 'database/allowed_emails.dart';
 import 'firebase_options.dart';
@@ -27,8 +26,7 @@ void main() async {
   /// even if it was pushed. Standard behavior is that the URL only shows routes you [go] to.
   /// GoRouter.optionURLReflectsImperativeAPIs = true;
 
-  WidgetsBinding widgetsBinding =
-      SentryWidgetsFlutterBinding.ensureInitialized();
+  WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
 
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 

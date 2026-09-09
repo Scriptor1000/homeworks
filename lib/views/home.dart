@@ -1,6 +1,6 @@
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:collection/collection.dart';
 
 import '../database/models/homework.dart';
@@ -187,7 +187,9 @@ class _HomeState extends State<Home> {
 
   /// Called when homework is marked done; currently logs only
   void onCompleted(int index) {
-    Sentry.logger.info('Homework at index $index completed');
+    FirebaseCrashlytics.instance.log(
+      'Homework at index $index marked completed.',
+    );
   }
 
   /// Builds the "urgent" decorated section
@@ -292,7 +294,7 @@ class _HomeState extends State<Home> {
           .subjects
           .firstWhereOrNull((s) => s.id == currentSubjectID.id);
       if (currentSubject == null) {
-        Sentry.logger.warn(
+        FirebaseCrashlytics.instance.log(
           'No subject found for current subject ID: ${currentSubjectID.id}',
         );
         SubjectSelectionRoute($extra: onSubjectForFastCreate).push(context);

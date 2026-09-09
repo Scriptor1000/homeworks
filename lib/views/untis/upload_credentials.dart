@@ -1,3 +1,4 @@
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -10,7 +11,6 @@ import '../../widgets/fab.dart';
 import '../../widgets/info_box.dart';
 import '../../widgets/own_progress_indicator.dart';
 import '../../widgets/password_field.dart';
-import 'package:sentry_flutter/sentry_flutter.dart';
 
 /// A widget for uploading Untis credentials to Firestore.
 ///
@@ -221,7 +221,7 @@ class _UploadCredentialsState extends State<UploadCredentials> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Fehler beim Hochladen der Anmeldedaten')),
       );
-      Sentry.captureException(error, stackTrace: stackTrace);
+      FirebaseCrashlytics.instance.recordError(error, stackTrace);
     } finally {
       if (mounted) {
         setState(() {

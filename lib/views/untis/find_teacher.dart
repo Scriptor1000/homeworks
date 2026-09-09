@@ -1,8 +1,8 @@
 import 'package:collection/collection.dart';
 import 'package:dart_untis_mobile/dart_untis_mobile.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:sentry_flutter/sentry_flutter.dart';
 
 import '../../provider/credential_provider.dart';
 import '../../provider/untis_provider.dart';
@@ -83,9 +83,9 @@ class _FindTeacherState extends State<FindTeacher> {
         stream: _stream,
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-            Sentry.captureException(
+            FirebaseCrashlytics.instance.recordError(
               snapshot.error,
-              stackTrace: snapshot.stackTrace,
+              snapshot.stackTrace,
             );
             return Center(child: Text('Fehler: ${snapshot.error}'));
           }
