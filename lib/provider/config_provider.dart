@@ -18,6 +18,8 @@ class ConfigProvider extends ChangeNotifier {
   _sharedPreferencesFactory;
   SharedPreferencesWithCache? _sharedPreferences;
 
+  bool _remoteConfigInitialized = false;
+
   int get maxWidthThreshold => getValue<int>('maxWidthThreshold');
   double get maxDayCardWidth => getValue<double>('maxDayCardWidth');
   double get maxWidthOnTablet => getValue<double>('maxWidthOnTablet');
@@ -35,9 +37,7 @@ class ConfigProvider extends ChangeNotifier {
     )
     sharedPreferences,
   }) : _remoteConfig = remoteConfig,
-       _sharedPreferencesFactory = sharedPreferences {
-    _remoteConfig.setDefaults(_defaults);
-  }
+       _sharedPreferencesFactory = sharedPreferences;
 
   T getValue<T>(String key) {
     T Function(String key) getFromRemote = switch (T) {
@@ -51,10 +51,15 @@ class ConfigProvider extends ChangeNotifier {
     if (_sharedPreferences != null && _sharedPreferences!.containsKey(key)) {
       return _sharedPreferences!.get(key) as T;
     }
+    if (!_remoteConfigInitialized) {
+      return _defaults[key] as T;
+    }
     return getFromRemote(key);
   }
 
   Future<void> initialize() async {
+    _remoteConfig.setDefaults(_defaults);
+
     await _remoteConfig.setConfigSettings(
       RemoteConfigSettings(
         fetchTimeout: const Duration(minutes: 1),
@@ -62,6 +67,8 @@ class ConfigProvider extends ChangeNotifier {
       ),
     );
     await _remoteConfig.fetchAndActivate();
+
+    _remoteConfigInitialized = true;
 
     SharedPreferencesWithCacheOptions sharedPreferencesOptions =
         SharedPreferencesWithCacheOptions(allowList: _defaults.keys.toSet());
