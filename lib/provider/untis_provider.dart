@@ -2,12 +2,13 @@ import 'dart:async';
 
 import 'package:collection/collection.dart';
 import 'package:dart_untis_mobile/dart_untis_mobile.dart';
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:firebase_performance/firebase_performance.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../database/models/credentials.dart';
+import '../utilities/analytics_service.dart';
 import '../utilities/common.dart';
 import '../utilities/enums.dart';
 import '../database/models/subject.dart';
@@ -26,8 +27,11 @@ class UntisProvider extends ChangeNotifier {
   UntisSubjectStatus _untisSubjectStatus = UntisSubjectStatus.untisUnavailable;
 
   final Duration _range;
+  final AnalyticsService _analytics;
 
-  UntisProvider({required Duration range}) : _range = range;
+  UntisProvider({required Duration range, required AnalyticsService analytics})
+    : _range = range,
+      _analytics = analytics;
 
   /// The List of Subjects from Untis in the next 30 days.
   List<Subject> get untisSubjects => _untisSubjects;
@@ -153,6 +157,8 @@ class UntisProvider extends ChangeNotifier {
     _untisSubjectStatus = UntisSubjectStatus.loading;
     notifyListeners();
 
+    Trace trace = _analytics.startCustomTrace('load_untis_timetable');
+
     try {
       // You have to edit the Package, the check if the difference is
       // negative is vice versa (start and end date are swapped)
@@ -178,9 +184,10 @@ class UntisProvider extends ChangeNotifier {
       timetable.periods.forEach(_parsePeriod);
 
       _untisSubjectStatus = UntisSubjectStatus.loaded;
+      trace.stop();
     } catch (error, stackTrace) {
       _untisSubjectStatus = UntisSubjectStatus.error;
-      FirebaseCrashlytics.instance.recordError(error, stackTrace);
+      _analytics.logError(error, stackTrace);
     } finally {
       notifyListeners();
     }

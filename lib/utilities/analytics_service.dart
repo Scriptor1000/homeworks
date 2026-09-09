@@ -1,17 +1,21 @@
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:firebase_performance/firebase_performance.dart';
 
 import 'enums.dart';
 
 class AnalyticsService {
   final FirebaseAnalytics _analytics;
   final FirebaseCrashlytics _crashlytics;
+  final FirebasePerformance _performance;
 
   AnalyticsService({
     required FirebaseAnalytics analytics,
     required FirebaseCrashlytics crashlytics,
+    required FirebasePerformance performance,
   }) : _analytics = analytics,
-       _crashlytics = crashlytics;
+       _crashlytics = crashlytics,
+       _performance = performance;
 
   /// Logs the event of updating due dates.
   ///
@@ -144,5 +148,11 @@ class AnalyticsService {
       'type': type.name,
       if (minutes != null) minutesName: minutes.inMinutes,
     };
+  }
+
+  Trace startCustomTrace(String traceName) {
+    Trace trace = _performance.newTrace(traceName);
+    trace.start();
+    return trace;
   }
 }

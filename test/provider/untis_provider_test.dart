@@ -1,6 +1,7 @@
 import 'package:dart_untis_mobile/dart_untis_mobile.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:homeworks/provider/untis_provider.dart';
+import 'package:homeworks/utilities/analytics_service.dart';
 import 'package:homeworks/utilities/enums.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
@@ -43,6 +44,7 @@ MockUntisPeriod createMockUntisPeriod({
   MockSpec<UntisPeriod>(),
   MockSpec<UntisSubject>(),
   MockSpec<UntisTeacher>(),
+  MockSpec<AnalyticsService>(),
 ])
 void main() {
   group('Untis Provider:', () {
@@ -50,6 +52,7 @@ void main() {
     late UntisProvider untisProvider;
     late MockUntisTimetable todayTimetable;
     late MockUntisTimetable futureTimetable;
+    late MockAnalyticsService mockAnalyticsService;
 
     DateTime now = DateTime.now();
 
@@ -57,7 +60,11 @@ void main() {
       mockUntisSession = MockUntisSession();
       todayTimetable = MockUntisTimetable();
       futureTimetable = MockUntisTimetable();
-      untisProvider = UntisProvider(range: Duration(days: 30));
+      mockAnalyticsService = MockAnalyticsService();
+      untisProvider = UntisProvider(
+        range: Duration(days: 30),
+        analytics: mockAnalyticsService,
+      );
 
       when(
         mockUntisSession.getTimetable(

@@ -1,4 +1,5 @@
 import 'package:collection/collection.dart';
+import 'package:firebase_performance/firebase_performance.dart';
 import 'package:flutter/material.dart';
 
 import '../database/homeworks.dart';
@@ -48,6 +49,8 @@ class HomeworksProvider extends ChangeNotifier {
 
   /// Loads all homeworks from Firestore and removes old completed ones
   Future<void> _loadHomeworks() async {
+    Trace trace = _analyticsService.startCustomTrace('load_homeworks');
+
     _homeworks = await _firestoreHomeworks.loadAllHomeworks();
     final now = DateTime.now();
     // TODO there is a better place for deleting old homeworks
@@ -72,6 +75,7 @@ class HomeworksProvider extends ChangeNotifier {
     );
 
     _homeworksLoaded = true;
+    trace.stop();
     notifyListeners();
   }
 
