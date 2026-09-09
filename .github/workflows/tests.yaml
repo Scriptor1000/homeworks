@@ -1,0 +1,45 @@
+name: Flutter Tests
+
+on:
+  pull_request:
+    branches:
+      - main
+
+  workflow_call:
+
+jobs:
+    test:
+    name: Run Flutter Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v5
+      
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.2'
+          cache: true
+
+      - name: Cache Flutter dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pub-cache
+            .dart_tool
+            .flutter-plugins
+            .flutter-plugins-dependencies
+          key: ${{ runner.os }}-flutter-dependencies-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-flutter-dependencies
+      
+      - name: Install dependencies
+        run: flutter pub get
+      
+      - name: Run build runner
+        run: dart run build_runner build
+
+      - name: Run tests
+        run: |
+          flutter analyze
+          flutter test
