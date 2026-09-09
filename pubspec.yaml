@@ -97,7 +97,6 @@ dev_dependencies:
   google_sign_in_mocks: ^0.4.1
   fake_cloud_firestore: ^4.0.0
 
-  sentry_dart_plugin: ^3.2.0
   flutter_launcher_icons: ^0.14.4
 
 # For information on the generic Dart part of this file, see the
@@ -141,17 +140,6 @@ flutter:
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
 
-sentry:
-  upload_debug_symbols: false # because no android/ios builds 
-  upload_source_maps: true
-  upload_sources: true
-
-  commits: auto
-  ignore_missing: true
-  
-  project: homeworks
-  org: max-uf
-
 flutter_launcher_icons:
   android: true
   ios: true
@@ -163,12 +151,6 @@ flutter_launcher_icons:
 
   remove_alpha_ios: true
   background_color_ios: "#FFFFFF"
-
-  web: 
-    generate: true
-    image_path: assets/icon/icon.png
-    background_color: "#FFFFFF"
-    theme_color: "#FFFFFF"
 
 flutter_native_splash:
   color: "#8eb3e1"
