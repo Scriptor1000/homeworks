@@ -63,8 +63,7 @@ class DefaultFirebaseOptions {
     appId: '1:626284965826:android:fb5237955242d6f1d1f05b',
     messagingSenderId: '626284965826',
     projectId: 'homework-manager-untis',
-    databaseURL:
-        'https://homework-manager-untis-default-rtdb.europe-west1.firebasedatabase.app',
+    databaseURL: 'https://homework-manager-untis-default-rtdb.europe-west1.firebasedatabase.app',
     storageBucket: 'homework-manager-untis.firebasestorage.app',
   );
   static const FirebaseOptions ios = FirebaseOptions(
@@ -72,13 +71,10 @@ class DefaultFirebaseOptions {
     appId: '1:626284965826:ios:a0380d8279a58f25d1f05b',
     messagingSenderId: '626284965826',
     projectId: 'homework-manager-untis',
-    databaseURL:
-        'https://homework-manager-untis-default-rtdb.europe-west1.firebasedatabase.app',
+    databaseURL: 'https://homework-manager-untis-default-rtdb.europe-west1.firebasedatabase.app',
     storageBucket: 'homework-manager-untis.firebasestorage.app',
-    androidClientId:
-        '626284965826-nbmgdpvv5c8pfo3qqddiu44ei6v6cp7d.apps.googleusercontent.com',
-    iosClientId:
-        '626284965826-a7rr1a2bd50reag0civmrtihdd6m2stj.apps.googleusercontent.com',
+    androidClientId: '626284965826-nbmgdpvv5c8pfo3qqddiu44ei6v6cp7d.apps.googleusercontent.com',
+    iosClientId: '626284965826-a7rr1a2bd50reag0civmrtihdd6m2stj.apps.googleusercontent.com',
     iosBundleId: 'de.seminarfach.homeworks',
   );
 }

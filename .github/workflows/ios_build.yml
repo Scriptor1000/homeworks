@@ -45,7 +45,7 @@ jobs:
           flutter test
     
   build-ios:
-    name: Build iOS App
+    name: Deploy iOS App
     needs: test 
     runs-on: macos-latest
 
@@ -147,53 +147,18 @@ jobs:
         run: |
           cd ios
           bundle exec fastlane ios build testflight:false
-      
-      - name: Upload IPA as GitHub artifact
-        uses: actions/upload-artifact@v4
+
+      - name: Upload IPA to Firebase App Distribution
+        uses: wzieba/Firebase-Distribution-Github-Action@v1.7.1
         with:
-          name: ios-app
-          path: build/ios/ipa/app-adhoc.ipa
+          appId: ${{ vars.IOS_APP_ID }}
+          serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_CREDENTIALS_CONTENT }}
+          groups: all
+          file: build/ios/ipa/app-adhoc.ipa
 
-      - name: Verify iOS signing files [DEBUG]
-        if: failure()
-        run: |
-          echo "Opening the P12 file ..."
-          openssl pkcs12 \
-            -legacy \
-            -in "$IOS_P12_PATH" \
-            -passin env:IOS_P12_PASSWORD \
-            -noout
-          
-          echo "Checking hash of the certificate and private key ..."
-          openssl x509 \
-            -in "$RUNNER_TEMP/distribution.pem" \
-              -pubkey -noout \
-              | openssl sha256
-
-          openssl pkey \
-            -in "$RUNNER_TEMP/distribution.key" \
-            -pubout \
-            | openssl sha256
-
-      - name: Print Xcode logs [DEBUG]
-        if: failure()
-        run: tail -n 1000 buildlogs/*
-      
-      - name: Show Xcode build result [DEBUG]
-        if: failure()
-        run: |
-          xcrun xcresulttool get build-results \
-            --path build/ios/Runner.xcresult
-
-      - name: Upload Xcode result [DEBUG]
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: xcode-result
-          path: build/ios/Runner.xcresult
 
   build-android:
-    name: Build Android App
+    name: Deploy Android App
     needs: test 
     runs-on: ubuntu-latest
 
@@ -248,34 +213,10 @@ jobs:
           name: android-app
           path: build/app/outputs/flutter-apk/app-release.apk
 
-  deploy:
-    name: Deploy to Firebase App Distribution
-    needs: [build-ios, build-android]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/download-artifact@v5
-        with:
-          name: android-app
-          path: artifacts/android
-
-      - uses: actions/download-artifact@v5
-        with:
-          name: ios-app
-          path: artifacts/ios
-
-      - name: Upload Android
+      - name: Upload Android to Firebase App Distribution
         uses: wzieba/Firebase-Distribution-Github-Action@v1.7.1
         with:
           appId: ${{ vars.ANDROID_APP_ID }}
           serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_CREDENTIALS_CONTENT }}
           groups: all
-          file: artifacts/android/app-release.apk
-
-      - name: Upload iOS
-        uses: wzieba/Firebase-Distribution-Github-Action@v1.7.1
-        with:
-          appId: ${{ vars.IOS_APP_ID }}
-          serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_CREDENTIALS_CONTENT }}
-          groups: all
-          file: artifacts/ios/app-adhoc.ipa
-      
+          file: build/app/outputs/flutter-apk/app-release.apk
