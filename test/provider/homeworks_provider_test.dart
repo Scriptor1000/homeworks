@@ -1,3 +1,4 @@
+import 'package:firebase_performance/firebase_performance.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:homeworks/database/homeworks.dart';
 import 'package:homeworks/database/models/homework.dart';
@@ -16,6 +17,7 @@ import 'homeworks_provider_test.mocks.dart';
   MockSpec<FirestoreHomeworks>(),
   MockSpec<AnalyticsService>(),
   MockSpec<UntisProvider>(),
+  MockSpec<Trace>(),
 ])
 void main() {
   group('Homeworks Provider:', () {
@@ -39,6 +41,8 @@ void main() {
         firestoreHomeworks: mockFirestoreHomeworks,
         analyticsService: mockAnalyticsService,
       );
+
+      when(mockAnalyticsService.startCustomTrace(any)).thenReturn(MockTrace());
     });
 
     final toDeleteHomeworks = [

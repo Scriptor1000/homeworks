@@ -1,4 +1,5 @@
 import 'package:dart_untis_mobile/dart_untis_mobile.dart';
+import 'package:firebase_performance/firebase_performance.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:homeworks/provider/untis_provider.dart';
 import 'package:homeworks/utilities/analytics_service.dart';
@@ -45,6 +46,7 @@ MockUntisPeriod createMockUntisPeriod({
   MockSpec<UntisSubject>(),
   MockSpec<UntisTeacher>(),
   MockSpec<AnalyticsService>(),
+  MockSpec<Trace>(),
 ])
 void main() {
   group('Untis Provider:', () {
@@ -78,6 +80,8 @@ void main() {
             ? todayTimetable
             : futureTimetable,
       );
+
+      when(mockAnalyticsService.startCustomTrace(any)).thenReturn(MockTrace());
     });
 
     test('Initial values are correct', () {
