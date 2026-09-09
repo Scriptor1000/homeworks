@@ -3,7 +3,6 @@ import 'package:dart_untis_mobile/dart_untis_mobile.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:sentry_flutter/sentry_flutter.dart';
 
 import '../database/credentials.dart';
 import '../database/models/credentials.dart';
@@ -169,7 +168,7 @@ class CredentialProvider extends ChangeNotifier {
         // noCredentials, loading, or sessionAccomplished-with-null-session:
         // none of these should be reachable here, since _credentials was
         // just set and await _createSession() always resolves to a final status.
-        Sentry.logger.error(
+        FirebaseCrashlytics.instance.log(
           'Unexpected UntisSessionStatus $_sessionStatus after '
           '_createSession() in loadCredentialsOnline (session: $_session)',
         );

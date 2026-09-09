@@ -1,6 +1,6 @@
 import 'package:collection/collection.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
-import 'package:sentry_flutter/sentry_flutter.dart';
 
 import '../database/homeworks.dart';
 import '../database/models/homework.dart';
@@ -190,7 +190,7 @@ class HomeworksProvider extends ChangeNotifier {
           hw.id == updatedHomework.id,
     );
     if (homework == null) {
-      Sentry.logger.error(
+      FirebaseCrashlytics.instance.log(
         'Homework with id ${updatedHomework.id} not found for updating. '
         'Current homeworks ID: ${_homeworks.map((hw) => hw.id).join(', ')}',
       );
@@ -233,7 +233,7 @@ class HomeworksProvider extends ChangeNotifier {
         ),
       );
     } else {
-      Sentry.logger.error(
+      FirebaseCrashlytics.instance.log(
         'Homework with id $homeworkID not found for deleting. '
         'Current homeworks ID: ${_homeworks.map((hw) => hw.id).join(', ')}',
       );
@@ -256,7 +256,7 @@ class HomeworksProvider extends ChangeNotifier {
             _analyticsService.reviveHomework(type: homework.type),
       );
     } else {
-      Sentry.logger.error(
+      FirebaseCrashlytics.instance.log(
         'Homework with id $homeworkID not found for new due date. '
         'Current homeworks ID: ${_homeworks.map((hw) => hw.id).join(', ')}',
       );
@@ -277,7 +277,7 @@ class HomeworksProvider extends ChangeNotifier {
         return _completeHomework(homework);
       }
     } else {
-      Sentry.logger.error(
+      FirebaseCrashlytics.instance.log(
         'Homework with id $homeworkID not found for changing status. '
         'Current homeworks ID: ${_homeworks.map((hw) => hw.id).join(', ')}',
       );

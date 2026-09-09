@@ -4,7 +4,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:sentry_flutter/sentry_flutter.dart';
 
 import '../database/allowed_emails.dart';
 import '../utilities/enums.dart';
@@ -90,7 +89,7 @@ class AuthenticationProvider extends ChangeNotifier {
       if (kDebugMode) {
         print('Google Sign-In Initialisierungsfehler: $error');
       }
-      Sentry.captureException(error, stackTrace: stackTrace);
+      FirebaseCrashlytics.instance.recordError(error, stackTrace);
       googleSignInState = GoogleSignInState.error;
     }
 

@@ -52,27 +52,17 @@ class Homeworks extends ListBase<Homework> {
         ..sort();
 
   Homeworks getForDate(DateTime date) {
-    final normalizedDate = normalizeDate(date);
-    return Homeworks(
-      homeworks: _homeworks
-          .where(
-            (h) =>
-                h.dueDate != null &&
-                normalizeDate(h.dueDate!) == normalizedDate,
-          )
-          .toList(),
-    );
+    return _whereDateIs((d) => normalizeDate(d) == normalizeDate(date));
   }
 
   Homeworks getForAfterDate(DateTime date) {
-    final normalizedDate = normalizeDate(date);
+    return _whereDateIs((d) => normalizeDate(d).isAfter(normalizeDate(date)));
+  }
+
+  Homeworks _whereDateIs(bool Function(DateTime) predicate) {
     return Homeworks(
       homeworks: _homeworks
-          .where(
-            (h) =>
-                h.dueDate != null &&
-                normalizeDate(h.dueDate!).isAfter(normalizedDate),
-          )
+          .where((h) => h.dueDate != null && predicate(h.dueDate!))
           .toList(),
     );
   }
