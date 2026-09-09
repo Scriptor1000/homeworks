@@ -101,7 +101,9 @@ class _HomeState extends State<Home> {
     const oneDay = Duration(days: 1);
 
     int dayCardCount = context.select((ConfigProvider p) => p.dayCardCount);
-    bool hasFreeTime = context.select((UntisProvider p) => p.hasFreeTime);
+    bool hasFreeTime = context.select(
+      (UntisProvider p) => p.hasFreeTime || !p.untisSubjectsLoaded,
+    );
     Homeworks homeworks = context.select((HomeworksProvider p) => p.homeworks);
 
     DateTime nextDay = normalizeDate(DateTime.now());
