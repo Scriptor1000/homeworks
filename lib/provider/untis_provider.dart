@@ -2,12 +2,14 @@ import 'dart:async';
 
 import 'package:collection/collection.dart';
 import 'package:dart_untis_mobile/dart_untis_mobile.dart';
+import 'package:firebase_performance/firebase_performance.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:sentry_flutter/sentry_flutter.dart';
 
 import '../database/models/credentials.dart';
+import '../utilities/analytics_service.dart';
+import '../utilities/common.dart';
 import '../utilities/enums.dart';
 import '../database/models/subject.dart';
 
@@ -21,11 +23,15 @@ class UntisProvider extends ChangeNotifier {
   List<UntisPeriod> _todayPeriods = [];
   List<Subject> _untisSubjects = [];
   List<UntisTeacher> _untisTeachers = [];
+  final Map<DateTime, List<UntisPeriod>> _timetableCache = {};
   UntisSubjectStatus _untisSubjectStatus = UntisSubjectStatus.untisUnavailable;
 
   final Duration _range;
+  final AnalyticsService _analytics;
 
-  UntisProvider({required Duration range}) : _range = range;
+  UntisProvider({required Duration range, required AnalyticsService analytics})
+    : _range = range,
+      _analytics = analytics;
 
   /// The List of Subjects from Untis in the next 30 days.
   List<Subject> get untisSubjects => _untisSubjects;
@@ -62,6 +68,15 @@ class UntisProvider extends ChangeNotifier {
       .map((period) => Subject.fromUntisSubject(period.subject!))
       .toList();
 
+  /// Whether the user has no further lessons today. This is determined by checking if all periods in [_todayPeriods] are either cancelled, have no teacher, have no subject, or start after the current time.
+  bool get hasFreeTime => _todayPeriods.every(
+    (period) =>
+        period.isCancelled ||
+        period.teacher == null ||
+        period.subject == null ||
+        period.endDateTime.isBefore(DateTime.now()),
+  );
+
   /// Whether the Untis subjects are loaded and available.
   bool get untisSubjectsLoaded =>
       _untisSubjectStatus == UntisSubjectStatus.loaded;
@@ -87,6 +102,38 @@ class UntisProvider extends ChangeNotifier {
     return currentPeriod.subject?.id;
   }
 
+  /// Returns the timetable periods for a given date.
+  ///
+  /// The date is normalized to ensure that only the year, month, and day are considered, ignoring the time component.
+  List<UntisPeriod> getLessonsForDate(DateTime date) {
+    final normalizedDate = normalizeDate(date);
+    return _timetableCache[normalizedDate] ?? [];
+  }
+
+  /// Returns the start time of a subject on a given date, if it exists.
+  ///
+  /// If the subject is not scheduled for that date, or if it is cancelled or has no assigned teacher, this method returns `null`.
+  /// The date is normalized to ensure that only the year, month, and day are considered, ignoring the time component.
+  Duration? getTimeOfSubjectOnDay(DateTime date, Subject subject) {
+    if (!subject.fromUntis) {
+      return null;
+    }
+    final lessons = getLessonsForDate(date);
+    final lesson = lessons.firstWhereOrNull(
+      (period) =>
+          period.subject?.id.id == subject.id &&
+          !period.isCancelled &&
+          period.teacher != null,
+    );
+    if (lesson == null) {
+      return null;
+    }
+    return Duration(
+      hours: lesson.startDateTime.hour,
+      minutes: lesson.startDateTime.minute,
+    );
+  }
+
   /// Updates the Untis credentials and loads the timetable if the credentials has changed.
   ///
   /// This method should be called from the update Method of [ProxyProvider].
@@ -110,6 +157,8 @@ class UntisProvider extends ChangeNotifier {
     _untisSubjectStatus = UntisSubjectStatus.loading;
     notifyListeners();
 
+    Trace trace = _analytics.startCustomTrace('load_untis_timetable');
+
     try {
       // You have to edit the Package, the check if the difference is
       // negative is vice versa (start and end date are swapped)
@@ -132,15 +181,13 @@ class UntisProvider extends ChangeNotifier {
         endDate: endDate,
       );
 
-      for (var period in timetable.periods) {
-        _parsePeriod(period);
-      }
+      timetable.periods.forEach(_parsePeriod);
 
       _untisSubjectStatus = UntisSubjectStatus.loaded;
+      trace.stop();
     } catch (error, stackTrace) {
       _untisSubjectStatus = UntisSubjectStatus.error;
-      print('Error loading timetable: $error');
-      Sentry.captureException(error, stackTrace: stackTrace);
+      _analytics.logError(error, stackTrace);
     } finally {
       notifyListeners();
     }
@@ -155,6 +202,10 @@ class UntisProvider extends ChangeNotifier {
     // sometimes only teacher is removed but the period is not cancelled
     final isCancelled = period.isCancelled || period.teacher == null;
 
+    _timetableCache
+        .putIfAbsent(normalizeDate(period.startDateTime), () => [])
+        .add(period);
+
     // this is the subject from the list, if the subject is already in the list
     final listedSubject = _untisSubjects.firstWhereOrNull(
       (s) => s.id == period.subject!.id.id,
@@ -168,16 +219,10 @@ class UntisProvider extends ChangeNotifier {
         subject.nextLesson = period.startDateTime;
       }
       _untisSubjects.add(subject);
-
-      // if a not cancelled period is before the next lesson (which shouldn't be the case because
-      // the periods should be ordered) or there isn't a next lesson (which could be because the
-      // first lesson in which the subject was found was cancelled) then the next lesson is updated
     } else if (!isCancelled &&
         (listedSubject.nextLesson == null ||
             period.startDateTime.isBefore(listedSubject.nextLesson!)) &&
         period.startDateTime.isAfter(todayNight)) {
-      // NOTE: you can make the change  on the variable because it is only a reference to
-      // the subject in the list, so this changes the subject in the list
       listedSubject.nextLesson = period.startDateTime;
     }
   }
@@ -268,23 +313,7 @@ class UntisProvider extends ChangeNotifier {
   }
 
   /// This method is not implemented yet.
-  void loadUntisHomeworks() {
-    // Could contain test, homework information
-    // also used at events, subject is needed
-    // print(timetable!.periods[3].text);
-
-    // is used to declare exams
-    // print(await _session!.getExams(
-    //   startDate: DateTime.now(),
-    //   endDate: DateTime.now().add(const Duration(days: 30)),
-    // ));
-
-    // is used to declare homeworks, but some also annouce exams
-    // print(await _session!.getHomework(
-    //   startDate: DateTime.now(),
-    //   endDate: DateTime.now().add(const Duration(days: 30)),
-    // ));
-  }
+  void loadUntisHomeworks() {}
 }
 
 /// Result of a teacher search containing found periods and current searching place.

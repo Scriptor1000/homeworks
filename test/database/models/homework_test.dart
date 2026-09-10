@@ -87,5 +87,6 @@ Homework homeworkWithFalseData({DateTime? dueDate, bool? isExam}) {
     fromUntis: false,
     dueDate: dueDate ?? DateTime.now(),
     type: (isExam ?? false) ? HomeworkType.exam : HomeworkType.homework,
+    emoji: HomeworkEmoji.crying,
   );
 }

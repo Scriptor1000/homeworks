@@ -316,7 +316,7 @@ class _SubjectBottomSheetContentState extends State<SubjectBottomSheetContent> {
     bool isLoading = _isProcessing[subject.id] ?? false;
     return SizeTransition(
       sizeFactor: animation,
-      axisAlignment: 0.0,
+      alignment: Alignment.topLeft,
       child: ScaleTransition(
         scale: animation,
         child: Padding(
@@ -374,7 +374,7 @@ class _SubjectBottomSheetContentState extends State<SubjectBottomSheetContent> {
     subject.backColor.harmonizeWith(Theme.of(context).primaryColor);
     return SizeTransition(
       sizeFactor: animation,
-      axisAlignment: 0.0,
+      alignment: Alignment.topLeft,
       child: ScaleTransition(
         scale: animation,
         child: Padding(
@@ -422,7 +422,7 @@ class _SubjectBottomSheetContentState extends State<SubjectBottomSheetContent> {
               decoration: BoxDecoration(
                 color: Theme.of(
                   context,
-                ).colorScheme.surfaceVariant.withOpacity(0.5),
+                ).colorScheme.surfaceContainerHighest.withValues(alpha: .5),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(

@@ -92,10 +92,24 @@ enum SubjectListType {
   inFirestoreUntisNotAvailable,
 }
 
+/// The status of support for Google Sign-In on the current platform.
 enum GoogleSignInState {
   supported,
   notSupported,
   needWebButton,
   error,
   loading,
+}
+
+/// The Emoji associated with a homework for visual representation.
+enum HomeworkEmoji {
+  happy('😄'),
+  serious('😑'),
+  unamused('😒'),
+  crying('😭'),
+  hate('😡');
+
+  final String emoji;
+
+  const HomeworkEmoji(this.emoji);
 }

@@ -1,7 +1,10 @@
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../provider/credential_provider.dart';
+import '../../utilities/common.dart';
 import '../../utilities/enums.dart';
 import '../../widgets/credential_form.dart';
 import '../../widgets/fab.dart';
@@ -11,9 +14,9 @@ import '../../widgets/password_field.dart';
 
 /// A widget for uploading Untis credentials to Firestore.
 ///
-/// The credentials are loaded from the [CredentialProvider].
-/// The user has to enter a secret key to encrypt the credentials before uploading them.
-/// Only the encrypted credentials are uploaded, the secret key is not stored or transmitted.
+/// Credentials are loaded from [CredentialProvider].
+/// The user enters a secret key to encrypt the credentials before uploading.
+/// Only the encrypted credentials are stored online; the secret key itself is never transmitted.
 class UploadCredentials extends StatefulWidget {
   const UploadCredentials({super.key});
 
@@ -29,7 +32,31 @@ class _UploadCredentialsState extends State<UploadCredentials> {
   final TextEditingController _serverController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
-  bool _isLoading = false;
+  /// Loading state while uploading.
+  bool loading = false;
+
+  /// Upload completed state (not used to block UI here but could be extended).
+
+  @override
+  void initState() {
+    super.initState();
+    final credentials = context.read<CredentialProvider>().credentials;
+
+    /// If credentials exist, prefill form, otherwise pop the screen.
+    if (credentials != null) {
+      setState(() {
+        _usernameController.text = credentials.username;
+        _passwordController.text = credentials.password;
+        _schoolController.text = credentials.school;
+        _serverController.text = credentials.server;
+      });
+    } else {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        context.pop();
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -61,94 +88,104 @@ class _UploadCredentialsState extends State<UploadCredentials> {
     return Scaffold(
       appBar: AppBar(title: const Text('Anmeldedaten online speichern')),
       // GestureDetector beibehalten, um die Tastatur auszublenden
-      body: GestureDetector(
-        onTap: () => FocusScope.of(context).unfocus(),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              OwnProgressIndicator(
-                active: _isLoading,
-                backgroundColor: Theme.of(context).colorScheme.surface,
-              ),
-              // Hauptinhalt mit ScrollView im Expanded
-              Expanded(
-                child: SingleChildScrollView(
-                  physics: const ClampingScrollPhysics(),
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // Zeige Info an, wenn die Daten bereits hochgeladen wurden
-                      if (alreadyUploaded)
+      body: withConstrainedWidth(
+        context,
+        child: GestureDetector(
+          onTap: () => FocusScope.of(context).unfocus(),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              children: [
+                /// Loading indicator
+                OwnProgressIndicator(
+                  active: loading,
+                  backgroundColor: Theme.of(context).colorScheme.surface,
+                ),
+
+                /// Main scrollable content
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const ClampingScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        /// Show info if already uploaded
+                        if (alreadyUploaded)
+                          const InfoBox(
+                            title: 'Achtung!',
+                            paragraphs: [
+                              'Es sind bereits Anmeldedaten in deiner Cloud gespeichert. Durch das Hochladen werden diese unwiderruflich überschrieben.',
+                              'Dein alter Schlüssel wird durch diesen Vorgang ungültig. Du kannst ausschließlich mit dem neuen Schlüssel auf deine Anmeldedaten zugreifen.',
+                            ],
+                            icon: Icons.warning,
+                            accentColor: Colors.orange,
+                          ),
+
+                        if (alreadyUploaded) standardGap(),
+
+                        const Text(
+                          'Gib einen geheimen Schlüssel ein, um deine Anmeldedaten sicher online zu speichern.',
+                          style: TextStyle(fontSize: 16),
+                        ),
+                        standardGap(),
+
+                        /// Secret key input
+                        UserPasswordField(
+                          controller: _secretController,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Dein geheimer Schlüssel darf nicht leer sein';
+                            }
+                            return null;
+                          },
+                        ),
+
+                        standardGap(),
+                        const Text(
+                          'Deine aktuellen Untis-Anmeldedaten:',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+
+                        standardGap(),
+
+                        /// Disabled credential form for display only
+                        CredentialForm(
+                          usernameController: _usernameController,
+                          passwordController: _passwordController,
+                          schoolController: _schoolController,
+                          serverController: _serverController,
+                          disabled: true,
+                        ),
+                        standardGap(),
+
+                        /// Info box about encryption
                         const InfoBox(
-                          title: 'Achtung!',
+                          title: 'Deine Daten sind sicher!',
                           paragraphs: [
-                            'Es sind bereits Anmeldedaten in deiner Cloud gespeichert. Durch das Hochladen werden diese unwiderruflich überschrieben.',
-                            'Dein alter Schlüssel wird durch diesen Vorgang ungültig. Du kannst ausschließlich mit dem neuen Schlüssel auf deine Anmeldedaten zugreifen.',
+                            'Deine Anmeldedaten werden mit diesem Schlüssel lokal verschlüsselt und nur in dieser verschlüsselten Form online gespeichert. Der Schlüssel selbst wird niemals übertragen.',
+                            'Du benötigst diesen identischen Schlüssel für jeden zukünftigen Zugriff auf diese Daten. Bitte merke ihn dir gut oder speichere ihn sicher an einem anderen Ort.',
                           ],
-                          icon: Icons.warning,
-                          accentColor: Colors.orange,
+                          icon: Icons.info_outline,
                         ),
-
-                      if (alreadyUploaded) standardGap(),
-                      const Text(
-                        'Gib einen geheimen Schlüssel ein, um deine Anmeldedaten sicher online zu speichern.',
-                        style: TextStyle(fontSize: 16),
-                      ),
-                      standardGap(),
-
-                      // Geheimes Schlüssel Textfeld mit Sichtbarkeitsumschaltung
-                      UserPasswordField(
-                        controller: _secretController,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Dein geheimer Schlüssel darf nicht leer sein';
-                          }
-                          return null;
-                        },
-                      ),
-
-                      standardGap(),
-                      const Text(
-                        'Deine aktuellen Untis-Anmeldedaten:',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-
-                      standardGap(),
-                      // Deaktivierte CredentialForm zur Anzeige der aktuellen Daten
-                      CredentialForm(
-                        usernameController: _usernameController,
-                        passwordController: _passwordController,
-                        schoolController: _schoolController,
-                        serverController: _serverController,
-                        disabled: true, // Deaktiviert, nur zur Anzeige
-                      ),
-                      standardGap(),
-                      // Informationstext zur Verschlüsselung mit dem aktualisierten InfoBox-Widget
-                      const InfoBox(
-                        title: 'Deine Daten sind sicher!',
-                        paragraphs: [
-                          'Deine Anmeldedaten werden mit diesem Schlüssel lokal verschlüsselt und nur in dieser verschlüsselten Form online gespeichert. Der Schlüssel selbst wird niemals übertragen.',
-                          'Du benötigst diesen identischen Schlüssel für jeden zukünftigen Zugriff auf diese Daten. Bitte merke ihn dir gut oder speichere ihn sicher an einem anderen Ort.',
-                        ],
-                        icon: Icons.info_outline,
-                      ),
-                      buildFABGap(),
-                    ],
+                        buildFABGap(),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
+
+      /// Floating action button to trigger upload
       floatingActionButton: ExtendedFAB(
         onClick: save,
-        active: !_isLoading,
+        active: !loading,
         icon: Icons.cloud_upload,
         label: 'Hochladen',
       ),
@@ -156,45 +193,41 @@ class _UploadCredentialsState extends State<UploadCredentials> {
     );
   }
 
+  /// Validates the form and uploads the credentials online using the provided secret.
   void save() async {
-    if (_isLoading) return;
+    if (loading) return;
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
     setState(() {
-      _isLoading = true;
+      loading = true;
     });
 
     final secret = _secretController.text;
     final credentialProvider = context.read<CredentialProvider>();
 
-    await credentialProvider
-        .uploadCredentialsOnline(secret)
-        .then(
-          (_) => {
-            if (mounted)
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Anmeldedaten erfolgreich hochgeladen'),
-                ),
-              ),
-            setState(() {
-              _isLoading = false;
-            }),
-          },
-          onError: (error, _) {
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Fehler beim Hochladen der Anmeldedaten'),
-                ),
-              );
-              setState(() {
-                _isLoading = false;
-              });
-            }
-          },
-        );
+    /// Upload encrypted credentials
+
+    try {
+      await credentialProvider.uploadCredentialsOnline(secret);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Anmeldedaten erfolgreich hochgeladen')),
+      );
+      context.pop();
+    } catch (error, stackTrace) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Fehler beim Hochladen der Anmeldedaten')),
+      );
+      FirebaseCrashlytics.instance.recordError(error, stackTrace);
+    } finally {
+      if (mounted) {
+        setState(() {
+          loading = false;
+        });
+      }
+    }
   }
 }

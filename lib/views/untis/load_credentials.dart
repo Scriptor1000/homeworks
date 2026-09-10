@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../provider/credential_provider.dart';
+import '../../utilities/common.dart';
 import '../../utilities/enums.dart';
 import '../../utilities/global_snackbar.dart';
 import '../../widgets/credential_form.dart';
@@ -11,10 +12,13 @@ import '../../widgets/info_box.dart';
 import '../../widgets/own_progress_indicator.dart';
 import '../../widgets/password_field.dart';
 
-/// A widget for loading Untis credentials from Firestore.
+/// Screen used to load Untis credentials stored in Firestore.
 ///
-/// The user can enter their user password wich is used to decrypt the stored credentials.
-/// If the credentials are found, they are given to [CredentialProvider] and stored locally.
+/// The user enters their **user password**, which is used locally to:
+/// - decrypt encrypted credentials retrieved from Firestore
+/// - then pass them to [CredentialProvider] to store locally
+///
+/// If loading succeeds → screen automatically closes.
 class LoadCredentials extends StatefulWidget {
   const LoadCredentials({super.key});
 
@@ -23,8 +27,10 @@ class LoadCredentials extends StatefulWidget {
 }
 
 class _LoadCredentialsState extends State<LoadCredentials> {
+  /// Controller for password text field
   final _userPasswordController = TextEditingController();
 
+  /// UI flag: when true, UI shows loading indicators and disables fields
   bool _isLoading = false;
 
   @override
@@ -38,17 +44,28 @@ class _LoadCredentialsState extends State<LoadCredentials> {
     super.dispose();
   }
 
+  /// Triggers loading of credentials from Firestore
+  ///
+  /// Steps:
+  /// 1. Check password not empty
+  /// 2. Show loading
+  /// 3. Ask [CredentialProvider] to load + decrypt credentials
+  /// 4. Stop loading or show error
   Future<void> _loadCredentials() async {
     if (_isLoading) return;
+
+    /// User forgot password
     if (_userPasswordController.text.isEmpty) {
       showSnackBar('Bitte gib dein Benutzerpasswort ein');
       return;
     }
 
+    /// UI: show loading
     setState(() {
       _isLoading = true;
     });
 
+    /// Ask provider to load + decrypt credentials
     context
         .read<CredentialProvider>()
         .loadCredentialsOnline(_userPasswordController.text)
@@ -69,90 +86,103 @@ class _LoadCredentialsState extends State<LoadCredentials> {
 
   @override
   Widget build(BuildContext context) {
+    /// Subscribe to provider updates
     final credentialProvider = context.watch<CredentialProvider>();
     return Scaffold(
       appBar: AppBar(title: const Text('Gespeicherte Anmeldedaten laden')),
-      body: SafeArea(
-        child: Column(
-          children: [
-            OwnProgressIndicator(
-              active: _isLoading,
-              backgroundColor: Theme.of(context).colorScheme.surface,
-            ),
+      body: withConstrainedWidth(
+        context,
+        child: SafeArea(
+          child: Column(
+            children: [
+              // Progress bar (at top)
+              OwnProgressIndicator(
+                active:
+                    _isLoading ||
+                    credentialProvider.sessionStatus ==
+                        UntisSessionStatus.loading,
+                backgroundColor: Theme.of(context).colorScheme.surface,
+              ),
 
-            // Hauptcontent mit ScrollView
-            Expanded(
-              child: SingleChildScrollView(
-                physics: const ClampingScrollPhysics(),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      if (credentialProvider.hasCredentials)
-                        InfoBox(
-                          title: 'Achtung!',
-                          paragraphs: [
-                            'Es sind bereits Anmeldedaten auf diesem Gerät gespeichert. Durch das Herunterladen der Clouddaten werden diese unwiderruflich überschrieben.',
-                            if (credentialProvider.sessionStatus ==
-                                UntisSessionStatus.sessionAccomplished)
-                              'Mit den lokalen Anmeldedaten wurde bereits erfolgreich eine Verbindung zu Untis hergestellt.',
-                          ],
-                          icon: Icons.warning,
-                          accentColor: Colors.orange,
-                        ),
+              // Main content below progress indicator
+              Expanded(
+                child: SingleChildScrollView(
+                  physics: const ClampingScrollPhysics(),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
 
-                      if (credentialProvider.hasCredentials) standardGap(),
-                      // Erklärungstext
-                      const Text(
-                        'Gib dein Benutzerpasswort ein, um deine gespeicherten Untis-Anmeldedaten zu laden.',
-                        style: TextStyle(fontSize: 16),
-                      ),
-                      standardGap(),
-
-                      // Benutzerpasswort-Feld mit dem neuen PasswordField-Widget
-                      UserPasswordField(
-                        controller: _userPasswordController,
-                        disabled: _isLoading,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Bitte gib dein Benutzerpasswort ein';
-                          }
-                          return null;
-                        },
-                      ),
-                      Row(
-                        mainAxisAlignment: .start,
-                        mainAxisSize: .min,
-                        children: [
-                          TextButton.icon(
-                            onPressed: buildForgotPasswordDialog,
-                            icon: const Icon(Icons.help_outline),
-                            label: const Text('Passwort vergessen?'),
-                            style: TextButton.styleFrom(
-                              foregroundColor: Theme.of(
-                                context,
-                              ).colorScheme.onSurface,
-                            ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // Text explaining purpose
+                        if (credentialProvider.hasCredentials)
+                          InfoBox(
+                            title: 'Achtung!',
+                            paragraphs: [
+                              'Es sind bereits Anmeldedaten auf diesem Gerät gespeichert. Durch das Herunterladen der Clouddaten werden diese unwiderruflich überschrieben.',
+                              if (credentialProvider.sessionStatus ==
+                                  UntisSessionStatus.sessionAccomplished)
+                                'Mit den lokalen Anmeldedaten wurde bereits erfolgreich eine Verbindung zu Untis hergestellt.',
+                            ],
+                            icon: Icons.warning,
+                            accentColor: Colors.orange,
                           ),
-                        ],
-                      ),
-                      standardGap(),
 
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: CredentialForm(
-                          initialCredentials: credentialProvider.credentials,
-                          disabled: true,
+                        if (credentialProvider.hasCredentials) standardGap(),
+                        // Erklärungstext
+                        const Text(
+                          'Gib dein Benutzerpasswort ein, um deine gespeicherten Untis-Anmeldedaten zu laden.',
+                          style: TextStyle(fontSize: 16),
                         ),
-                      ),
-                      buildFABGap(),
-                    ],
+                        standardGap(),
+
+                        /// Password input
+                        /// (the password is never sent to server — only used locally to decrypt)
+                        UserPasswordField(
+                          controller: _userPasswordController,
+                          disabled: _isLoading,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Bitte gib dein Benutzerpasswort ein';
+                            }
+                            return null;
+                          },
+                        ),
+                        Row(
+                          mainAxisAlignment: .start,
+                          mainAxisSize: .min,
+                          children: [
+                            TextButton.icon(
+                              onPressed: buildForgotPasswordDialog,
+                              icon: const Icon(Icons.help_outline),
+                              label: const Text('Passwort vergessen?'),
+                              style: TextButton.styleFrom(
+                                foregroundColor: Theme.of(
+                                  context,
+                                ).colorScheme.onSurface,
+                              ),
+                            ),
+                          ],
+                        ),
+                        standardGap(),
+
+                        /// Shows stored credentials (already decrypted if available)
+                        /// but disabled — cannot edit here
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: CredentialForm(
+                            initialCredentials: credentialProvider.credentials,
+                            disabled: true,
+                          ),
+                        ),
+                        buildFABGap(),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
       floatingActionButton: ExtendedFAB(

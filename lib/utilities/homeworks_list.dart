@@ -1,6 +1,8 @@
 import '../database/models/homework.dart';
 import 'dart:collection';
 
+import 'common.dart';
+
 /// A class that represents a list of homeworks.
 ///
 /// This class provides various filters to retrieve specific subsets of homeworks.
@@ -34,6 +36,40 @@ class Homeworks extends ListBase<Homework> {
 
   Homeworks get withoutDueDate =>
       Homeworks(homeworks: _homeworks.where((h) => h.dueDate == null).toList());
+
+  Homeworks get overdue => Homeworks(
+    homeworks: _homeworks
+        .where(
+          (h) =>
+              h.dueDate != null &&
+              h.dueDate!.isBefore(normalizeDate(DateTime.now())),
+        )
+        .toList(),
+  );
+
+  List<DateTime> get dueDates =>
+      _homeworks
+          .where((h) => h.dueDate != null)
+          .map((h) => normalizeDate(h.dueDate!))
+          .toSet()
+          .toList()
+        ..sort();
+
+  Homeworks getForDate(DateTime date) {
+    return _whereDateIs((d) => normalizeDate(d) == normalizeDate(date));
+  }
+
+  Homeworks getForAfterDate(DateTime date) {
+    return _whereDateIs((d) => normalizeDate(d).isAfter(normalizeDate(date)));
+  }
+
+  Homeworks _whereDateIs(bool Function(DateTime) predicate) {
+    return Homeworks(
+      homeworks: _homeworks
+          .where((h) => h.dueDate != null && predicate(h.dueDate!))
+          .toList(),
+    );
+  }
 
   // These 4 have to be implemented for ListBase, all other methods are based on them.
   @override

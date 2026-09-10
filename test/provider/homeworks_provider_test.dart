@@ -1,3 +1,4 @@
+import 'package:firebase_performance/firebase_performance.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:homeworks/database/homeworks.dart';
 import 'package:homeworks/database/models/homework.dart';
@@ -16,6 +17,7 @@ import 'homeworks_provider_test.mocks.dart';
   MockSpec<FirestoreHomeworks>(),
   MockSpec<AnalyticsService>(),
   MockSpec<UntisProvider>(),
+  MockSpec<Trace>(),
 ])
 void main() {
   group('Homeworks Provider:', () {
@@ -39,6 +41,8 @@ void main() {
         firestoreHomeworks: mockFirestoreHomeworks,
         analyticsService: mockAnalyticsService,
       );
+
+      when(mockAnalyticsService.startCustomTrace(any)).thenReturn(MockTrace());
     });
 
     final toDeleteHomeworks = [
@@ -51,6 +55,7 @@ void main() {
         isCompleted: false,
         dueDate: now.add(const Duration(days: 1)),
         fromUntis: false,
+        emoji: HomeworkEmoji.crying,
       ),
       Homework(
         id: '2',
@@ -61,6 +66,7 @@ void main() {
         isCompleted: false,
         dueDate: now.subtract(const Duration(days: 1)),
         fromUntis: false,
+        emoji: HomeworkEmoji.happy,
       ),
       Homework(
         id: '3',
@@ -71,6 +77,7 @@ void main() {
         isCompleted: true,
         dueDate: now.add(const Duration(days: 1)),
         fromUntis: false,
+        emoji: HomeworkEmoji.hate,
       ),
       Homework(
         id: '4',
@@ -81,6 +88,7 @@ void main() {
         isCompleted: true,
         dueDate: now.subtract(const Duration(days: 1)),
         fromUntis: false,
+        emoji: HomeworkEmoji.serious,
       ),
       Homework(
         id: '5',
@@ -91,6 +99,7 @@ void main() {
         isCompleted: true,
         dueDate: now.subtract(const Duration(days: 1)),
         fromUntis: false,
+        emoji: HomeworkEmoji.hate,
       ),
     ];
 
@@ -169,6 +178,7 @@ void main() {
                 isCompleted: false,
                 dueDate: data[i].dueDate,
                 fromUntis: data[i].fromUntis,
+                emoji: HomeworkEmoji.crying,
               ),
             );
           }
@@ -282,6 +292,7 @@ void main() {
         isCompleted: completed ?? false,
         dueDate: dueDate ?? now.add(const Duration(days: 1)),
         fromUntis: false,
+        emoji: HomeworkEmoji.crying,
       );
       when(
         mockFirestoreHomeworks.loadAllHomeworks(),
@@ -324,6 +335,7 @@ void main() {
           isCompleted: false,
           dueDate: now,
           fromUntis: false,
+          emoji: HomeworkEmoji.crying,
         );
         final dueDate = now.add(const Duration(days: 5));
         // test
@@ -333,6 +345,8 @@ void main() {
         verifyNever(
           mockAnalyticsService.reviveHomework(type: HomeworkType.homework),
         );
+        verify(mockAnalyticsService.logMessage(any)).called(1);
+        verifyNoMoreInteractions(mockAnalyticsService);
       },
     );
 
@@ -409,6 +423,7 @@ void main() {
         isCompleted: false,
         dueDate: now,
         fromUntis: false,
+        emoji: HomeworkEmoji.crying,
       );
       // test
       await homeworksProvider.createHomework(homework);
@@ -465,7 +480,8 @@ void main() {
         );
         // verify
         verifyZeroInteractions(mockFirestoreHomeworks);
-        verifyZeroInteractions(mockAnalyticsService);
+        verify(mockAnalyticsService.logMessage(any)).called(1);
+        verifyNoMoreInteractions(mockAnalyticsService);
       },
     );
 
@@ -497,6 +513,7 @@ void main() {
         isCompleted: false,
         dueDate: now,
         fromUntis: false,
+        emoji: HomeworkEmoji.crying,
       );
       when(
         mockFirestoreHomeworks.loadAllHomeworks(),
@@ -533,12 +550,79 @@ void main() {
         isCompleted: false,
         dueDate: now,
         fromUntis: false,
+        emoji: HomeworkEmoji.crying,
       );
       // test
       expect(homeworksProvider.deleteHomework(homework.id), completes);
       // verify
       verifyNever(mockFirestoreHomeworks.deleteHomework(homework.documentId));
-      verifyZeroInteractions(mockAnalyticsService);
+      verify(mockAnalyticsService.logMessage(any)).called(1);
+      verifyNoMoreInteractions(mockAnalyticsService);
+    });
+
+    test('should return homework when id exists', () async {
+      // setup
+      final homework = Homework(
+        id: '1',
+        title: 'title',
+        description: 'des',
+        subjectDocId: 'sub',
+        toNextLesson: false,
+        isCompleted: false,
+        dueDate: now,
+        fromUntis: false,
+        emoji: HomeworkEmoji.crying,
+      );
+
+      when(
+        mockFirestoreHomeworks.loadAllHomeworks(),
+      ).thenAnswer((_) async => [homework]);
+
+      await homeworksProvider.initialize();
+
+      // test
+      final result = homeworksProvider.getById(homework.documentId);
+
+      // verify
+      expect(result, isNotNull);
+      expect(result, equals(homework));
+    });
+    test('should return imported homework when documentId exists', () async {
+      // setup
+      final homework = Homework(
+        id: '1',
+        title: 'title',
+        description: 'des',
+        subjectDocId: 'sub',
+        toNextLesson: false,
+        isCompleted: false,
+        dueDate: now,
+        fromUntis: true,
+        emoji: HomeworkEmoji.crying,
+      );
+      when(
+        mockFirestoreHomeworks.loadAllHomeworks(),
+      ).thenAnswer((_) async => [homework]);
+      await homeworksProvider.initialize();
+      // test
+      final result = homeworksProvider.getById(homework.documentId);
+      // verify
+      expect(result, isNotNull);
+      expect(result, equals(homework));
+    });
+    test('should return null when id does not exist', () async {
+      // setup
+      when(
+        mockFirestoreHomeworks.loadAllHomeworks(),
+      ).thenAnswer((_) async => []);
+
+      await homeworksProvider.initialize();
+
+      // test
+      final result = homeworksProvider.getById('non_existing_id');
+
+      // verify
+      expect(result, isNull);
     });
   });
 }

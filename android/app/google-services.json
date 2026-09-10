@@ -15,11 +15,19 @@
       },
       "oauth_client": [
         {
-          "client_id": "626284965826-ra90km7h0l4378c3b2kfn2etb6ajvrut.apps.googleusercontent.com",
+          "client_id": "626284965826-nbmgdpvv5c8pfo3qqddiu44ei6v6cp7d.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.max.homeworks",
-            "certificate_hash": "d088b4f7657a9ae2798ab151ddf470ca035e38cf"
+            "certificate_hash": "16d41dd174abeafac1b115b239cd0106d9c259a6"
+          }
+        },
+        {
+          "client_id": "626284965826-ta04oqjv7vhm3cq5p78j9nctou2rj8ua.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.max.homeworks",
+            "certificate_hash": "db55ac70732ee9b3a7f1d11791dadaf1c305297f"
           }
         },
         {
@@ -38,6 +46,13 @@
             {
               "client_id": "626284965826-iovj6s0lvft551f3d6ahdr6qkoc53njg.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "626284965826-a7rr1a2bd50reag0civmrtihdd6m2stj.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "de.seminarfach.homeworks"
+              }
             }
           ]
         }

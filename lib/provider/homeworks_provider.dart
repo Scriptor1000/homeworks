@@ -1,6 +1,6 @@
 import 'package:collection/collection.dart';
+import 'package:firebase_performance/firebase_performance.dart';
 import 'package:flutter/material.dart';
-import 'package:sentry_flutter/sentry_flutter.dart';
 
 import '../database/homeworks.dart';
 import '../database/models/homework.dart';
@@ -11,9 +11,14 @@ import '../utilities/homeworks_list.dart';
 import '../utilities/constants.dart';
 import 'untis_provider.dart';
 
+/// Provider for managing homeworks
+///
+/// This class handles loading, creating, updating, and deleting homeworks.
+/// It interacts with [FirestoreHomeworks] for persistent storage and keeps
+/// a local list [_homeworks] in sync.
 class HomeworksProvider extends ChangeNotifier {
-  List<Homework> _homeworks = [];
-  bool _homeworksLoaded = false;
+  List<Homework> _homeworks = []; // local list of homeworks
+  bool _homeworksLoaded = false; // whether homeworks have been loaded
 
   final FirestoreHomeworks _firestoreHomeworks;
   final AnalyticsService _analyticsService;
@@ -42,7 +47,10 @@ class HomeworksProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Loads all homeworks from Firestore and removes old completed ones
   Future<void> _loadHomeworks() async {
+    Trace trace = _analyticsService.startCustomTrace('load_homeworks');
+
     _homeworks = await _firestoreHomeworks.loadAllHomeworks();
     final now = DateTime.now();
     // TODO there is a better place for deleting old homeworks
@@ -55,15 +63,19 @@ class HomeworksProvider extends ChangeNotifier {
         )
         .toList();
     for (var homework in toDelete) {
-      await _firestoreHomeworks.deleteHomework(homework.id);
+      await _firestoreHomeworks.deleteHomework(homework.documentId);
     }
+
+    // Remove the same homeworks locally
     _homeworks.removeWhere(
       (homework) =>
           homework.dueDate != null &&
           homework.dueDate!.isBefore(now) &&
           homework.isCompleted,
     );
+
     _homeworksLoaded = true;
+    trace.stop();
     notifyListeners();
   }
 
@@ -112,6 +124,12 @@ class HomeworksProvider extends ChangeNotifier {
     _analyticsService.updateDueDates(count);
   }
 
+  Homework? getById(String id) {
+    return _homeworks.firstWhereOrNull(
+      (hw) => hw.documentId == id || hw.id == id,
+    );
+  }
+
   /// Creates a new homework and stores it in Firestore and updates the local list.
   ///
   /// It generates a new [Homework] object with the given [title] and [subject], the rest is filled with standard values.
@@ -119,6 +137,7 @@ class HomeworksProvider extends ChangeNotifier {
   /// The homework will be added to the [_homeworks] list and saved in Firestore.
   Future<void> fastCreateHomework(String title, Subject subject) async {
     final nextLesson = subject.nextLesson;
+
     HomeworkType type = HomeworkType.homework;
     for (final prefix in examPrefixes) {
       if (title.startsWith(prefix)) {
@@ -127,6 +146,7 @@ class HomeworksProvider extends ChangeNotifier {
         break;
       }
     }
+
     var homework = Homework(
       title: title,
       description: '',
@@ -136,6 +156,7 @@ class HomeworksProvider extends ChangeNotifier {
       dueDate: nextLesson,
       fromUntis: false,
       type: type,
+      emoji: null,
     );
     return _mutateState(
       mutateLocalState: () => _homeworks.add(homework),
@@ -149,6 +170,9 @@ class HomeworksProvider extends ChangeNotifier {
     );
   }
 
+  /// Creates a homework from a full [Homework] object
+  ///
+  /// Adds it to the local list and saves in Firestore.
   Future<void> createHomework(Homework homework) async {
     return _mutateState(
       mutateLocalState: () => _homeworks.add(homework),
@@ -159,6 +183,35 @@ class HomeworksProvider extends ChangeNotifier {
         isToNextLesson: homework.toNextLesson,
         isCreatedFast: false,
       ),
+    );
+  }
+
+  Future<void> updateHomework(Homework updatedHomework) async {
+    final homework = _homeworks.firstWhereOrNull(
+      (hw) =>
+          hw.documentId == updatedHomework.documentId ||
+          hw.id == updatedHomework.id,
+    );
+    if (homework == null) {
+      _analyticsService.logMessage(
+        'Homework with id ${updatedHomework.id} not found for updating. '
+        'Current homeworks ID: ${_homeworks.map((hw) => hw.id).join(', ')}',
+      );
+      return;
+    }
+    return _mutateState(
+      mutateLocalState: () {
+        homework.title = updatedHomework.title;
+        homework.description = updatedHomework.description;
+        homework.subjectDocId = updatedHomework.subjectDocId;
+        homework.toNextLesson = updatedHomework.toNextLesson;
+        homework.dueDate = updatedHomework.dueDate;
+        homework.type = updatedHomework.type;
+        homework.emoji = updatedHomework.emoji;
+      },
+      mutateRemoteState: () async =>
+          await _firestoreHomeworks.saveHomework(homework),
+      logAnalytics: () {},
     );
   }
 
@@ -183,7 +236,7 @@ class HomeworksProvider extends ChangeNotifier {
         ),
       );
     } else {
-      Sentry.logger.error(
+      _analyticsService.logMessage(
         'Homework with id $homeworkID not found for deleting. '
         'Current homeworks ID: ${_homeworks.map((hw) => hw.id).join(', ')}',
       );
@@ -206,7 +259,7 @@ class HomeworksProvider extends ChangeNotifier {
             _analyticsService.reviveHomework(type: homework.type),
       );
     } else {
-      Sentry.logger.error(
+      _analyticsService.logMessage(
         'Homework with id $homeworkID not found for new due date. '
         'Current homeworks ID: ${_homeworks.map((hw) => hw.id).join(', ')}',
       );
@@ -227,7 +280,7 @@ class HomeworksProvider extends ChangeNotifier {
         return _completeHomework(homework);
       }
     } else {
-      Sentry.logger.error(
+      _analyticsService.logMessage(
         'Homework with id $homeworkID not found for changing status. '
         'Current homeworks ID: ${_homeworks.map((hw) => hw.id).join(', ')}',
       );

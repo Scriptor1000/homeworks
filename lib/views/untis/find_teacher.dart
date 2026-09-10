@@ -1,12 +1,12 @@
 import 'package:collection/collection.dart';
 import 'package:dart_untis_mobile/dart_untis_mobile.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:sentry_flutter/sentry_flutter.dart';
 
 import '../../provider/credential_provider.dart';
 import '../../provider/untis_provider.dart';
-import '../../utilities/enums.dart';
+import '../../utilities/common.dart';
 
 /// Screen to view the timetable of a teacher.
 class FindTeacher extends StatefulWidget {
@@ -83,9 +83,9 @@ class _FindTeacherState extends State<FindTeacher> {
         stream: _stream,
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-            Sentry.captureException(
+            FirebaseCrashlytics.instance.recordError(
               snapshot.error,
-              stackTrace: snapshot.stackTrace,
+              snapshot.stackTrace,
             );
             return Center(child: Text('Fehler: ${snapshot.error}'));
           }
@@ -93,7 +93,7 @@ class _FindTeacherState extends State<FindTeacher> {
             return const Center(child: CircularProgressIndicator());
           }
           final result = snapshot.data!;
-          return _buildResult(result);
+          return withConstrainedWidth(context, child: _buildResult(result));
         },
       ),
     );
@@ -120,13 +120,21 @@ class _FindTeacherState extends State<FindTeacher> {
   }
 
   Widget _formatDate(UntisPeriod period) {
+    String weekday = getWeekday(period.startDateTime);
+
+    final bool isToday =
+        normalizeDate(period.startDateTime) == normalizeDate(DateTime.now());
+
     return Row(
       children: [
         SizedBox(width: 30, child: Divider()),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           child: Text(
-            '${period.startDateTime.day.toString().padLeft(2, '0')}.${period.startDateTime.month.toString().padLeft(2, '0')}.${period.startDateTime.year}',
+            '$weekday - '
+            '${period.startDateTime.day.toString().padLeft(2, '0')}'
+            '.${period.startDateTime.month.toString().padLeft(2, '0')}'
+            ' ${isToday ? ' (Heute)' : ''}',
             style: Theme.of(context).textTheme.labelLarge?.copyWith(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
@@ -185,13 +193,9 @@ class _FindTeacherState extends State<FindTeacher> {
         style: isCanceled ? canceledStyle : null,
       ),
       trailing: Text(
-        '${_formatTime(period.startDateTime)} - ${_formatTime(period.endDateTime)}',
+        '${formatHourMinute(period.startDateTime)} - ${formatHourMinute(period.endDateTime)}',
         style: Theme.of(context).textTheme.bodySmall,
       ),
     );
-  }
-
-  String _formatTime(DateTime time) {
-    return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
   }
 }

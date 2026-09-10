@@ -5,7 +5,7 @@ import '../utilities/cryptography.dart';
 import 'models/factory.dart';
 import 'user.dart';
 
-/// Klasse für das Handling von Credentials in Firestore.
+/// Class for handling credentials in Firestore.
 class FirestoreCredentials {
   static const credentialsField = 'UntisCredentials';
   static const credentialsHashField = 'UntisCredentialsHash';

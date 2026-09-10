@@ -16,9 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.0+1
-
-#flutter run -d chrome --web-hostname localhost --web-port 5000 --web-experimental-hot-reload
+version: 0.1.0+1
 
 environment:
   sdk: ^3.10.0
@@ -48,7 +46,7 @@ dependencies:
   # ui related packages
   animations: ^2.0.11
   dynamic_color: ^1.7.0
-  font_awesome_flutter: ^10.8.0
+  font_awesome_flutter: ^11.0.0
   gap: ^3.0.1
   flutter_native_splash: ^2.4.7
 
@@ -59,8 +57,7 @@ dependencies:
   google_sign_in_web: ^1.0.0
   cloud_firestore: ^6.0.0
   firebase_analytics: ^12.0.2
-  
-  sentry_flutter: ^9.6.0
+  firebase_crashlytics: ^5.3.0
 
   cryptography: ^2.7.0
   uuid: ^4.5.1
@@ -71,6 +68,10 @@ dependencies:
   # storage related packages
   shared_preferences: ^2.3.3
   flutter_secure_storage: ^10.0.0
+  firebase_remote_config: ^6.5.6
+  intl: ^0.20.2
+  firebase_performance: ^0.11.5
+  firebase_app_check: ^0.4.7
   
 
 dev_dependencies:
@@ -95,7 +96,6 @@ dev_dependencies:
   google_sign_in_mocks: ^0.4.1
   fake_cloud_firestore: ^4.0.0
 
-  sentry_dart_plugin: ^3.2.0
   flutter_launcher_icons: ^0.14.4
 
 # For information on the generic Dart part of this file, see the
@@ -139,30 +139,17 @@ flutter:
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
 
-sentry:
-  upload_debug_symbols: false # because no android/ios builds 
-  upload_source_maps: true
-  upload_sources: true
-
-  commits: auto
-  ignore_missing: true
-  
-  project: homeworks
-  org: max-uf
-
 flutter_launcher_icons:
   android: true
-  image_path_android: assets/icon/icon.png
+  ios: true
+  image_path: assets/icon/icon.png
 
   adaptive_icon_foreground: assets/icon/icon.png
   adaptive_icon_background: "#FFFFFF" #8eb3e1
   adaptive_icon_foreground_inset: 16
 
-  web: 
-    generate: true
-    image_path: assets/icon/icon.png
-    background_color: "#FFFFFF"
-    theme_color: "#FFFFFF"
+  remove_alpha_ios: true
+  background_color_ios: "#FFFFFF"
 
 flutter_native_splash:
   color: "#8eb3e1"

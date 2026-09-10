@@ -1,20 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
+import '../provider/config_provider.dart';
 import 'typesafe_router.dart';
 
-/// A shell widget wich displays the bottom navigation bar at all routes.
+/// A shell widget that displays a bottom navigation bar across all routes.
+///
+/// The [child] is the current screen displayed above the navigation bar.
+/// The [state] is the current GoRouter state, used to determine the selected index.
 class NavigationShell extends StatelessWidget {
   const NavigationShell({super.key, required this.child, required this.state});
 
-  /// The shown screen of the current route, shown above the bottom navigation bar.
+  /// The screen to display above the bottom navigation bar.
   final Widget child;
 
-  /// The current state of the GoRouter, used to determine the selected index.
+  /// The current GoRouter state, used to highlight the correct navigation item.
   final GoRouterState state;
 
   @override
   Widget build(BuildContext context) {
+    int maxWidth = context.select(
+      (ConfigProvider provider) => provider.maxWidthThreshold,
+    ); // Define the maximum width for the layout
+
+    return LayoutBuilder(
+      builder: (context, constraints) => constraints.maxWidth > maxWidth
+          ? _buildLargeLayout(context)
+          : _buildSmallLayout(context),
+    );
+  }
+
+  Widget _buildSmallLayout(BuildContext context) {
     return Scaffold(
       body: child,
       bottomNavigationBar: NavigationBar(
@@ -27,9 +44,35 @@ class NavigationShell extends StatelessWidget {
     );
   }
 
-  /// Handles the tap on a bottom navigation item.
+  Widget _buildLargeLayout(BuildContext context) {
+    EdgeInsets padding = MediaQuery.of(context).padding;
+    return Scaffold(
+      body: Row(
+        children: [
+          NavigationRail(
+            selectedIndex: DestinationsManager.getNavigationIndex(state),
+            onDestinationSelected: (index) {
+              _onItemTapped(index, context);
+            },
+            labelType: NavigationRailLabelType.all,
+            destinations: DestinationsManager.navigationRailDestinations,
+          ),
+          Padding(
+            padding: EdgeInsets.only(top: padding.top, bottom: padding.bottom),
+            child: const VerticalDivider(thickness: 1, width: 1),
+          ),
+          Expanded(child: child),
+        ],
+      ),
+    );
+  }
+
+  /// Handles taps on the bottom navigation items.
   void _onItemTapped(int index, BuildContext context) {
     switch (index) {
+      /*case 0:
+        const TimetableRoute().go(context);
+        break;*/
       case 0:
         const HomeRoute().go(context);
         break;

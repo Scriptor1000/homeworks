@@ -9,7 +9,6 @@
             "request": "launch",
             "type": "dart",
             "args": [
-                "--web-experimental-hot-reload",
                 // only localhost:5000 is allowed as redirect URI from google sign in
                 "--web-hostname localhost",
                 "--web-port 5000"

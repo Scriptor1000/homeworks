@@ -4,7 +4,7 @@ import 'models/factory.dart';
 import 'models/subject.dart';
 import 'user.dart';
 
-/// Klasse für das Handling von Subjects in Firestore mit Dependency Injection.
+/// Class for handling subjects in Firestore with dependency injections.
 class FirestoreSubjects {
   static const subjectCollection = 'subjects';
 

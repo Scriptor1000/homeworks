@@ -1,64 +1,112 @@
 import 'package:flutter/material.dart';
+import 'package:gap/gap.dart';
 import 'package:provider/provider.dart';
 
 import '../../database/models/subject.dart';
 import '../../provider/subject_provider.dart';
+import '../../utilities/common.dart';
 import '../../widgets/search_screen.dart';
 import '../../widgets/subject_tile.dart';
 
-/// Widget to select a subject
+/// A screen that allows users to choose a [Subject].
 ///
-/// This widget displays a list of [Subject] from the [SubjectProvider].
-/// You can give it a callback [onSubjectSelected] to handle the selected subject,
-/// which will only be called if the user selects a subject.
-/// After a selection is made, it will pop the current screen.
-class SubjectSelection extends StatelessWidget {
+/// This widget:
+/// - Retrieves all subjects from [SubjectProvider]
+/// - Displays them in a searchable list
+/// - Filters subjects based on input text
+/// - Returns the selected subject via [onSubjectSelected]
+/// - Pops this route once a subject is chosen
+class SubjectSelection extends StatefulWidget {
+  /// Callback executed when a subject is selected.
+  ///
+  /// If null, no callback will be triggered.
   final void Function(Subject)? onSubjectSelected;
+
   const SubjectSelection({super.key, this.onSubjectSelected});
 
   @override
+  State<SubjectSelection> createState() => _SubjectSelectionState();
+}
+
+class _SubjectSelectionState extends State<SubjectSelection> {
+  /// Search query used to filter subjects.
+  String query = '';
+
+  @override
   Widget build(BuildContext context) {
-    final subjects = context
-        .watch<SubjectProvider>()
-        .subjects
-        .where((subject) => subject.visible)
-        .toList();
+    /// Reads the full list of subjects from the provider.
+    final subjects = context.watch<SubjectProvider>().subjects;
+
+    /// Filters subjects by visibility and by name or shortName depending on
+    /// `query`.
+    final filteredSubjects = subjects.where((subject) {
+      return subject.visible &&
+          (subject.name.toLowerCase().contains(query.toLowerCase()) ||
+              subject.shortName.toLowerCase().contains(query.toLowerCase()));
+    }).toList();
+
+    // IDEA: Perhaps a special section for "today's subjects" could be added?
+    // final untisProvider = context.watch<UntisProvider>();
+    // final todaySubjectIds = untisProvider.untisSubjectsLoaded
+    //     ? untisProvider.todaySubjects
+    //           .map((subject) => subject.documentId)
+    //           .toSet()
+    //     : <String>{};
+    // final todaySubjects = filteredSubjects
+    //     .where((subject) => todaySubjectIds.contains(subject.documentId))
+    //     .toList();
 
     return Scaffold(
       appBar: AppBar(title: const Text('Fach auswählen')),
-      body: subjects.isEmpty
-          ? buildEmpty()
-          : SearchScreen<Subject>(
-              searchableItems: subjects,
-              searchHint: 'Fach suchen...',
-              getQueryString: (subject) =>
-                  '${subject.name} ${subject.shortName}',
-              buildTile: _buildSubjectTile,
-              onSelected: (s) {
-                onSubjectSelected?.call(s);
-                Navigator.pop(context, s);
-              },
-            ),
-    );
-  }
-
-  Widget buildEmpty() {
-    return Center(
-      child: Text(
-        'Keine Fächer vorhanden. \n'
-        'Um Fächer hinzuzufügen, musst du dein Untis Konto verbinden.\n'
-        'Weil jede Hausaufgabe einem Fach zugeordnet sein muss, '
-        'kannst du ohne diese Verbindung keine Hausaufgaben erstellen.'
-        'Falls du dies bereits getan hast, kann es sein dass alle Fächer ausgeblendet sind. ',
+      body: withConstrainedWidth(
+        context,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: filteredSubjects.isEmpty
+              ? _buildEmpty(subjects, context)
+              : SearchScreen(
+                  searchableItems: filteredSubjects,
+                  searchHint: 'Fach suchen...',
+                  getQueryString: (Subject subject) =>
+                      '${subject.name} ${subject.shortName}'.toLowerCase(),
+                  buildTile:
+                      (
+                        BuildContext context,
+                        Subject subject,
+                        void Function() onTap,
+                      ) => SubjectTile(subject: subject, onTap: onTap),
+                  onSelected: (Subject subject) {
+                    widget.onSubjectSelected?.call(subject);
+                    Navigator.pop(context);
+                  },
+                ),
+        ),
       ),
     );
   }
 
-  Widget _buildSubjectTile(
-    BuildContext context,
-    Subject subject,
-    VoidCallback onTap,
-  ) {
-    return SubjectTile(subject: subject, onTap: () => onTap());
+  Center _buildEmpty(List<Subject> subjects, BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            subjects.isEmpty ? Icons.library_books_outlined : Icons.search_off,
+            size: 48,
+            color: Theme.of(context).colorScheme.outline,
+          ),
+          const Gap(12),
+          Text(
+            subjects.isEmpty
+                ? 'Keine Fächer vorhanden'
+                : 'Kein Fach gefunden für „$query"',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.outline,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
   }
 }

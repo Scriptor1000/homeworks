@@ -2,24 +2,47 @@ import 'dart:core';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:uuid/uuid.dart';
-
 import '../../utilities/enums.dart';
 
 /// A Homework which can be saved to Firestore.
-class Homework {
-  final String id;
-  final String title;
-  final String description;
-  final String subjectDocId;
-  final bool toNextLesson;
-  final bool fromUntis;
-  final DateTime createdAt;
+///
+/// Represents a single homework item with properties like title, description,
+/// due date, and associations to a subject. Can be created manually or imported
+/// from Untis.
 
-  final HomeworkType type;
+class Homework {
+  /// Unique identifier for the homework. Generated automatically if not provided.
+  String id;
+
+  /// Title of the homework.
+  String title;
+
+  /// Detailed description of the homework.
+  String description;
+
+  /// Document ID of the subject this homework belongs to.
+  String subjectDocId;
+
+  /// If true, the due date is determined by the next lesson of the subject.
+  bool toNextLesson;
+
+  /// Indicates if the homework was imported from Untis.
+  bool fromUntis;
+
+  /// Timestamp when the homework was created.
+  DateTime createdAt;
+
+  /// Indicates if the homework has been completed.
   bool isCompleted;
 
-  // dueDate can be null, but only if toNextLesson is true which can only be if the subject is from Untis.
+  /// The due date for the homework. Can be null if [toNextLesson] is true.
   DateTime? dueDate;
+
+  /// The type of the homework, which can be a regular homework, an exam, or an appointment.
+  HomeworkType type;
+
+  /// Optional emoji associated with the homework for visual representation.
+  HomeworkEmoji? emoji;
 
   Homework({
     String? id,
@@ -29,6 +52,7 @@ class Homework {
     required this.toNextLesson,
     required this.isCompleted,
     required this.fromUntis,
+    required this.emoji,
     this.dueDate,
     this.type = HomeworkType.homework,
     DateTime? createdAt,
@@ -40,6 +64,7 @@ class Homework {
         'Homework with toNextLesson must be associated with a Subject from Untis.',
       );
     }
+    // Validation: if dueDate is null, toNextLesson must be true
     if (dueDate == null) {
       assert(
         toNextLesson,
@@ -48,6 +73,7 @@ class Homework {
     }
   }
 
+  /// Factory constructor to create a [Homework] from a Firestore document.
   factory Homework.fromDocument(Map<String, dynamic> json) {
     if (!json.containsKey('homeworkType')) {
       json['homeworkType'] = json['isExam'] == true
@@ -67,9 +93,13 @@ class Homework {
           ? (json['dueDate'] as Timestamp).toDate()
           : null,
       createdAt: (json['createdAt'] as Timestamp).toDate(),
+      emoji: json.containsKey('emoji')
+          ? HomeworkEmoji.values[json['emoji'] as int]
+          : null,
     );
   }
 
+  /// Converts the homework into a Firestore-compatible map.
   Map<String, dynamic> toDocument() {
     return {
       'id': id,
@@ -81,14 +111,18 @@ class Homework {
       'homeworkType': type.index,
       'subjectDocId': subjectDocId,
       if (dueDate != null) 'dueDate': Timestamp.fromDate(dueDate!),
+      if (emoji != null) 'emoji': emoji!.index,
       'createdAt': Timestamp.fromDate(createdAt),
     };
   }
 
+  /// Returns the Firestore document ID, prefixed if imported from Untis.
   String get documentId => fromUntis ? 'imported_$id' : id;
 
-  /// Checks if the homework is due today or earlier.
-  /// If the homework is an exam, it is urgent if it is due in the next 3 days.
+  /// Checks if the homework is urgent.
+  ///
+  /// A homework is considered urgent if it is due today or earlier.
+  /// Exams are considered urgent if due within the next 3 days.
   bool get isUrgent =>
       dueDate != null &&
       DateTime(
