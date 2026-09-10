@@ -102,7 +102,7 @@ class _HomeState extends State<Home> {
 
     int dayCardCount = context.select((ConfigProvider p) => p.dayCardCount);
     bool hasFreeTime = context.select(
-      (UntisProvider p) => p.hasFreeTime || !p.untisSubjectsLoaded,
+      (UntisProvider p) => p.hasFreeTime && p.untisSubjectsLoaded,
     );
     Homeworks homeworks = context.select((HomeworksProvider p) => p.homeworks);
 
@@ -118,13 +118,11 @@ class _HomeState extends State<Home> {
     return ListView(
       scrollDirection: Axis.horizontal,
       padding: EdgeInsets.only(
-        bottom:
-            kFABHeight +
+        bottom: kFABHeight +
             MediaQuery.of(context).viewPadding.bottom +
             2 * kGapSize,
         left: horizontalPadding,
       ),
-
       children: [
         if (!hasFreeTime)
           HomeDayCard(date: DateTime.now(), includeOverdueHomeworks: true),
