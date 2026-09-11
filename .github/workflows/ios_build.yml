@@ -112,8 +112,7 @@ jobs:
       - name: Install Fastlane
         run: |
           cd ios
-          gem install fastlane        
-          bundle exec fastlane add_plugin firebase_app_distribution --non_interactive
+          bundle install
 
       - name: Deploy signed iOS IPA
         env:
