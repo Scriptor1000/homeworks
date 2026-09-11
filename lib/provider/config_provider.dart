@@ -2,42 +2,58 @@ import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-const _defaults = <String, dynamic>{
+const defaultConfig = <String, dynamic>{
   'maxWidthThreshold': 600,
   'maxWidthOnTablet': 800,
   'maxDayCardWidth': 400.0,
   'dayCardCount': 5,
+  'untisTimetableLoadDays': 30,
 };
 
-/// A provider for accessing Firebase Remote Config values.
+/// A provider for accessing configured values from either Firebase Remote Config or local SharedPreferences.
 class ConfigProvider extends ChangeNotifier {
   final FirebaseRemoteConfig _remoteConfig;
-  final Future<SharedPreferencesWithCache> Function(
-    SharedPreferencesWithCacheOptions options,
-  )
-  _sharedPreferencesFactory;
-  SharedPreferencesWithCache? _sharedPreferences;
+  final SharedPreferencesWithCache _sharedPreferences;
 
   bool _remoteConfigInitialized = false;
+
+  ConfigProvider({
+    required FirebaseRemoteConfig remoteConfig,
+    required SharedPreferencesWithCache sharedPreferences,
+  }) : _remoteConfig = remoteConfig,
+       _sharedPreferences = sharedPreferences;
 
   int get maxWidthThreshold => getValue<int>('maxWidthThreshold');
   double get maxDayCardWidth => getValue<double>('maxDayCardWidth');
   double get maxWidthOnTablet => getValue<double>('maxWidthOnTablet');
   int get dayCardCount => getValue<int>('dayCardCount');
+  int get untisTimetableLoadDays => getValue<int>('untisTimetableLoadDays');
 
-  set dayCardCount(int value) {
-    _sharedPreferences?.setInt('dayCardCount', value);
+  set dayCardCount(int value) => setValue<int>('dayCardCount', value);
+
+  void setValue<T>(String key, T value) {
+    void Function(String key, T value) setInSharedPreferences = switch (T) {
+      const (int) => (key, value) => _sharedPreferences.setInt(
+        key,
+        value as int,
+      ),
+      const (double) => (key, value) => _sharedPreferences.setDouble(
+        key,
+        value as double,
+      ),
+      const (bool) => (key, value) => _sharedPreferences.setBool(
+        key,
+        value as bool,
+      ),
+      const (String) => (key, value) => _sharedPreferences.setString(
+        key,
+        value as String,
+      ),
+      _ => throw Exception('Unsupported type $T'),
+    };
+    setInSharedPreferences(key, value);
     notifyListeners();
   }
-
-  ConfigProvider({
-    required FirebaseRemoteConfig remoteConfig,
-    required Future<SharedPreferencesWithCache> Function(
-      SharedPreferencesWithCacheOptions options,
-    )
-    sharedPreferences,
-  }) : _remoteConfig = remoteConfig,
-       _sharedPreferencesFactory = sharedPreferences;
 
   T getValue<T>(String key) {
     T Function(String key) getFromRemote = switch (T) {
@@ -48,17 +64,25 @@ class ConfigProvider extends ChangeNotifier {
       _ => throw Exception('Unsupported type $T'),
     };
 
-    if (_sharedPreferences != null && _sharedPreferences!.containsKey(key)) {
-      return _sharedPreferences!.get(key) as T;
+    T Function(String key) getFromSharedPreferences = switch (T) {
+      const (int) => (key) => _sharedPreferences.getInt(key) as T,
+      const (double) => (key) => _sharedPreferences.getDouble(key) as T,
+      const (bool) => (key) => _sharedPreferences.getBool(key) as T,
+      const (String) => (key) => _sharedPreferences.getString(key) as T,
+      _ => throw Exception('Unsupported type $T'),
+    };
+
+    if (_sharedPreferences.containsKey(key)) {
+      return getFromSharedPreferences(key);
     }
     if (!_remoteConfigInitialized) {
-      return _defaults[key] as T;
+      return defaultConfig[key] as T;
     }
     return getFromRemote(key);
   }
 
   Future<void> initialize() async {
-    _remoteConfig.setDefaults(_defaults);
+    _remoteConfig.setDefaults(defaultConfig);
 
     await _remoteConfig.setConfigSettings(
       RemoteConfigSettings(
@@ -69,12 +93,6 @@ class ConfigProvider extends ChangeNotifier {
     await _remoteConfig.fetchAndActivate();
 
     _remoteConfigInitialized = true;
-
-    SharedPreferencesWithCacheOptions sharedPreferencesOptions =
-        SharedPreferencesWithCacheOptions(allowList: _defaults.keys.toSet());
-    _sharedPreferences = await _sharedPreferencesFactory(
-      sharedPreferencesOptions,
-    );
     notifyListeners();
 
     _remoteConfig.onConfigUpdated.listen((event) {

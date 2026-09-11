@@ -2,11 +2,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_performance/firebase_performance.dart';
-import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../database/credentials.dart';
 import '../database/homeworks.dart';
@@ -31,19 +29,14 @@ class ProviderShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Config provider for remote config
-    final configProvider = ConfigProvider(
-      remoteConfig: FirebaseRemoteConfig.instance,
-      sharedPreferences: (SharedPreferencesWithCacheOptions options) async {
-        return SharedPreferencesWithCache.create(cacheOptions: options);
-      },
-    );
+    final ConfigProvider configProvider = context.read();
 
     final firestore = FirebaseFirestore.instance;
     final analytics = FirebaseAnalytics.instance;
     final crashlytics = FirebaseCrashlytics.instance;
     final performance = FirebasePerformance.instance;
     // this could be a constant or config
-    final range = const Duration(days: 30);
+    final range = Duration(days: configProvider.untisTimetableLoadDays);
 
     // Cryptography utility for encrypting/decrypting credentials
     final cryptography = CredentialCryptography(uid: uid);

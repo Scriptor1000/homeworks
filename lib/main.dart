@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_performance/firebase_performance.dart';
+import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -13,10 +14,12 @@ import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'database/allowed_emails.dart';
 import 'firebase_options.dart';
 import 'provider/authentication_provider.dart';
+import 'provider/config_provider.dart';
 import 'routes/typesafe_router.dart';
 import 'utilities/constants.dart';
 import 'utilities/global_snackbar.dart';
@@ -36,18 +39,27 @@ void main() async {
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  await FirebasePerformance.instance.setPerformanceCollectionEnabled(
-    kReleaseMode,
-  );
-
-  await FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(kReleaseMode);
-
   await FirebaseAppCheck.instance.activate(
     providerAndroid: kDebugMode
         ? AndroidDebugProvider()
         : AndroidPlayIntegrityProvider(),
     providerApple: AppleAppAttestProvider(),
   );
+
+  ConfigProvider configProvider = ConfigProvider(
+    remoteConfig: FirebaseRemoteConfig.instance,
+    sharedPreferences: await SharedPreferencesWithCache.create(
+      cacheOptions: SharedPreferencesWithCacheOptions(
+        allowList: defaultConfig.keys.toSet(),
+      ),
+    ),
+  );
+
+  await FirebasePerformance.instance.setPerformanceCollectionEnabled(
+    kReleaseMode,
+  );
+
+  await FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(kReleaseMode);
 
   FlutterNativeSplash.remove();
   if (kReleaseMode) {
@@ -58,20 +70,9 @@ void main() async {
       FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
       return true;
     };
-    // await SentryFlutter.init((options) {
-    //   options.dsn =
-    //       'https://2937d7b0e20d869f78933ba866a6c078@o4510119803092992.ingest.de.sentry.io/4510119812661328';
-    //   options.enableAutoSessionTracking = true;
-
-    //   if (sentryReleaseName.isNotEmpty) {
-    //     options.release = sentryReleaseName;
-    //     options.environment = sentryReleaseName.split('@').first == 'main'
-    //         ? 'production'
-    //         : 'staging';
-    //   }
-    // }, appRunner: () => runApp(SentryWidget(child: const MainApp())));
   }
-  runApp(const MainApp());
+
+  runApp(Provider.value(value: configProvider, child: const MainApp()));
 }
 
 /// Root widget of the application.
