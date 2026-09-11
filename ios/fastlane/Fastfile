@@ -140,7 +140,10 @@ platform :ios do
   lane :build do |options|
     setup_signing
     archive_path = build_archive
-    export_adhoc(archive_path: archive_path)
+    if options[:adhoc]
+      export_adhoc(archive_path: archive_path)
+      deploy_firebase
+    end
     if options[:testflight]
       export_testflight(archive_path: archive_path)
       deploy_testflight
@@ -160,6 +163,16 @@ platform :ios do
       ipa: "../build/ios/ipa/app-testflight.ipa",
       api_key: api_key,
       skip_waiting_for_build_processing: true
+    )
+  end
+
+  desc "Deploy IOS App zu Firebase App Distribution"
+  private_lane :deploy_firebase do
+    firebase_app_distribution(
+      app: ENV["FIREBASE_APP_ID"],
+      service_credentials_file: ENV["FIREBASE_SERVICE_CREDENTIALS_FILE_PATH"],
+      groups: "internal",
+      ipa_path: "../build/ios/ipa/app-adhoc.ipa"
     )
   end
 end

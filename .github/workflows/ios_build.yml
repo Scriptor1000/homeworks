@@ -65,6 +65,7 @@ jobs:
           echo "IOS_P12_PATH=$RUNNER_TEMP/distribution.p12" >> "$GITHUB_ENV"
           echo "IOS_ADHOC_PROFILE_PATH=$RUNNER_TEMP/adhoc.mobileprovision" >> "$GITHUB_ENV"
           echo "IOS_TESTFLIGHT_PROFILE_PATH=$RUNNER_TEMP/testflight.mobileprovision" >> "$GITHUB_ENV"
+          echo "FIREBASE_SERVICE_CREDENTIALS_FILE_PATH=$RUNNER_TEMP/firebase-service-credentials.json" >> "$GITHUB_ENV"
 
       - name: Restore iOS signing files
         env:
@@ -72,6 +73,7 @@ jobs:
           IOS_PRIVATE_KEY_BASE64: ${{ secrets.IOS_PRIVATE_KEY_BASE64 }}
           IOS_ADHOC_PROVISIONING_PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_ADHOC_BASE64 }}
           IOS_TESTFLIGHT_PROVISIONING_PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_TESTFLIGHT_BASE64 }}
+          FIREBASE_SERVICE_CREDENTIALS_CONTENT: ${{ secrets.FIREBASE_SERVICE_CREDENTIALS_CONTENT }}
         run: |
           echo "Decoding iOS signing files ..."
           echo -n "$IOS_CERTIFICATE_BASE64" \
@@ -85,6 +87,8 @@ jobs:
 
           echo -n "$IOS_TESTFLIGHT_PROVISIONING_PROFILE_BASE64" \
             | base64 --decode > "$IOS_TESTFLIGHT_PROFILE_PATH"
+
+          echo -n "$FIREBASE_SERVICE_CREDENTIALS_CONTENT" > "$FIREBASE_SERVICE_CREDENTIALS_FILE_PATH"
           
           echo "Creating P12 file from certificate and private key ..."
           openssl x509 \
@@ -109,30 +113,23 @@ jobs:
         run: |
           cd ios
           gem install fastlane        
+          bundle exec fastlane add_plugin firebase_app_distribution
 
-      - name: Build signed iOS IPA
+      - name: Deploy signed iOS IPA
         env:
           APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
           IOS_BUNDLE_ID: ${{ vars.IOS_BUNDLE_ID }}
           IOS_ADHOC_PROFILE_NAME: ${{ vars.IOS_ADHOC_PROFILE_NAME }}
           IOS_TESTFLIGHT_PROFILE_NAME: ${{ vars.IOS_TESTFLIGHT_PROFILE_NAME }}
 
+          FIREBASE_APP_ID: ${{ vars.IOS_APP_ID }}
+
           APP_STORE_CONNECT_API_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY_BASE64 }}
           APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
         run: |
           cd ios          
-          bundle exec fastlane ios build testflight:${{ github.ref_type == 'tag' && 'true' || 'false' }}
-
-
-      - name: Upload IPA to Firebase App Distribution
-        uses: wzieba/Firebase-Distribution-Github-Action@v1.7.1
-        with:
-          appId: ${{ vars.IOS_APP_ID }}
-          serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_CREDENTIALS_CONTENT }}
-          groups: internal
-          file: build/ios/ipa/app-adhoc.ipa
-
+          bundle exec fastlane ios build adhoc:true testflight:${{ github.ref_type == 'tag' && 'true' || 'false' }}
 
   build-android:
     name: Deploy Android App
