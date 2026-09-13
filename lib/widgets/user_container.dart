@@ -5,9 +5,7 @@ import 'package:provider/provider.dart';
 
 import '../provider/authentication_provider.dart';
 import '../provider/credential_provider.dart';
-import '../utilities/enums.dart';
 import '../utilities/global_snackbar.dart';
-import '../web_authentication/web_authentication.dart' as web;
 import 'fab.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -128,106 +126,17 @@ class _UserContainerState extends State<UserContainer> {
     );
   }
 
-  Widget _buildGoogleSignInButton(
-    BuildContext context,
-    bool hasGoogle,
-    bool hasEmailPassword,
-  ) {
-    final authProvider = context.read<AuthenticationProvider>();
+  Widget _buildLoginMethodCard({
+    required FaIconData icon,
+    required bool hasMethod,
+    required String methodName,
+    required String status,
+    required String buttonLabel,
+    required VoidCallback onPressed,
+    required bool isLoading,
+  }) {
+    ThemeData theme = Theme.of(context);
 
-    // Für Web verwenden wir den renderButton wenn möglich
-    if (kIsWeb &&
-        authProvider.googleSignInState == GoogleSignInState.needWebButton) {
-      return Card(
-        elevation: 2,
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  FaIcon(
-                    FontAwesomeIcons.google,
-                    color: hasGoogle
-                        ? Colors.green
-                        : Theme.of(context).colorScheme.primary,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Google',
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              if (hasGoogle)
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.check_circle, color: Colors.green, size: 16),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Verknüpft',
-                      style: Theme.of(
-                        context,
-                      ).textTheme.bodySmall?.copyWith(color: Colors.green),
-                    ),
-                  ],
-                )
-              else
-                Text(
-                  'Nicht verbunden',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withValues(alpha: 0.6),
-                  ),
-                ),
-              const SizedBox(height: 12),
-              if (hasGoogle && hasEmailPassword)
-                FilledButton.icon(
-                  onPressed: isGoogleLoading ? null : _unlinkGoogleAccount,
-                  icon: isGoogleLoading
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.link_off, size: 16),
-                  label: const Text('Trennen'),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: Theme.of(context).colorScheme.error,
-                    foregroundColor: Theme.of(context).colorScheme.onError,
-                  ),
-                )
-              else if (hasGoogle)
-                FilledButton.icon(
-                  onPressed: () => showSnackBar(
-                    'Google-Konto kann nicht getrennt werden, da es die einzige Anmeldemethode ist',
-                  ),
-                  icon: const Icon(Icons.link_off, size: 16),
-                  label: const Text('Trennen'),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: Theme.of(
-                      context,
-                    ).colorScheme.outline.withValues(alpha: 0.12),
-                    foregroundColor: Theme.of(context).colorScheme.outline,
-                  ),
-                )
-              else
-                web.renderButton(),
-            ],
-          ),
-        ),
-      );
-    }
-
-    // Für andere Plattformen normaler Button
     return Card(
       elevation: 2,
       child: Padding(
@@ -240,90 +149,86 @@ class _UserContainerState extends State<UserContainer> {
               children: [
                 FaIcon(
                   FontAwesomeIcons.google,
-                  color: hasGoogle
-                      ? Colors.green
-                      : Theme.of(context).colorScheme.primary,
+                  color: hasMethod ? Colors.green : theme.colorScheme.primary,
                   size: 20,
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'Google',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                  methodName,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ],
             ),
             const SizedBox(height: 8),
-            if (hasGoogle)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (hasMethod)
                   Icon(Icons.check_circle, color: Colors.green, size: 16),
-                  const SizedBox(width: 4),
-                  Text(
-                    'Verknüpft',
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodySmall?.copyWith(color: Colors.green),
+                Text(
+                  status,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: hasMethod
+                        ? Colors.green
+                        : theme.colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
-                ],
-              )
-            else
-              Text(
-                'Nicht verbunden',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
-              ),
+              ],
+            ),
             const SizedBox(height: 12),
-            if (hasGoogle && hasEmailPassword)
-              FilledButton.icon(
-                onPressed: isGoogleLoading ? null : _unlinkGoogleAccount,
-                icon: isGoogleLoading
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.link_off, size: 16),
-                label: const Text('Trennen'),
-                style: FilledButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.error,
-                  foregroundColor: Theme.of(context).colorScheme.onError,
-                ),
-              )
-            else if (hasGoogle)
-              FilledButton.icon(
-                onPressed: () => showSnackBar(
-                  'Google-Konto kann nicht getrennt werden, da es die einzige Anmeldemethode ist',
-                ),
-                icon: const Icon(Icons.link_off, size: 16),
-                label: const Text('Trennen'),
-                style: FilledButton.styleFrom(
-                  backgroundColor: Theme.of(
-                    context,
-                  ).colorScheme.outline.withValues(alpha: 0.12),
-                  foregroundColor: Theme.of(context).colorScheme.outline,
-                ),
-              )
-            else
-              FilledButton.icon(
-                onPressed: isGoogleLoading ? null : _linkGoogleAccount,
-                icon: isGoogleLoading
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.link, size: 16),
-                label: const Text('Verknüpfen'),
+            FilledButton.icon(
+              onPressed: onPressed,
+              icon: isLoading
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Icon(hasMethod ? Icons.link_off : Icons.link, size: 16),
+              label: Text(buttonLabel),
+              style: FilledButton.styleFrom(
+                backgroundColor: hasMethod
+                    ? theme.colorScheme.error
+                    : theme.colorScheme.primary,
+                foregroundColor: hasMethod
+                    ? theme.colorScheme.onError
+                    : theme.colorScheme.onPrimary,
               ),
+            ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildGoogleSignInButton(
+    BuildContext context,
+    bool hasGoogle,
+    bool hasEmailPassword,
+  ) {
+    return _buildLoginMethodCard(
+      icon: FontAwesomeIcons.google,
+      hasMethod: hasGoogle,
+      methodName: 'Google',
+      status: hasGoogle ? 'Verknüpft' : 'Nicht verbunden',
+      buttonLabel: hasGoogle ? 'Trennen' : 'Verknüpfen',
+      onPressed: () {
+        if (isGoogleLoading) return;
+        if (hasGoogle) {
+          if (!hasEmailPassword) {
+            showSnackBar(
+              'Google-Konto kann nicht getrennt werden, da es die einzige Anmeldemethode ist',
+            );
+            return;
+          }
+          _unlinkGoogleAccount();
+        } else {
+          _linkGoogleAccount();
+        }
+      },
+      isLoading: isGoogleLoading,
     );
   }
 
@@ -331,72 +236,20 @@ class _UserContainerState extends State<UserContainer> {
     BuildContext context,
     bool hasEmailPassword,
   ) {
-    return Card(
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.lock,
-                  color: hasEmailPassword
-                      ? Colors.green
-                      : Theme.of(context).colorScheme.primary,
-                  size: 20,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Passwort',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            if (hasEmailPassword)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.check_circle, color: Colors.green, size: 16),
-                  const SizedBox(width: 4),
-                  Text(
-                    'Eingerichtet',
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodySmall?.copyWith(color: Colors.green),
-                  ),
-                ],
-              )
-            else
-              Text(
-                'Nicht eingerichtet',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.onSurface.withValues(alpha: 0.6),
-                ),
-              ),
-            const SizedBox(height: 12),
-            if (hasEmailPassword)
-              FilledButton.icon(
-                onPressed: _changeEmailPassword,
-                icon: const Icon(Icons.edit, size: 16),
-                label: const Text('Ändern'),
-              )
-            else
-              FilledButton.icon(
-                onPressed: _setupEmailPassword,
-                icon: const Icon(Icons.add, size: 16),
-                label: const Text('Einrichten'),
-              ),
-          ],
-        ),
-      ),
+    return _buildLoginMethodCard(
+      icon: FontAwesomeIcons.envelope,
+      hasMethod: hasEmailPassword,
+      methodName: 'Passwort',
+      status: hasEmailPassword ? 'Eingerichtet' : 'Nicht eingerichtet',
+      buttonLabel: hasEmailPassword ? 'Ändern' : 'Einrichten',
+      onPressed: () {
+        if (hasEmailPassword) {
+          _changeEmailPassword();
+        } else {
+          _setupEmailPassword();
+        }
+      },
+      isLoading: false,
     );
   }
 
