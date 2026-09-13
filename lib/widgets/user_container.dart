@@ -23,6 +23,7 @@ class UserContainer extends StatefulWidget {
 
 class _UserContainerState extends State<UserContainer> {
   bool isGoogleLoading = false;
+  bool isAppleLoading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -35,6 +36,7 @@ class _UserContainerState extends State<UserContainer> {
     final hasEmailPassword = user.providerData.any(
       (e) => e.providerId == 'password',
     );
+    final hasApple = user.providerData.any((e) => e.providerId == 'apple.com');
 
     return Container(
       width: double.infinity,
@@ -96,15 +98,15 @@ class _UserContainerState extends State<UserContainer> {
                 child: _buildGoogleSignInButton(
                   context,
                   hasGoogle,
+                  hasApple,
                   hasEmailPassword,
                 ),
               ),
 
-              const SizedBox(width: 12),
+              standardGap(),
 
-              // Email/Passwort Button
               Expanded(
-                child: _buildEmailPasswordButton(context, hasEmailPassword),
+                child: _buildAppleButton(context, hasApple, hasEmailPassword),
               ),
             ],
           ),
@@ -112,14 +114,22 @@ class _UserContainerState extends State<UserContainer> {
           standardGap(),
 
           // Abmelden-Button
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              foregroundColor: Theme.of(context).colorScheme.error,
-              backgroundColor: Theme.of(context).colorScheme.errorContainer,
-            ),
-            icon: const Icon(Icons.logout),
-            label: const Text('Abmelden'),
-            onPressed: () => _signOut(),
+          Row(
+            children: [
+              Expanded(
+                child: _buildEmailPasswordButton(context, hasEmailPassword),
+              ),
+              standardGap(),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  foregroundColor: Theme.of(context).colorScheme.error,
+                  backgroundColor: Theme.of(context).colorScheme.errorContainer,
+                ),
+                icon: const Icon(Icons.logout),
+                label: const Text('Abmelden'),
+                onPressed: () => _signOut(),
+              ),
+            ],
           ),
         ],
       ),
@@ -148,7 +158,7 @@ class _UserContainerState extends State<UserContainer> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 FaIcon(
-                  FontAwesomeIcons.google,
+                  icon,
                   color: hasMethod ? Colors.green : theme.colorScheme.primary,
                   size: 20,
                 ),
@@ -206,6 +216,7 @@ class _UserContainerState extends State<UserContainer> {
   Widget _buildGoogleSignInButton(
     BuildContext context,
     bool hasGoogle,
+    bool hasApple,
     bool hasEmailPassword,
   ) {
     return _buildLoginMethodCard(
@@ -225,7 +236,7 @@ class _UserContainerState extends State<UserContainer> {
           }
           _unlinkGoogleAccount();
         } else {
-          _linkGoogleAccount();
+          _linkGoogleAccount(hasApple);
         }
       },
       isLoading: isGoogleLoading,
@@ -253,7 +264,78 @@ class _UserContainerState extends State<UserContainer> {
     );
   }
 
-  Future<void> _linkGoogleAccount() async {
+  Widget _buildAppleButton(
+    BuildContext context,
+    bool hasApple,
+    bool hasEmailPassword,
+  ) {
+    return _buildLoginMethodCard(
+      icon: FontAwesomeIcons.apple,
+      hasMethod: hasApple,
+      methodName: 'Apple',
+      status: hasApple ? 'Verknüpft' : 'Nicht verbunden',
+      buttonLabel: hasApple ? 'Trennen' : 'Verknüpfen',
+      onPressed: () {
+        if (isAppleLoading) return;
+        if (hasApple) {
+          if (!hasEmailPassword) {
+            showSnackBar(
+              'Apple-Konto kann nicht getrennt werden, da es die einzige Anmeldemethode ist',
+            );
+            return;
+          }
+          _unlinkAppleAccount();
+        } else {
+          _linkAppleAccount();
+        }
+      },
+      isLoading: isAppleLoading,
+    );
+  }
+
+  Future<bool> confirmDialog({
+    required String title,
+    required String content,
+    required String confirmButtonText,
+    ButtonStyle confirmButtonStyle = const ButtonStyle(),
+  }) async {
+    return await showDialog<bool>(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text(title),
+              content: Text(content),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text('Abbrechen'),
+                ),
+                TextButton(
+                  style: confirmButtonStyle,
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: Text(confirmButtonText),
+                ),
+              ],
+            );
+          },
+        ) ??
+        false;
+  }
+
+  Future<void> _linkGoogleAccount(bool hasApple) async {
+    final bool confirm =
+        hasApple ||
+        await confirmDialog(
+          title: 'Google Konto verknüpfen',
+          content:
+              'Dein Google-Konto wird mit diesem Konto verknüpft, wodurch du dich auch mit Google anmelden kannst.'
+              'Beachte, das dabei deine Email-Adresse von Google diesem Konto zugeordnet wird.'
+              'Wenn du bei Apple deine E-Mail-Adresse verbirgt hast, wird die von Apple bereitgestellte '
+              'private Relay-Adresse dann deiner Google-Email-Adresse zugeordnet.',
+          confirmButtonText: 'Verknüpfen',
+        );
+
+    if (!confirm || !mounted) return;
     setState(() {
       isGoogleLoading = true;
     });
@@ -268,35 +350,46 @@ class _UserContainerState extends State<UserContainer> {
     }
   }
 
+  Future<void> _linkAppleAccount() async {
+    final bool confirm = await confirmDialog(
+      title: 'Apple-Konto verknüpfen',
+      content:
+          'Dein Apple-Konto wird mit diesem Konto verknüpft.'
+          'Wenn du bei Apple deine E-Mail-Adresse verbirgst, wird die von Apple bereitgestellte private '
+          'Relay-Adresse ebenfalls diesem Konto (einschließlich deiner Email) zugeordnet.',
+      confirmButtonText: 'Verknüpfen',
+    );
+
+    if (!confirm || !mounted) return;
+
+    setState(() {
+      isAppleLoading = true;
+    });
+    try {
+      await context.read<AuthenticationProvider>().authenticateWithApple();
+    } catch (e) {
+      showSnackBar('Fehler bei der Verknüpfung: $e');
+    } finally {
+      setState(() {
+        isAppleLoading = false;
+      });
+    }
+  }
+
   Future<void> _unlinkGoogleAccount() async {
     // Bestätigungsdialog anzeigen
-    final bool? confirm = await showDialog<bool>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Google-Konto entfernen'),
-          content: const Text(
-            'Möchtest du wirklich dein Google-Konto von dieser App entfernen? Diese Aktion kann nicht rückgängig gemacht werden.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Abbrechen'),
-            ),
-            TextButton(
-              style: TextButton.styleFrom(
-                foregroundColor: Theme.of(context).colorScheme.error,
-              ),
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Entfernen'),
-            ),
-          ],
-        );
-      },
+    final bool confirm = await confirmDialog(
+      title: 'Google-Konto trennen',
+      content:
+          'Sind Sie sicher, dass Sie die Verknüpfung zu ihrem Google-Konto von diesem Konto trennen möchten?',
+      confirmButtonText: 'Trennen',
+      confirmButtonStyle: TextButton.styleFrom(
+        foregroundColor: Theme.of(context).colorScheme.error,
+      ),
     );
 
     // Wenn der Nutzer abgebrochen hat oder der Dialog anderweitig geschlossen wurde
-    if (confirm != true || !mounted) return;
+    if (!confirm || !mounted) return;
 
     setState(() {
       isGoogleLoading = true;
@@ -306,6 +399,36 @@ class _UserContainerState extends State<UserContainer> {
     setState(() {
       isGoogleLoading = false;
     });
+  }
+
+  Future<void> _unlinkAppleAccount() async {
+    // Bestätigungsdialog anzeigen
+    final bool confirm = await confirmDialog(
+      title: 'Apple-Konto trennen',
+      content:
+          'Sind Sie sicher, dass Sie die Verknüpfung zu ihrem Apple-Konto von diesem Konto trennen möchten?',
+      confirmButtonText: 'Trennen',
+      confirmButtonStyle: TextButton.styleFrom(
+        foregroundColor: Theme.of(context).colorScheme.error,
+      ),
+    );
+
+    // Wenn der Nutzer abgebrochen hat oder der Dialog anderweitig geschlossen wurde
+    if (!confirm || !mounted) return;
+
+    setState(() {
+      isAppleLoading = true;
+    });
+
+    try {
+      await context.read<AuthenticationProvider>().unlinkFromApple();
+    } catch (e) {
+      showSnackBar('Fehler bei der Entkoppelung: $e');
+    } finally {
+      setState(() {
+        isAppleLoading = false;
+      });
+    }
   }
 
   Future<void> _setupEmailPassword() async {

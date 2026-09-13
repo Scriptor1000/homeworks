@@ -29,8 +29,8 @@ class AuthenticationProvider extends ChangeNotifier {
   /// Google Sign-In handler.
   final GoogleSignIn _googleSignIn;
 
-  /// Helper to check and manage allowed emails stored in Firestore.
-  final FirestoreAllowedEmails _allowedEmails;
+  /// Firebase Auth provider for Apple Sign-In.
+  final AppleAuthProvider _appleProvider;
 
   /// Completer resolved once Google sign-in support is determined.
   final Completer<bool> _googleSupported = Completer<bool>();
@@ -54,10 +54,11 @@ class AuthenticationProvider extends ChangeNotifier {
   AuthenticationProvider({
     required FirebaseAuth firebaseAuth,
     required GoogleSignIn googleSignIn,
+    required AppleAuthProvider appleProvider,
     required FirestoreAllowedEmails allowedEmails,
   }) : _firebaseAuth = firebaseAuth,
        _googleSignIn = googleSignIn,
-       _allowedEmails = allowedEmails;
+       _appleProvider = appleProvider;
 
   /// Initializes Google Sign-In compatibility and event listeners.
   ///
@@ -117,14 +118,9 @@ class AuthenticationProvider extends ChangeNotifier {
   /// Does NOT automatically log in — Firebase does this implicitly.
   /// Returns `null` if successful, or an error message on failure.
   Future<String?> registerWithEmail(String email, String password) async {
-    final trimmedEmail = email.trim();
-    final allowed = await _allowedEmails.isEmailAllowed(trimmedEmail);
-    if (!allowed) {
-      return 'Kein Zugang mit dieser Email möglich. Bitte wende dich an den Administrator.';
-    }
     try {
       await _firebaseAuth.createUserWithEmailAndPassword(
-        email: trimmedEmail,
+        email: email.trim(),
         password: password,
       );
 
@@ -153,6 +149,29 @@ class AuthenticationProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> authenticateWithApple() async {
+    try {
+      if (user != null) {
+        await user!.linkWithProvider(_appleProvider);
+        return;
+      }
+      await _firebaseAuth.signInWithProvider(_appleProvider);
+    } catch (error) {
+      // TODO swich the error code if it is a GoogleSignInException
+      await _googleSignIn.disconnect();
+      showSnackBar('Fehler bei der Anmeldung: $error');
+    }
+  }
+
+  Future<void> unlinkFromApple() async {
+    final user = _firebaseAuth.currentUser;
+    if (user == null) {
+      return;
+    }
+
+    await user.unlink(_appleProvider.providerId);
+  }
+
   /// Decides whether to sign in or link credentials based on existing user state.
   Future<void> _handleGoogleCredentials(GoogleSignInAccount googleUser) async {
     if (_firebaseAuth.currentUser == null) {
@@ -171,32 +190,13 @@ class AuthenticationProvider extends ChangeNotifier {
   /// 4. Remove temporary invitation entries if required
   Future<void> _signInWithGoogle(GoogleSignInAccount googleUser) async {
     try {
-      final allowed = await _allowedEmails.isEmailAllowed(googleUser.email);
-
-      if (!allowed) {
-        showSnackBar(
-          'Kein Zugang mit dieser Email (${googleUser.email}) möglich.'
-          ' Bitte wende dich an den Administrator.',
-        );
-        await _googleSignIn.disconnect();
-        return;
-      }
-
       final GoogleSignInAuthentication googleAuth = googleUser.authentication;
 
       final AuthCredential credential = GoogleAuthProvider.credential(
         idToken: googleAuth.idToken,
       );
 
-      final userCredential = await _firebaseAuth.signInWithCredential(
-        credential,
-      );
-      final user = userCredential.user;
-
-      if (user != null) {
-        await _allowedEmails.removeTemporaryEntries(googleUser.email, user.uid);
-      }
-
+      await _firebaseAuth.signInWithCredential(credential);
       notifyListeners();
     } catch (error, stackTrace) {
       FirebaseCrashlytics.instance.recordError(error, stackTrace);
@@ -237,8 +237,6 @@ class AuthenticationProvider extends ChangeNotifier {
       }
       await user.reload();
 
-      await _allowedEmails.authorizeEmail(googleUser.email, user.uid);
-
       notifyListeners();
     } catch (error, stackTrace) {
       FirebaseCrashlytics.instance.recordError(error, stackTrace);
@@ -256,10 +254,8 @@ class AuthenticationProvider extends ChangeNotifier {
     if (user == null) {
       return;
     }
-
-    await user.unlink('google.com');
+    await user.unlink(GoogleAuthProvider.PROVIDER_ID);
     await _googleSignIn.disconnect();
-    await _allowedEmails.revokeEmail(user.uid);
   }
 
   /// Signs out the currently signed-in user from their Google account.
@@ -276,13 +272,6 @@ class AuthenticationProvider extends ChangeNotifier {
   /// Shows a snackbar on failure.
   Future<void> loginWithEmail(String email, String password) async {
     final trimmedEmail = email.trim();
-    final allowed = await _allowedEmails.isEmailAllowed(trimmedEmail);
-    if (!allowed) {
-      showSnackBar(
-        'Kein Zugang mit dieser Email möglich. Bitte wende dich an den Administrator.',
-      );
-      return;
-    }
     final credentials = EmailAuthProvider.credential(
       email: trimmedEmail,
       password: password,

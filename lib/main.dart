@@ -72,7 +72,9 @@ void main() async {
     };
   }
 
-  runApp(Provider.value(value: configProvider, child: const MainApp()));
+  runApp(
+    ChangeNotifierProvider.value(value: configProvider, child: const MainApp()),
+  );
 }
 
 /// Root widget of the application.
@@ -173,6 +175,7 @@ Widget authenticationProviderShell({required Widget child}) {
       firebaseAuth: firebaseAuth,
       googleSignIn: googleSignIn,
       allowedEmails: allowedEmails,
+      appleProvider: AppleAuthProvider(),
     )..initialize(),
     child: child, // The widget subtree that needs auth context
   );

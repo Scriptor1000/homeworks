@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../web_authentication/web_authentication.dart' as web;
 import '../provider/authentication_provider.dart';
 import '../utilities/enums.dart';
+import '../widgets/fab.dart';
 import 'forgot_pw_page.dart';
 import 'registration.dart';
 
@@ -66,6 +67,15 @@ class _AuthenticationState extends State<Authentication> {
     setState(() => _isLoading = true);
     final authProvider = context.read<AuthenticationProvider>();
     await authProvider.authenticateWithGoogle();
+    if (mounted) {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  void _appleLogin() async {
+    setState(() => _isLoading = true);
+    final authProvider = context.read<AuthenticationProvider>();
+    await authProvider.authenticateWithApple();
     if (mounted) {
       setState(() => _isLoading = false);
     }
@@ -224,12 +234,15 @@ class _AuthenticationState extends State<Authentication> {
 
                             // Divider with "ODER"
                             buildDivider(),
-                            const SizedBox(height: 20),
+                            standardGap(),
 
                             // Google Sign-in button (or web button if needed)
                             buildGoogleSignInButton(
                               authProvider.googleSignInState,
                             ),
+                            standardGap(),
+
+                            builderAppleSignInButton(),
                           ],
                         ),
                       ),
@@ -428,5 +441,21 @@ class _AuthenticationState extends State<Authentication> {
         ),
       ),
     };
+  }
+
+  Widget builderAppleSignInButton() {
+    return OutlinedButton.icon(
+      onPressed: _isLoading ? null : _appleLogin,
+      icon: const FaIcon(FontAwesomeIcons.apple, size: 18),
+      label: const Text(
+        'Mit Apple anmelden',
+        style: TextStyle(fontWeight: FontWeight.w500, fontSize: 16),
+      ),
+      style: OutlinedButton.styleFrom(
+        side: BorderSide(color: Colors.grey.shade300),
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
   }
 }
