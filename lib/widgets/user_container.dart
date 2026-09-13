@@ -1,10 +1,10 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 
 import '../provider/authentication_provider.dart';
 import '../provider/credential_provider.dart';
+import '../utilities/enums.dart';
 import '../utilities/global_snackbar.dart';
 import 'fab.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -106,7 +106,12 @@ class _UserContainerState extends State<UserContainer> {
               standardGap(),
 
               Expanded(
-                child: _buildAppleButton(context, hasApple, hasEmailPassword),
+                child: _buildAppleButton(
+                  context,
+                  hasApple,
+                  hasGoogle,
+                  hasEmailPassword,
+                ),
               ),
             ],
           ),
@@ -120,18 +125,43 @@ class _UserContainerState extends State<UserContainer> {
                 child: _buildEmailPasswordButton(context, hasEmailPassword),
               ),
               standardGap(),
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  foregroundColor: Theme.of(context).colorScheme.error,
-                  backgroundColor: Theme.of(context).colorScheme.errorContainer,
-                ),
-                icon: const Icon(Icons.logout),
-                label: const Text('Abmelden'),
-                onPressed: () => _signOut(),
-              ),
+              Expanded(child: _buildActionCard()),
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildActionCard() {
+    return Card(
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                foregroundColor: Theme.of(context).colorScheme.error,
+                backgroundColor: Theme.of(context).colorScheme.errorContainer,
+              ),
+              icon: const Icon(Icons.logout),
+              label: const Text('Abmelden'),
+              onPressed: () => _signOut(),
+            ),
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                foregroundColor: Theme.of(context).colorScheme.error,
+                backgroundColor: Theme.of(context).colorScheme.errorContainer,
+              ),
+              icon: const Icon(Icons.logout),
+              label: const Text('Konto löschen'),
+              onPressed: () => _deleteAccount(),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -141,9 +171,7 @@ class _UserContainerState extends State<UserContainer> {
     required bool hasMethod,
     required String methodName,
     required String status,
-    required String buttonLabel,
-    required VoidCallback onPressed,
-    required bool isLoading,
+    required FilledButton button,
   }) {
     ThemeData theme = Theme.of(context);
 
@@ -188,25 +216,7 @@ class _UserContainerState extends State<UserContainer> {
               ],
             ),
             const SizedBox(height: 12),
-            FilledButton.icon(
-              onPressed: onPressed,
-              icon: isLoading
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : Icon(hasMethod ? Icons.link_off : Icons.link, size: 16),
-              label: Text(buttonLabel),
-              style: FilledButton.styleFrom(
-                backgroundColor: hasMethod
-                    ? theme.colorScheme.error
-                    : theme.colorScheme.primary,
-                foregroundColor: hasMethod
-                    ? theme.colorScheme.onError
-                    : theme.colorScheme.onPrimary,
-              ),
-            ),
+            button,
           ],
         ),
       ),
@@ -219,27 +229,44 @@ class _UserContainerState extends State<UserContainer> {
     bool hasApple,
     bool hasEmailPassword,
   ) {
+    final theme = Theme.of(context);
     return _buildLoginMethodCard(
       icon: FontAwesomeIcons.google,
       hasMethod: hasGoogle,
       methodName: 'Google',
       status: hasGoogle ? 'Verknüpft' : 'Nicht verbunden',
-      buttonLabel: hasGoogle ? 'Trennen' : 'Verknüpfen',
-      onPressed: () {
-        if (isGoogleLoading) return;
-        if (hasGoogle) {
-          if (!hasEmailPassword) {
-            showSnackBar(
-              'Google-Konto kann nicht getrennt werden, da es die einzige Anmeldemethode ist',
-            );
-            return;
+      button: FilledButton.icon(
+        onPressed: () {
+          if (isGoogleLoading) return;
+          if (hasGoogle) {
+            if (!hasEmailPassword && !hasApple) {
+              showSnackBar(
+                'Google-Konto kann nicht getrennt werden, da es die einzige Anmeldemethode ist',
+              );
+              return;
+            }
+            _unlinkGoogleAccount();
+          } else {
+            _linkGoogleAccount(hasApple);
           }
-          _unlinkGoogleAccount();
-        } else {
-          _linkGoogleAccount(hasApple);
-        }
-      },
-      isLoading: isGoogleLoading,
+        },
+        icon: isGoogleLoading
+            ? const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : Icon(hasGoogle ? Icons.link_off : Icons.link, size: 16),
+        label: Text(hasGoogle ? 'Trennen' : 'Verknüpfen'),
+        style: FilledButton.styleFrom(
+          backgroundColor: hasGoogle
+              ? theme.colorScheme.error
+              : theme.colorScheme.primary,
+          foregroundColor: hasGoogle
+              ? theme.colorScheme.onError
+              : theme.colorScheme.onPrimary,
+        ),
+      ),
     );
   }
 
@@ -252,44 +279,64 @@ class _UserContainerState extends State<UserContainer> {
       hasMethod: hasEmailPassword,
       methodName: 'Passwort',
       status: hasEmailPassword ? 'Eingerichtet' : 'Nicht eingerichtet',
-      buttonLabel: hasEmailPassword ? 'Ändern' : 'Einrichten',
-      onPressed: () {
-        if (hasEmailPassword) {
-          _changeEmailPassword();
-        } else {
-          _setupEmailPassword();
-        }
-      },
-      isLoading: false,
+      button: FilledButton.icon(
+        onPressed: () {
+          if (hasEmailPassword) {
+            _changeEmailPassword();
+          } else {
+            _setupEmailPassword();
+          }
+        },
+        icon: Icon(hasEmailPassword ? Icons.edit : Icons.add, size: 16),
+        label: Text(hasEmailPassword ? 'Ändern' : 'Einrichten'),
+      ),
     );
   }
 
   Widget _buildAppleButton(
     BuildContext context,
     bool hasApple,
+    bool hasGoogle,
     bool hasEmailPassword,
   ) {
+    final theme = Theme.of(context);
     return _buildLoginMethodCard(
       icon: FontAwesomeIcons.apple,
       hasMethod: hasApple,
       methodName: 'Apple',
       status: hasApple ? 'Verknüpft' : 'Nicht verbunden',
-      buttonLabel: hasApple ? 'Trennen' : 'Verknüpfen',
-      onPressed: () {
-        if (isAppleLoading) return;
-        if (hasApple) {
-          if (!hasEmailPassword) {
-            showSnackBar(
-              'Apple-Konto kann nicht getrennt werden, da es die einzige Anmeldemethode ist',
-            );
-            return;
+      button: FilledButton.icon(
+        onPressed: () {
+          if (isGoogleLoading) return;
+          if (hasApple) {
+            if (!hasEmailPassword && !hasGoogle) {
+              showSnackBar(
+                'Google-Konto kann nicht getrennt werden, da es die einzige Anmeldemethode ist',
+              );
+              return;
+            }
+            _unlinkAppleAccount();
+          } else {
+            _linkAppleAccount();
           }
-          _unlinkAppleAccount();
-        } else {
-          _linkAppleAccount();
-        }
-      },
-      isLoading: isAppleLoading,
+        },
+        icon: isAppleLoading
+            ? const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : Icon(hasApple ? Icons.link_off : Icons.link, size: 16),
+        label: Text(hasApple ? 'Trennen' : 'Verknüpfen'),
+        style: FilledButton.styleFrom(
+          backgroundColor: hasApple
+              ? theme.colorScheme.error
+              : theme.colorScheme.primary,
+          foregroundColor: hasApple
+              ? theme.colorScheme.onError
+              : theme.colorScheme.onPrimary,
+        ),
+      ),
     );
   }
 
@@ -478,7 +525,7 @@ class _UserContainerState extends State<UserContainer> {
           'Für dieses Konto ist keine E-Mail-Adresse hinterlegt. Bitte hinterlegen Sie zuerst eine E-Mail-Adresse.';
     } else {
       try {
-        await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+        await context.read<AuthenticationProvider>().sendResetEmail();
         message =
             'E-Mail gesendet. Falls sie nicht eingetroffen ist, bitte Spam-Ordner und die eingegebene E-Mail überprüfen.';
       } on FirebaseAuthException {
@@ -500,5 +547,123 @@ class _UserContainerState extends State<UserContainer> {
     ]);
 
     showSnackBar('Erfolgreich abgemeldet');
+  }
+
+  Future<void> _deleteAccount() async {
+    final authProvider = context.read<AuthenticationProvider>();
+    final user = authProvider.user!;
+
+    final hasGoogle = user.providerData.any(
+      (e) => e.providerId == 'google.com',
+    );
+    final hasEmailPassword = user.providerData.any(
+      (e) => e.providerId == 'password',
+    );
+    final hasApple = user.providerData.any((e) => e.providerId == 'apple.com');
+
+    final method = await _selectAuthicationMethod(
+      hasGoogle,
+      hasApple,
+      hasEmailPassword,
+    );
+
+    if (method == null) {
+      showSnackBar('Konto-Löschung abgebrochen');
+      return;
+    }
+
+    String? password;
+    if (method == .emailAndPassword) {
+      password = await _passwordDialog();
+      if (password == null || password.isEmpty) {
+        showSnackBar('Konto-Löschung abgebrochen');
+        return;
+      }
+    }
+
+    await authProvider.deleteAccount(method, password);
+  }
+
+  Future<String?> _passwordDialog() {
+    return showDialog<String>(
+      context: context,
+      builder: (BuildContext context) {
+        final TextEditingController passwordController =
+            TextEditingController();
+        return AlertDialog(
+          title: const Text('Passwort eingeben'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: passwordController,
+                obscureText: true,
+                decoration: const InputDecoration(labelText: 'Passwort'),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Abbrechen'),
+            ),
+            TextButton(
+              onPressed: () =>
+                  Navigator.of(context).pop(passwordController.text),
+              child: const Text('Bestätigen'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<AuthenticationMethod?> _selectAuthicationMethod(
+    bool hasGoogle,
+    bool hasApple,
+    bool hasEmailPassword,
+  ) {
+    return showModalBottomSheet<AuthenticationMethod?>(
+      context: context,
+      builder: (BuildContext context) => Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            standardGap(),
+            Text(
+              'Konto löschen',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            Text(
+              'Um dein Konto zu löschen, musst du dich authentifizieren. Wähle eine Methode aus, um fortzufahren.',
+            ),
+
+            if (hasGoogle)
+              ListTile(
+                leading: const FaIcon(FontAwesomeIcons.google),
+                title: const Text('Google'),
+                onTap: () async =>
+                    Navigator.of(context).pop(AuthenticationMethod.google),
+              ),
+            if (hasApple)
+              ListTile(
+                leading: const FaIcon(FontAwesomeIcons.apple),
+                title: const Text('Apple'),
+                onTap: () async =>
+                    Navigator.of(context).pop(AuthenticationMethod.apple),
+              ),
+            if (hasEmailPassword)
+              ListTile(
+                leading: const FaIcon(FontAwesomeIcons.envelope),
+                title: const Text('Passwort / Email'),
+                onTap: () async => Navigator.of(
+                  context,
+                ).pop(AuthenticationMethod.emailAndPassword),
+              ),
+          ],
+        ),
+      ),
+    );
   }
 }

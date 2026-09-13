@@ -149,6 +149,10 @@ class AuthenticationProvider extends ChangeNotifier {
     }
   }
 
+  /// Begins Apple sign-in flow.
+  ///
+  /// If the user is already signed in, links the Apple credentials to their account.
+  /// If not, signs in with Apple credentials.
   Future<void> authenticateWithApple() async {
     try {
       if (user != null) {
@@ -163,6 +167,7 @@ class AuthenticationProvider extends ChangeNotifier {
     }
   }
 
+  /// Unlinks the currently signed-in Firebase user from their Apple account.
   Future<void> unlinkFromApple() async {
     final user = _firebaseAuth.currentUser;
     if (user == null) {
@@ -284,6 +289,52 @@ class AuthenticationProvider extends ChangeNotifier {
         'Anmeldung fehlgeschlagen: ${e is FirebaseAuthException ? _getErrorMessage(e) : e.toString()}',
       );
     }
+  }
+
+  /// Sends a password reset email to the currently signed-in user.
+  Future<void> sendResetEmail() async {
+    final user = _firebaseAuth.currentUser;
+    if (user == null || user.email == null) {
+      return;
+    }
+    await _firebaseAuth.sendPasswordResetEmail(email: user.email!);
+  }
+
+  /// Deletes the currently signed-in user's account from Firebase Auth WARNING! Use with caution.
+  Future<void> deleteAccount(
+    AuthenticationMethod reauthenticationMethod,
+    String? password,
+  ) async {
+    final user = _firebaseAuth.currentUser;
+    if (user == null) {
+      return;
+    }
+
+    switch (reauthenticationMethod) {
+      case .apple:
+        await user.reauthenticateWithProvider(_appleProvider);
+        break;
+      case .google:
+        final googleUser = await _googleSignIn.authenticate();
+        final googleAuth = await googleUser.authentication;
+        final credential = GoogleAuthProvider.credential(
+          idToken: googleAuth.idToken,
+        );
+        await user.reauthenticateWithCredential(credential);
+        break;
+      case .emailAndPassword:
+        if (user.email == null || password == null) {
+          throw Exception('Email or password is null');
+        }
+        final credential = EmailAuthProvider.credential(
+          email: user.email!,
+          password: password,
+        );
+        await user.reauthenticateWithCredential(credential);
+        break;
+    }
+
+    await user.delete();
   }
 
   /// The error messages for FirebaseAuth exceptions.
