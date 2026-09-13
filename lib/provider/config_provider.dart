@@ -3,13 +3,21 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 const defaultConfig = <String, dynamic>{
+  // UI config
   'maxWidthThreshold': 600.0,
   'maxWidthOnTablet': 800.0,
   'maxDayCardWidth': 400.0,
   'minAccountActionTileWidth': 200.0,
   'thresholdShowAccountActionTileHorizontly': 300.0,
+  // App config
   'dayCardCount': 5,
   'untisTimetableLoadDays': 30,
+  // Privacy config
+  'crashlyticsConsent': false,
+  'analyticsConsent': false,
+  'performanceConsent': false,
+  'consentDialogShown': false,
+  'privacyPolicyUrl': 'https://asg-homeworks.pages.dev/privacy-policy.html',
 };
 
 /// A provider for accessing configured values from either Firebase Remote Config or local SharedPreferences.
@@ -25,19 +33,41 @@ class ConfigProvider extends ChangeNotifier {
   }) : _remoteConfig = remoteConfig,
        _sharedPreferences = sharedPreferences;
 
-  double get maxWidthThreshold => getValue<double>('maxWidthThreshold');
-  double get maxDayCardWidth => getValue<double>('maxDayCardWidth');
-  double get maxWidthOnTablet => getValue<double>('maxWidthOnTablet');
+  // UI config
+  double get maxWidthThreshold => _getValue<double>('maxWidthThreshold');
+  double get maxDayCardWidth => _getValue<double>('maxDayCardWidth');
+  double get maxWidthOnTablet => _getValue<double>('maxWidthOnTablet');
   double get minAccountActionTileWidth =>
-      getValue<double>('minAccountActionTileWidth');
+      _getValue<double>('minAccountActionTileWidth');
   double get thresholdShowAccountActionTileHorizontly =>
-      getValue<double>('thresholdShowAccountActionTileHorizontly');
-  int get dayCardCount => getValue<int>('dayCardCount');
-  int get untisTimetableLoadDays => getValue<int>('untisTimetableLoadDays');
+      _getValue<double>('thresholdShowAccountActionTileHorizontly');
 
-  set dayCardCount(int value) => setValue<int>('dayCardCount', value);
+  // App config
+  int get dayCardCount => _getValue<int>('dayCardCount');
+  set dayCardCount(int value) => _setValue<int>('dayCardCount', value);
+  int get untisTimetableLoadDays => _getValue<int>('untisTimetableLoadDays');
 
-  void setValue<T>(String key, T value) {
+  // Privacy config
+  String get privacyPolicyUrl => _getValue<String>('privacyPolicyUrl');
+
+  bool get consentDialogShown =>
+      _getValue<bool>('consentDialogShown', localOnly: true);
+  set consentDialogShown(bool value) =>
+      _setValue<bool>('consentDialogShown', value);
+  bool get crashlyticsConsent =>
+      _getValue<bool>('crashlyticsConsent', localOnly: true);
+  set crashlyticsConsent(bool value) =>
+      _setValue<bool>('crashlyticsConsent', value);
+  bool get analyticsConsent =>
+      _getValue<bool>('analyticsConsent', localOnly: true);
+  set analyticsConsent(bool value) =>
+      _setValue<bool>('analyticsConsent', value);
+  bool get performanceConsent =>
+      _getValue<bool>('performanceConsent', localOnly: true);
+  set performanceConsent(bool value) =>
+      _setValue<bool>('performanceConsent', value);
+
+  void _setValue<T>(String key, T value) {
     void Function(String key, T value) setInSharedPreferences = switch (T) {
       const (int) => (key, value) => _sharedPreferences.setInt(
         key,
@@ -61,7 +91,7 @@ class ConfigProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  T getValue<T>(String key) {
+  T _getValue<T>(String key, {bool localOnly = false}) {
     T Function(String key) getFromRemote = switch (T) {
       const (int) => (key) => _remoteConfig.getInt(key) as T,
       const (double) => (key) => _remoteConfig.getDouble(key) as T,
@@ -81,7 +111,7 @@ class ConfigProvider extends ChangeNotifier {
     if (_sharedPreferences.containsKey(key)) {
       return getFromSharedPreferences(key);
     }
-    if (!_remoteConfigInitialized) {
+    if (!_remoteConfigInitialized || localOnly) {
       return defaultConfig[key] as T;
     }
     return getFromRemote(key);

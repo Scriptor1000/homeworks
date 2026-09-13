@@ -1,0 +1,198 @@
+import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:firebase_performance/firebase_performance.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+import '../provider/config_provider.dart';
+import '../utilities/global_snackbar.dart';
+import '../widgets/fab.dart';
+
+typedef ConsentDialogResult = ({
+  bool crashlyticsConsent,
+  bool analyticsConsent,
+  bool performanceConsent,
+});
+
+class ConsentDialogShell extends StatefulWidget {
+  final Widget child;
+  const ConsentDialogShell({super.key, required this.child});
+
+  @override
+  State<ConsentDialogShell> createState() => _ConsentDialogShellState();
+}
+
+class _ConsentDialogShellState extends State<ConsentDialogShell> {
+  bool _dialogVisible = false;
+
+  @override
+  Widget build(BuildContext context) {
+    bool consentDialogShown = context.select(
+      (ConfigProvider provider) => provider.consentDialogShown,
+    );
+
+    ConfigProvider configProvider = context.read<ConfigProvider>();
+
+    if (!consentDialogShown) {
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => showConsentDialog(context),
+      );
+    }
+
+    configProvider.addListener(() {
+      FirebasePerformance.instance.setPerformanceCollectionEnabled(
+        kReleaseMode && configProvider.performanceConsent,
+      );
+
+      FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(
+        kReleaseMode && configProvider.crashlyticsConsent,
+      );
+
+      FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(
+        kReleaseMode && configProvider.analyticsConsent,
+      );
+    });
+
+    return widget.child;
+  }
+
+  void showConsentDialog(BuildContext context) async {
+    if (!context.mounted || _dialogVisible) return;
+    setState(() {
+      _dialogVisible = true;
+    });
+    ConfigProvider configProvider = context.read<ConfigProvider>();
+    ConsentDialogResult? results = await showDialog<ConsentDialogResult>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const ConsentDialog(),
+    );
+    setState(() {
+      _dialogVisible = false;
+    });
+    if (results == null) {
+      showSnackBar(
+        'Fehler: Die Auswahl konnte nicht registriert werden. Wiederhole... ',
+      );
+      showConsentDialog(currentContext ?? context);
+      return;
+    }
+    configProvider.crashlyticsConsent = results.crashlyticsConsent;
+    configProvider.analyticsConsent = results.analyticsConsent;
+    configProvider.performanceConsent = results.performanceConsent;
+    configProvider.consentDialogShown = true;
+  }
+}
+
+class ConsentDialog extends StatefulWidget {
+  const ConsentDialog({super.key});
+
+  @override
+  State<ConsentDialog> createState() => _ConsentDialogState();
+}
+
+class _ConsentDialogState extends State<ConsentDialog> {
+  bool crashlyticsConsent = false;
+  bool analyticsConsent = false;
+  bool performanceConsent = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Zustimmung zur Datenerfassung'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text.rich(
+            TextSpan(
+              children: [
+                TextSpan(
+                  text:
+                      'Diese App befinet sich in der Entwicklung und würde gerne entsprechend unsere ',
+                ),
+                TextSpan(
+                  text: 'Datenschutzerklärung',
+                  style: const TextStyle(
+                    color: Colors.blue,
+                    decoration: TextDecoration.underline,
+                  ),
+                  recognizer: TapGestureRecognizer()
+                    ..onTap = () {
+                      final configProvider = context.read<ConfigProvider>();
+                      final url = configProvider.privacyPolicyUrl;
+                      launchUrl(Uri.parse(url));
+                    },
+                ),
+                TextSpan(
+                  text: ' Daten für Analyse- und Absturzberichte sammeln.',
+                ),
+                TextSpan(
+                  text:
+                      ' Wir schätzen Ihre Privatsphäre und möchten Ihre '
+                      ' Zustimmung einholen, bevor wir diese Daten erfassen. ',
+                ),
+              ],
+            ),
+          ),
+          littleGap(),
+          const Text(
+            'Bitte wählen Sie aus, welche Daten Sie bereit sind zu teilen:',
+          ),
+          standardGap(),
+          CheckboxListTile(
+            title: const Text('Absturzberichte (Crashlytics)'),
+            value: crashlyticsConsent,
+            onChanged: (value) {
+              setState(() {
+                crashlyticsConsent = value ?? false;
+              });
+            },
+          ),
+          CheckboxListTile(
+            title: const Text('Analyse (Analytics)'),
+            value: analyticsConsent,
+            onChanged: (value) {
+              setState(() {
+                analyticsConsent = value ?? false;
+              });
+            },
+          ),
+          CheckboxListTile(
+            title: const Text('Leistungsüberwachung (Performance)'),
+            value: performanceConsent,
+            onChanged: (value) {
+              setState(() {
+                performanceConsent = value ?? false;
+              });
+            },
+          ),
+        ],
+      ),
+      actions: [
+        ElevatedButton(
+          onPressed: () {
+            Navigator.of(context).pop((
+              crashlyticsConsent: crashlyticsConsent,
+              analyticsConsent: analyticsConsent,
+              performanceConsent: performanceConsent,
+            ));
+          },
+          child: const Text('Auswahl akzeptieren'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            Navigator.of(context).pop((
+              crashlyticsConsent: true,
+              analyticsConsent: true,
+              performanceConsent: true,
+            ));
+          },
+          child: const Text('Alle akzeptieren'),
+        ),
+      ],
+    );
+  }
+}

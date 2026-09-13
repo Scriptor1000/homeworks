@@ -240,6 +240,7 @@ class _UserContainerState extends State<UserContainer> {
               children: [
                 Column(
                   mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: .center,
                   children: [
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,

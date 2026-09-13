@@ -88,5 +88,10 @@
 			</dict>
 		</array>
 		<!-- End of the Google Sign-in Section -->
+
+		<key>LSApplicationQueriesSchemes</key>
+		<array>
+		<string>https</string>
+		</array>
 	</dict>
 </plist>

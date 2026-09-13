@@ -56,12 +56,17 @@ void main() async {
   );
 
   await FirebasePerformance.instance.setPerformanceCollectionEnabled(
-    kReleaseMode,
+    kReleaseMode && configProvider.performanceConsent,
   );
 
-  await FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(kReleaseMode);
+  await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(
+    kReleaseMode && configProvider.crashlyticsConsent,
+  );
 
-  FlutterNativeSplash.remove();
+  await FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(
+    kReleaseMode && configProvider.analyticsConsent,
+  );
+
   if (kReleaseMode) {
     FlutterError.onError = (errorDetails) {
       FirebaseCrashlytics.instance.recordFlutterFatalError(errorDetails);
@@ -71,6 +76,8 @@ void main() async {
       return true;
     };
   }
+
+  FlutterNativeSplash.remove();
 
   runApp(
     ChangeNotifierProvider.value(

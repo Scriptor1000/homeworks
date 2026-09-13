@@ -49,6 +49,7 @@ dependencies:
   font_awesome_flutter: ^11.0.0
   gap: ^3.0.1
   flutter_native_splash: ^2.4.7
+  url_launcher: ^6.3.2
 
   # firebase related packages
   firebase_core: ^4.0.0

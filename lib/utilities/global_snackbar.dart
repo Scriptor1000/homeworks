@@ -22,3 +22,5 @@ showComplexSnackBar(SnackBar snackBar) {
     () => scaffoldMessengerKey.currentState?.showSnackBar(snackBar),
   );
 }
+
+BuildContext? get currentContext => scaffoldMessengerKey.currentContext;
