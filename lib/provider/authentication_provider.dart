@@ -316,7 +316,7 @@ class AuthenticationProvider extends ChangeNotifier {
         break;
       case .google:
         final googleUser = await _googleSignIn.authenticate();
-        final googleAuth = await googleUser.authentication;
+        final googleAuth = googleUser.authentication;
         final credential = GoogleAuthProvider.credential(
           idToken: googleAuth.idToken,
         );

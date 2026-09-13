@@ -3,8 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 const defaultConfig = <String, dynamic>{
-  'maxWidthThreshold': 600,
-  'maxWidthOnTablet': 800,
+  'maxWidthThreshold': 600.0,
+  'maxWidthOnTablet': 800.0,
   'maxDayCardWidth': 400.0,
   'dayCardCount': 5,
   'untisTimetableLoadDays': 30,
@@ -23,7 +23,7 @@ class ConfigProvider extends ChangeNotifier {
   }) : _remoteConfig = remoteConfig,
        _sharedPreferences = sharedPreferences;
 
-  int get maxWidthThreshold => getValue<int>('maxWidthThreshold');
+  double get maxWidthThreshold => getValue<double>('maxWidthThreshold');
   double get maxDayCardWidth => getValue<double>('maxDayCardWidth');
   double get maxWidthOnTablet => getValue<double>('maxWidthOnTablet');
   int get dayCardCount => getValue<int>('dayCardCount');

@@ -73,7 +73,10 @@ void main() async {
   }
 
   runApp(
-    ChangeNotifierProvider.value(value: configProvider, child: const MainApp()),
+    ChangeNotifierProvider.value(
+      value: configProvider..initialize(),
+      child: const MainApp(),
+    ),
   );
 }
 

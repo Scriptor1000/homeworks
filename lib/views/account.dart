@@ -20,12 +20,23 @@ class AccountView extends StatelessWidget {
             child: Column(
               children: [
                 UserContainer(),
+                _buildOpenSourceLicensesButton(context),
                 // Hier kann später weiterer Inhalt für die Account-Seite eingefügt werden
               ],
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildOpenSourceLicensesButton(BuildContext context) {
+    return ListTile(
+      onTap: () {
+        showLicensePage(context: context, applicationName: 'Homeworks');
+      },
+      title: Text('Open Source Lizenzen'),
+      leading: Icon(Icons.info_outline),
     );
   }
 }

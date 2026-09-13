@@ -70,11 +70,6 @@ class ProviderShell extends StatelessWidget {
 
     return MultiProvider(
       providers: [
-        // Provides configuration values from Settings and Remote Config
-        ChangeNotifierProvider(
-          create: (_) => configProvider..initialize(),
-          lazy: false,
-        ),
         // Provides local and online credentials
         ChangeNotifierProvider(
           create: (_) => CredentialProvider(
