@@ -12,6 +12,7 @@ const defaultConfig = <String, dynamic>{
   // App config
   'dayCardCount': 5,
   'untisTimetableLoadDays': 30,
+  'untisDemoMode': false,
   // Privacy config
   'crashlyticsConsent': false,
   'analyticsConsent': false,
@@ -46,6 +47,8 @@ class ConfigProvider extends ChangeNotifier {
   int get dayCardCount => _getValue<int>('dayCardCount');
   set dayCardCount(int value) => _setValue<int>('dayCardCount', value);
   int get untisTimetableLoadDays => _getValue<int>('untisTimetableLoadDays');
+  bool get untisDemoMode => _getValue<bool>('untisDemoMode');
+  set untisDemoMode(bool value) => _setValue<bool>('untisDemoMode', value);
 
   // Privacy config
   String get privacyPolicyUrl => _getValue<String>('privacyPolicyUrl');

@@ -30,6 +30,18 @@ class Subject {
   /// Date of the next lesson for this subject, if available.
   DateTime? nextLesson;
 
+  /// Creates a new Subject instance with the given properties.
+  Subject({
+    required this.backColor,
+    required this.foreColor,
+    required this.id,
+    required this.fromUntis,
+    required this.name,
+    required this.shortName,
+    this.visible = true,
+    this.nextLesson,
+  });
+
   /// Creates a Subject from an UntisSubject instance.
   ///
   /// Colors are converted from Untis values, and the `fromUntis` flag is set to true.

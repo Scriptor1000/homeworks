@@ -13,6 +13,8 @@ import '../database/subjects.dart';
 import '../database/user.dart';
 import '../provider/config_provider.dart';
 import '../provider/credential_provider.dart';
+import '../provider/demo/credentials_demo_provider.dart';
+import '../provider/demo/untis_demo_provider.dart';
 import '../provider/homeworks_provider.dart';
 import '../provider/subject_provider.dart';
 import '../provider/untis_provider.dart';
@@ -29,14 +31,19 @@ class ProviderShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Config provider for remote config
-    final ConfigProvider configProvider = context.read();
+    final int untisTimetableLoadDays = context.select(
+      (ConfigProvider p) => p.untisTimetableLoadDays,
+    );
+    final bool untisDemoMode = context.select(
+      (ConfigProvider p) => p.untisDemoMode,
+    );
 
     final firestore = FirebaseFirestore.instance;
     final analytics = FirebaseAnalytics.instance;
     final crashlytics = FirebaseCrashlytics.instance;
     final performance = FirebasePerformance.instance;
     // this could be a constant or config
-    final range = Duration(days: configProvider.untisTimetableLoadDays);
+    final range = Duration(days: untisTimetableLoadDays);
 
     // Cryptography utility for encrypting/decrypting credentials
     final cryptography = CredentialCryptography(uid: uid);
@@ -69,25 +76,39 @@ class ProviderShell extends StatelessWidget {
     );
 
     return MultiProvider(
+      key: ValueKey(untisDemoMode),
       providers: [
         // Provides local and online credentials
-        ChangeNotifierProvider(
-          create: (_) => CredentialProvider(
-            firestoreCredentials: firestoreCredentials,
-            itemFactory: itemFactory,
-            storage: storage,
-          )..initialize(),
-          lazy: false,
-        ),
-        // Provides Untis session data based on credentials
-        ChangeNotifierProxyProvider<CredentialProvider, UntisProvider>(
-          create: (_) =>
-              UntisProvider(range: range, analytics: analyticsService),
-          update: (_, untisCredentialProvider, previous) =>
-              (previous?..updateCredentials(untisCredentialProvider.session)) ??
-              UntisProvider(range: range, analytics: analyticsService),
-          lazy: false,
-        ),
+        if (untisDemoMode) ...[
+          ChangeNotifierProvider<CredentialProvider>(
+            create: (_) => CredentialsDemoProvider(
+              firestoreCredentials: firestoreCredentials,
+            )..initialize(),
+          ),
+
+          ChangeNotifierProvider<UntisProvider>(
+            create: (_) => UntisDemoProvider(range: range),
+          ),
+        ] else ...[
+          ChangeNotifierProvider(
+            create: (_) => CredentialProvider(
+              firestoreCredentials: firestoreCredentials,
+              itemFactory: itemFactory,
+              storage: storage,
+            )..initialize(),
+            lazy: false,
+          ),
+          // Provides Untis session data based on credentials
+          ChangeNotifierProxyProvider<CredentialProvider, UntisProvider>(
+            create: (_) =>
+                UntisProvider(range: range, analytics: analyticsService),
+            update: (_, untisCredentialProvider, previous) =>
+                (previous
+                  ?..updateCredentials(untisCredentialProvider.session)) ??
+                UntisProvider(range: range, analytics: analyticsService),
+            lazy: false,
+          ),
+        ],
         // Provides homework data, updated when UntisProvider changes
         ChangeNotifierProxyProvider<UntisProvider, HomeworksProvider>(
           create: (_) => HomeworksProvider(

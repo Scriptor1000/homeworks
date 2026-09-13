@@ -105,7 +105,7 @@ class UntisProvider extends ChangeNotifier {
   /// Returns the timetable periods for a given date.
   ///
   /// The date is normalized to ensure that only the year, month, and day are considered, ignoring the time component.
-  List<UntisPeriod> getLessonsForDate(DateTime date) {
+  List<UntisPeriod> _getLessonsForDate(DateTime date) {
     final normalizedDate = normalizeDate(date);
     return _timetableCache[normalizedDate] ?? [];
   }
@@ -118,7 +118,7 @@ class UntisProvider extends ChangeNotifier {
     if (!subject.fromUntis) {
       return null;
     }
-    final lessons = getLessonsForDate(date);
+    final lessons = _getLessonsForDate(date);
     final lesson = lessons.firstWhereOrNull(
       (period) =>
           period.subject?.id.id == subject.id &&

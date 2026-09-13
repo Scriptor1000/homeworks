@@ -340,8 +340,8 @@ class _SubjectBottomSheetContentState extends State<SubjectBottomSheetContent> {
                       SubjectListType.inBoth ||
                       SubjectListType.inFirestoreUntisNotAvailable => Icon(
                         subject.visible
-                            ? Icons.visibility_off_outlined
-                            : Icons.visibility_outlined,
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined,
                       ),
                     },
                     onPressed: () async {

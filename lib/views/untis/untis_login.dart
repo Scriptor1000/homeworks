@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../provider/config_provider.dart';
 import '../../provider/credential_provider.dart';
 import '../../database/models/credentials.dart';
 import '../../utilities/common.dart';
@@ -45,14 +46,6 @@ class _UntisLoginState extends State<UntisLogin> {
 
   @override
   void initState() {
-    final provider = context.read<CredentialProvider>();
-    _usernameController.text = provider.credentials?.username ?? '';
-    _passwordController.text = provider.credentials?.password ?? '';
-    _schoolController.text =
-        provider.credentials?.school ?? 'albert-schweitzer';
-    _serverController.text =
-        provider.credentials?.server ?? 'albert-schweitzer.webuntis.com';
-
     super.initState();
   }
 
@@ -92,6 +85,13 @@ class _UntisLoginState extends State<UntisLogin> {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<CredentialProvider>();
+
+    _usernameController.text = provider.credentials?.username ?? '';
+    _passwordController.text = provider.credentials?.password ?? '';
+    _schoolController.text =
+        provider.credentials?.school ?? 'albert-schweitzer';
+    _serverController.text =
+        provider.credentials?.server ?? 'albert-schweitzer.webuntis.com';
     return Scaffold(
       appBar: AppBar(title: const Text('Untis Anmeldung')),
       body: withConstrainedWidth(
@@ -146,6 +146,8 @@ class _UntisLoginState extends State<UntisLogin> {
                         ],
                         title: 'Hinweis',
                       ),
+                      standardGap(),
+                      _buildDemoModeToggle(),
                     ],
                   ),
                 ),
@@ -164,5 +166,53 @@ class _UntisLoginState extends State<UntisLogin> {
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
+  }
+
+  Widget _buildDemoModeToggle() {
+    final provider = context.watch<ConfigProvider>();
+    return SwitchListTile(
+      title: const Text('Demo-Modus aktivieren'),
+      value: provider.untisDemoMode,
+      onChanged: (value) async {
+        if (value == false) {
+          provider.untisDemoMode = false;
+        } else if (await _showDemoModeInfoDialog() && mounted) {
+          Navigator.of(context).pop();
+        }
+      },
+    );
+  }
+
+  Future<bool> _showDemoModeInfoDialog() async {
+    return await showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: const Text('Demo-Modus'),
+              content: const Text(
+                'Im Demo-Modus werden keine echten Untis Anmeldedaten benötigt. '
+                'Die App zeigt stattdessen eine Demo-Version der Untis-Funktionen, '
+                'wofür konstante Unterrichtsdaten verwendet werden. '
+                'Diese Option ist für etwaige Reviews von Apple gedacht.',
+              ),
+              actions: [
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('Abbrechen'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    context.read<ConfigProvider>().untisDemoMode = true;
+                    Navigator.of(context).pop(true);
+                  },
+                  child: const Text('Aktiveren'),
+                ),
+              ],
+            );
+          },
+        ) ??
+        false;
   }
 }
