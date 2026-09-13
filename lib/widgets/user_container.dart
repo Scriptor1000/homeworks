@@ -3,6 +3,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 
 import '../provider/authentication_provider.dart';
+import '../provider/config_provider.dart';
 import '../provider/credential_provider.dart';
 import '../utilities/enums.dart';
 import '../utilities/global_snackbar.dart';
@@ -89,44 +90,80 @@ class _UserContainerState extends State<UserContainer> {
             ),
 
           standardGap(),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              double minWidth = context.select<ConfigProvider, double>(
+                (provider) => provider.minAccountActionTileWidth,
+              );
 
-          // Anmelde-Buttons in einer Reihe
-          Row(
-            children: [
-              // Google Sign-In Button
-              Expanded(
-                child: _buildGoogleSignInButton(
-                  context,
-                  hasGoogle,
-                  hasApple,
-                  hasEmailPassword,
-                ),
-              ),
+              bool showColAndRows =
+                  constraints.maxWidth - kGapSize > minWidth * 2;
 
-              standardGap(),
-
-              Expanded(
-                child: _buildAppleButton(
-                  context,
-                  hasApple,
-                  hasGoogle,
-                  hasEmailPassword,
-                ),
-              ),
-            ],
-          ),
-
-          standardGap(),
-
-          // Abmelden-Button
-          Row(
-            children: [
-              Expanded(
-                child: _buildEmailPasswordButton(context, hasEmailPassword),
-              ),
-              standardGap(),
-              Expanded(child: _buildActionCard()),
-            ],
+              return showColAndRows
+                  ? Table(
+                      columnWidths: const {
+                        0: FlexColumnWidth(),
+                        1: FlexColumnWidth(),
+                      },
+                      children: [
+                        TableRow(
+                          children: [
+                            TableCell(
+                              verticalAlignment:
+                                  TableCellVerticalAlignment.fill,
+                              child: _buildGoogleSignInButton(
+                                context,
+                                hasGoogle,
+                                hasApple,
+                                hasEmailPassword,
+                              ),
+                            ),
+                            TableCell(
+                              child: _buildAppleButton(
+                                context,
+                                hasApple,
+                                hasGoogle,
+                                hasEmailPassword,
+                              ),
+                            ),
+                          ],
+                        ),
+                        TableRow(
+                          children: [
+                            TableCell(
+                              verticalAlignment: .fill,
+                              child: _buildEmailPasswordButton(
+                                context,
+                                hasEmailPassword,
+                              ),
+                            ),
+                            TableCell(child: _buildActionCard()),
+                          ],
+                        ),
+                      ],
+                    )
+                  : Column(
+                      children: [
+                        _buildGoogleSignInButton(
+                          context,
+                          hasGoogle,
+                          hasApple,
+                          hasEmailPassword,
+                        ),
+                        standardGap(),
+                        _buildAppleButton(
+                          context,
+                          hasApple,
+                          hasGoogle,
+                          hasEmailPassword,
+                        ),
+                        standardGap(),
+                        _buildEmailPasswordButton(context, hasEmailPassword),
+                        standardGap(),
+                        _buildActionCard(),
+                      ],
+                    );
+            },
           ),
         ],
       ),
@@ -142,23 +179,38 @@ class _UserContainerState extends State<UserContainer> {
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                foregroundColor: Theme.of(context).colorScheme.error,
-                backgroundColor: Theme.of(context).colorScheme.errorContainer,
-              ),
-              icon: const Icon(Icons.logout),
-              label: const Text('Abmelden'),
-              onPressed: () => _signOut(),
+            Text(
+              'Kontoaktionen',
+              style: Theme.of(
+                context,
+              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
             ),
-            ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                foregroundColor: Theme.of(context).colorScheme.error,
-                backgroundColor: Theme.of(context).colorScheme.errorContainer,
-              ),
-              icon: const Icon(Icons.logout),
-              label: const Text('Konto löschen'),
-              onPressed: () => _deleteAccount(),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    foregroundColor: Theme.of(context).colorScheme.error,
+                    backgroundColor: Theme.of(
+                      context,
+                    ).colorScheme.errorContainer,
+                  ),
+                  icon: const Icon(Icons.logout),
+                  label: const Text('Abmelden'),
+                  onPressed: () => _signOut(),
+                ),
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    foregroundColor: Theme.of(context).colorScheme.error,
+                    backgroundColor: Theme.of(
+                      context,
+                    ).colorScheme.errorContainer,
+                  ),
+                  icon: const Icon(Icons.delete_forever),
+                  label: const Text('Konto löschen'),
+                  onPressed: () => _deleteAccount(),
+                ),
+              ],
             ),
           ],
         ),
@@ -174,50 +226,77 @@ class _UserContainerState extends State<UserContainer> {
     required FilledButton button,
   }) {
     ThemeData theme = Theme.of(context);
-
     return Card(
       elevation: 2,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            double thresholdWidth = context.select<ConfigProvider, double>(
+              (provider) => provider.thresholdShowAccountActionTileHorizontly,
+            );
+            return Row(
+              mainAxisAlignment: .spaceBetween,
               children: [
-                FaIcon(
-                  icon,
-                  color: hasMethod ? Colors.green : theme.colorScheme.primary,
-                  size: 20,
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        FaIcon(
+                          icon,
+                          color: hasMethod
+                              ? Colors.green
+                              : theme.colorScheme.primary,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          methodName,
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    littleGap(),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        if (hasMethod)
+                          Icon(
+                            Icons.check_circle,
+                            color: Colors.green,
+                            size: 16,
+                          ),
+                        littleGap(),
+                        Text(
+                          status,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: hasMethod
+                                    ? Colors.green
+                                    : theme.colorScheme.onSurface.withValues(
+                                        alpha: 0.6,
+                                      ),
+                              ),
+                        ),
+                      ],
+                    ),
+                    if (constraints.maxWidth < thresholdWidth) ...[
+                      standardGap(),
+                      button,
+                    ],
+                  ],
                 ),
-                const SizedBox(width: 8),
-                Text(
-                  methodName,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                if (constraints.maxWidth >= thresholdWidth) ...[
+                  standardGap(),
+                  button,
+                ],
               ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                if (hasMethod)
-                  Icon(Icons.check_circle, color: Colors.green, size: 16),
-                Text(
-                  status,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: hasMethod
-                        ? Colors.green
-                        : theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            button,
-          ],
+            );
+          },
         ),
       ),
     );
@@ -371,7 +450,7 @@ class _UserContainerState extends State<UserContainer> {
 
   Future<void> _linkGoogleAccount(bool hasApple) async {
     final bool confirm =
-        hasApple ||
+        !hasApple ||
         await confirmDialog(
           title: 'Google Konto verknüpfen',
           content:

@@ -6,6 +6,8 @@ const defaultConfig = <String, dynamic>{
   'maxWidthThreshold': 600.0,
   'maxWidthOnTablet': 800.0,
   'maxDayCardWidth': 400.0,
+  'minAccountActionTileWidth': 200.0,
+  'thresholdShowAccountActionTileHorizontly': 300.0,
   'dayCardCount': 5,
   'untisTimetableLoadDays': 30,
 };
@@ -26,6 +28,10 @@ class ConfigProvider extends ChangeNotifier {
   double get maxWidthThreshold => getValue<double>('maxWidthThreshold');
   double get maxDayCardWidth => getValue<double>('maxDayCardWidth');
   double get maxWidthOnTablet => getValue<double>('maxWidthOnTablet');
+  double get minAccountActionTileWidth =>
+      getValue<double>('minAccountActionTileWidth');
+  double get thresholdShowAccountActionTileHorizontly =>
+      getValue<double>('thresholdShowAccountActionTileHorizontly');
   int get dayCardCount => getValue<int>('dayCardCount');
   int get untisTimetableLoadDays => getValue<int>('untisTimetableLoadDays');
 
