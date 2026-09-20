@@ -10,12 +10,10 @@ class AnalyticsService {
   final FirebasePerformance _performance;
 
   AnalyticsService({
-    required FirebaseAnalytics analytics,
-    required FirebaseCrashlytics crashlytics,
-    required FirebasePerformance performance,
-  }) : _analytics = analytics,
-       _crashlytics = crashlytics,
-       _performance = performance;
+    required this._analytics,
+    required this._crashlytics,
+    required this._performance,
+  });
 
   /// Logs the event of updating due dates.
   ///

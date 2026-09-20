@@ -24,10 +24,9 @@ class HomeworksProvider extends ChangeNotifier {
   final AnalyticsService _analyticsService;
 
   HomeworksProvider({
-    required FirestoreHomeworks firestoreHomeworks,
-    required AnalyticsService analyticsService,
-  }) : _firestoreHomeworks = firestoreHomeworks,
-       _analyticsService = analyticsService;
+    required this._firestoreHomeworks,
+    required this._analyticsService,
+  });
 
   /// The list of homeworks which have a due date.
   ///

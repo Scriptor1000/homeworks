@@ -15,12 +15,10 @@ class FirestoreCredentials {
   final ItemFactory _itemFactory;
 
   FirestoreCredentials({
-    required FirestoreUser firestoreUser,
-    required CredentialCryptography cryptography,
-    required ItemFactory itemFactory,
-  }) : _firestoreUser = firestoreUser,
-       _cryptography = cryptography,
-       _itemFactory = itemFactory;
+    required this._firestoreUser,
+    required this._cryptography,
+    required this._itemFactory,
+  });
 
   /// Saves the Untis credentials to Firestore.
   ///

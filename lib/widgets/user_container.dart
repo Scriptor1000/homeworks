@@ -9,6 +9,7 @@ import '../provider/credential_provider.dart';
 import '../utilities/enums.dart';
 import '../utilities/global_snackbar.dart';
 import 'fab.dart';
+
 import 'package:firebase_auth/firebase_auth.dart';
 
 /// A widget that displays user information and allows account management.
@@ -74,9 +75,8 @@ class _UserContainerState extends State<UserContainer> {
           // Benutzername
           Text(
             user.displayName ?? 'Benutzer',
-            style: Theme.of(
-              context,
-            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+            style: Theme.of(context).textTheme.titleLarge
+                ?.copyWith(fontWeight: FontWeight.bold),
             textAlign: TextAlign.center,
           ),
 
@@ -182,9 +182,8 @@ class _UserContainerState extends State<UserContainer> {
           children: [
             Text(
               'Kontoaktionen',
-              style: Theme.of(
-                context,
-              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+              style: Theme.of(context).textTheme.titleSmall
+                  ?.copyWith(fontWeight: FontWeight.bold),
             ),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -192,9 +191,9 @@ class _UserContainerState extends State<UserContainer> {
                 ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
                     foregroundColor: Theme.of(context).colorScheme.error,
-                    backgroundColor: Theme.of(
-                      context,
-                    ).colorScheme.errorContainer,
+                    backgroundColor: Theme.of(context)
+                        .colorScheme
+                        .errorContainer,
                   ),
                   icon: const Icon(Icons.logout),
                   label: const Text('Abmelden'),
@@ -203,9 +202,9 @@ class _UserContainerState extends State<UserContainer> {
                 ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
                     foregroundColor: Theme.of(context).colorScheme.error,
-                    backgroundColor: Theme.of(
-                      context,
-                    ).colorScheme.errorContainer,
+                    backgroundColor: Theme.of(context)
+                        .colorScheme
+                        .errorContainer,
                   ),
                   icon: const Icon(Icons.delete_forever),
                   label: const Text('Konto löschen'),
@@ -508,8 +507,7 @@ class _UserContainerState extends State<UserContainer> {
     // Bestätigungsdialog anzeigen
     final bool confirm = await confirmDialog(
       title: 'Google-Konto trennen',
-      content:
-          'Sind Sie sicher, dass Sie die Verknüpfung zu ihrem Google-Konto von diesem Konto trennen möchten?',
+      content: 'Sind Sie sicher, dass Sie die Verknüpfung zu ihrem Google-Konto von diesem Konto trennen möchten?',
       confirmButtonText: 'Trennen',
       confirmButtonStyle: TextButton.styleFrom(
         foregroundColor: Theme.of(context).colorScheme.error,
@@ -533,8 +531,7 @@ class _UserContainerState extends State<UserContainer> {
     // Bestätigungsdialog anzeigen
     final bool confirm = await confirmDialog(
       title: 'Apple-Konto trennen',
-      content:
-          'Sind Sie sicher, dass Sie die Verknüpfung zu ihrem Apple-Konto von diesem Konto trennen möchten?',
+      content: 'Sind Sie sicher, dass Sie die Verknüpfung zu ihrem Apple-Konto von diesem Konto trennen möchten?',
       confirmButtonText: 'Trennen',
       confirmButtonStyle: TextButton.styleFrom(
         foregroundColor: Theme.of(context).colorScheme.error,
@@ -602,13 +599,11 @@ class _UserContainerState extends State<UserContainer> {
     final email = context.read<AuthenticationProvider>().user?.email;
 
     if (email == null || email.trim().isEmpty) {
-      message =
-          'Für dieses Konto ist keine E-Mail-Adresse hinterlegt. Bitte hinterlegen Sie zuerst eine E-Mail-Adresse.';
+      message = 'Für dieses Konto ist keine E-Mail-Adresse hinterlegt. Bitte hinterlegen Sie zuerst eine E-Mail-Adresse.';
     } else {
       try {
         await context.read<AuthenticationProvider>().sendResetEmail();
-        message =
-            'E-Mail gesendet. Falls sie nicht eingetroffen ist, bitte Spam-Ordner und die eingegebene E-Mail überprüfen.';
+        message = 'E-Mail gesendet. Falls sie nicht eingetroffen ist, bitte Spam-Ordner und die eingegebene E-Mail überprüfen.';
       } on FirebaseAuthException {
         message = 'Fehler beim Senden der E-Mail';
       }
@@ -616,9 +611,8 @@ class _UserContainerState extends State<UserContainer> {
 
     if (!mounted) return;
 
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
   }
 
   Future<void> _signOut() async {
@@ -632,6 +626,7 @@ class _UserContainerState extends State<UserContainer> {
 
   Future<void> _deleteAccount() async {
     final authProvider = context.read<AuthenticationProvider>();
+    final firestoreUser = context.read<FirestoreUser>();
     final user = authProvider.user!;
 
     final hasGoogle = user.providerData.any(
@@ -661,8 +656,6 @@ class _UserContainerState extends State<UserContainer> {
         return;
       }
     }
-
-    FirestoreUser firestoreUser = context.read<FirestoreUser>();
 
     await authProvider.deleteAccount(method, firestoreUser, password);
   }
@@ -768,9 +761,9 @@ class _UserContainerState extends State<UserContainer> {
               ListTile(
                 leading: const FaIcon(FontAwesomeIcons.envelope),
                 title: const Text('Passwort / Email'),
-                onTap: () async => Navigator.of(
-                  context,
-                ).pop(AuthenticationMethod.emailAndPassword),
+                onTap: () async =>
+                    Navigator.of(context)
+                        .pop(AuthenticationMethod.emailAndPassword),
               ),
           ],
         ),

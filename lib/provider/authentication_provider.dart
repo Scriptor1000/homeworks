@@ -49,17 +49,15 @@ class AuthenticationProvider extends ChangeNotifier {
   /// Creates a new [AuthenticationProvider].
   ///
   /// Required:
-  /// - [firebaseAuth] Firebase authentication service
-  /// - [googleSignIn] Google sign-in instance
+  /// - [_firebaseAuth] Firebase authentication service
+  /// - [_googleSignIn] Google sign-in instance
   /// - [allowedEmails] Firestore helper for allowed email management
   AuthenticationProvider({
-    required FirebaseAuth firebaseAuth,
-    required GoogleSignIn googleSignIn,
-    required AppleAuthProvider appleProvider,
+    required this._firebaseAuth,
+    required this._googleSignIn,
+    required this._appleProvider,
     required FirestoreAllowedEmails allowedEmails,
-  }) : _firebaseAuth = firebaseAuth,
-       _googleSignIn = googleSignIn,
-       _appleProvider = appleProvider;
+  });
 
   /// Initializes Google Sign-In compatibility and event listeners.
   ///
@@ -324,7 +322,7 @@ class AuthenticationProvider extends ChangeNotifier {
           _appleProvider,
         );
         if (credentials.additionalUserInfo?.authorizationCode == null) break;
-        _firebaseAuth.revokeTokenWithAuthorizationCode(
+        await _firebaseAuth.revokeTokenWithAuthorizationCode(
           credentials.additionalUserInfo!.authorizationCode!,
         );
         break;
@@ -348,7 +346,7 @@ class AuthenticationProvider extends ChangeNotifier {
         break;
     }
 
-    await firestoreUser.userDocument.delete();
+    await firestoreUser.deleteAllData();
     await user.delete();
   }
 

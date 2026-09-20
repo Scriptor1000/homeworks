@@ -27,6 +27,14 @@ class ConsentDialogShell extends StatefulWidget {
 
 class _ConsentDialogShellState extends State<ConsentDialogShell> {
   bool _dialogVisible = false;
+  late ConfigProvider configProvider;
+
+  @override
+  void initState() {
+    super.initState();
+    configProvider = context.read<ConfigProvider>();
+    configProvider.addListener(_updateFirebaseCollection);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,43 +42,41 @@ class _ConsentDialogShellState extends State<ConsentDialogShell> {
       (ConfigProvider provider) => provider.consentDialogShown,
     );
 
-    ConfigProvider configProvider = context.read<ConfigProvider>();
-
-    if (!consentDialogShown) {
+    if (!consentDialogShown && !_dialogVisible) {
       WidgetsBinding.instance.addPostFrameCallback(
         (_) => showConsentDialog(context),
       );
     }
 
-    configProvider.addListener(() async {
-      await FirebasePerformance.instance.setPerformanceCollectionEnabled(
-        kReleaseMode && configProvider.performanceConsent,
-      );
-      await FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(
-        kReleaseMode && configProvider.analyticsConsent,
-      );
-
-      await FirebaseCrashlytics.instance.deleteUnsentReports();
-
-      await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(
-        kReleaseMode && configProvider.crashlyticsConsent,
-      );
-
-      if (kReleaseMode && configProvider.crashlyticsConsent) {
-        FlutterError.onError = (errorDetails) {
-          FirebaseCrashlytics.instance.recordFlutterFatalError(errorDetails);
-        };
-        PlatformDispatcher.instance.onError = (error, stack) {
-          FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
-          return true;
-        };
-      } else {
-        FlutterError.onError = null;
-        PlatformDispatcher.instance.onError = null;
-      }
-    });
-
     return widget.child;
+  }
+
+  Future<void> _updateFirebaseCollection() async {
+    await FirebasePerformance.instance.setPerformanceCollectionEnabled(
+      kReleaseMode && configProvider.performanceConsent,
+    );
+    await FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(
+      kReleaseMode && configProvider.analyticsConsent,
+    );
+
+    await FirebaseCrashlytics.instance.deleteUnsentReports();
+
+    await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(
+      kReleaseMode && configProvider.crashlyticsConsent,
+    );
+
+    if (kReleaseMode && configProvider.crashlyticsConsent) {
+      FlutterError.onError = (errorDetails) {
+        FirebaseCrashlytics.instance.recordFlutterFatalError(errorDetails);
+      };
+      PlatformDispatcher.instance.onError = (error, stack) {
+        FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+        return true;
+      };
+    } else {
+      FlutterError.onError = null;
+      PlatformDispatcher.instance.onError = null;
+    }
   }
 
   void showConsentDialog(BuildContext context) async {
@@ -124,8 +130,7 @@ class _ConsentDialogState extends State<ConsentDialog> {
             TextSpan(
               children: [
                 TextSpan(
-                  text:
-                      'Diese App wird als Teil einer Seminarfacharbeit entwickelt, für dessen Auswertung entsprechend unserer ',
+                  text: 'Diese App wird als Teil einer Seminarfacharbeit entwickelt, für dessen Auswertung entsprechend unserer ',
                 ),
                 TextSpan(
                   text: 'Datenschutzerklärung',

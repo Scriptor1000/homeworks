@@ -51,7 +51,7 @@ class UntisDemoProvider extends ChangeNotifier implements UntisProvider {
 
   final Duration _range;
 
-  UntisDemoProvider({required Duration range}) : _range = range;
+  UntisDemoProvider({required this._range});
 
   @override
   DateTime get endDate => DateTime.now().add(_range);

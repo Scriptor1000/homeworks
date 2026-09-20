@@ -12,10 +12,9 @@ class FirestoreHomeworks {
   final ItemFactory _itemFactory;
 
   FirestoreHomeworks({
-    required FirestoreUser firestoreUser,
-    required ItemFactory itemFactory,
-  }) : _firestoreUser = firestoreUser,
-       _itemFactory = itemFactory;
+    required this._firestoreUser,
+    required this._itemFactory,
+  });
 
   CollectionReference<Map<String, dynamic>> get _homeworksCollectionsRef =>
       _firestoreUser.userDocument.collection(homeworksCollections);

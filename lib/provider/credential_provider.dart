@@ -29,12 +29,10 @@ class CredentialProvider extends ChangeNotifier {
       CredentialsOnlineStatus.loading;
 
   CredentialProvider({
-    required FirestoreCredentials firestoreCredentials,
-    required ItemFactory itemFactory,
-    required FlutterSecureStorage storage,
-  }) : _firestoreCredentials = firestoreCredentials,
-       _itemFactory = itemFactory,
-       _storage = storage;
+    required this._firestoreCredentials,
+    required this._itemFactory,
+    required this._storage,
+  });
 
   /// Wheter the credentials are currently being loaded or the loading process is finished.
   bool get isLoading => _isLoadingCredentials;

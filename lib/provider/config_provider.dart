@@ -29,10 +29,9 @@ class ConfigProvider extends ChangeNotifier {
   bool _remoteConfigInitialized = false;
 
   ConfigProvider({
-    required FirebaseRemoteConfig remoteConfig,
-    required SharedPreferencesWithCache sharedPreferences,
-  }) : _remoteConfig = remoteConfig,
-       _sharedPreferences = sharedPreferences;
+    required this._remoteConfig,
+    required this._sharedPreferences,
+  });
 
   // UI config
   double get maxWidthThreshold => _getValue<double>('maxWidthThreshold');

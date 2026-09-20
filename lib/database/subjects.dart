@@ -11,11 +11,7 @@ class FirestoreSubjects {
   final FirestoreUser _firestoreUser;
   final ItemFactory _itemFactory;
 
-  FirestoreSubjects({
-    required FirestoreUser firestoreUser,
-    required ItemFactory itemFactory,
-  }) : _firestoreUser = firestoreUser,
-       _itemFactory = itemFactory;
+  FirestoreSubjects({required this._firestoreUser, required this._itemFactory});
 
   CollectionReference<Map<String, dynamic>> get _subjectCollectionRef =>
       _firestoreUser.userDocument.collection(subjectCollection);

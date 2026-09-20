@@ -22,8 +22,7 @@ class CredentialsDemoProvider extends ChangeNotifier
 
   final FirestoreCredentials _firestoreCredentials;
 
-  CredentialsDemoProvider({required FirestoreCredentials firestoreCredentials})
-    : _firestoreCredentials = firestoreCredentials;
+  CredentialsDemoProvider({required this._firestoreCredentials});
 
   @override
   bool get hasCredentials => true;
