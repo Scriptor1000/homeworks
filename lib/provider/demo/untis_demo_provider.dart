@@ -66,8 +66,13 @@ class UntisDemoProvider extends ChangeNotifier implements UntisProvider {
   bool get hasFreeTime => DateTime.now().hour >= 16;
 
   @override
-  // TODO: implement teachers
-  List<UntisTeacher> get teachers => throw UnimplementedError();
+  List<OwnUntisTeacher> get teachers => .generate(
+    5,
+    (i) => OwnUntisTeacher(
+      id: UntisElementDescriptor(.teacher, i),
+      fullName: 'Demo Teacher $i',
+    ),
+  );
 
   @override
   List<Subject> get todaySubjects => DateTime.now().weekday <= 5
@@ -81,10 +86,37 @@ class UntisDemoProvider extends ChangeNotifier implements UntisProvider {
   Stream<TeacherSearchResult>? findTeacher(
     UntisElementDescriptor teacher, {
     bool searchInRoom = false,
-    Set<UntisPeriod> previousResults = const {},
-  }) {
-    // TODO: implement findTeacher
-    throw UnimplementedError();
+    Set<FoundPeriod> previousResults = const {},
+  }) async* {
+    if (teacher.type != .teacher) {
+      throw ArgumentError('Expected a teacher descriptor');
+    }
+
+    List<FoundPeriod> results = [];
+
+    for (int day = 0; day < 7; day++) {
+      yield TeacherSearchResult(
+        periods: results.toSet(),
+        currentSearchingPlace: '$day',
+      );
+      await Future.delayed(const Duration(milliseconds: 300));
+      for (int i = 0; i < _demoWeeklySchedule[day].length; i++) {
+        final period = FoundPeriod(
+          startDateTime: DateTime.now()
+              .add(Duration(days: day))
+              .copyWith(hour: 2 * i + 8),
+          endDateTime: DateTime.now()
+              .add(Duration(days: day))
+              .copyWith(hour: 2 * i + 9),
+          roomNames: ['R00${i + 1}'],
+          classNames: ['B${(i + 1) % 3 + 6}'],
+          isCancelled: i % 3 == 0,
+          id: day * 10 + i,
+        );
+        results.add(period);
+      }
+    }
+    yield TeacherSearchResult(periods: results.toSet());
   }
 
   @override
