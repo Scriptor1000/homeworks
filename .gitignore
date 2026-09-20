@@ -67,3 +67,6 @@ ios/fastlane/*.key
 ios/fastlane/*.cer
 ios/fastlane/*.mobileprovision
 ios/fastlane/*.p8
+
+# Helper Scripts
+*.py

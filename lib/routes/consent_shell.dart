@@ -42,18 +42,32 @@ class _ConsentDialogShellState extends State<ConsentDialogShell> {
       );
     }
 
-    configProvider.addListener(() {
-      FirebasePerformance.instance.setPerformanceCollectionEnabled(
+    configProvider.addListener(() async {
+      await FirebasePerformance.instance.setPerformanceCollectionEnabled(
         kReleaseMode && configProvider.performanceConsent,
       );
+      await FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(
+        kReleaseMode && configProvider.analyticsConsent,
+      );
 
-      FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(
+      await FirebaseCrashlytics.instance.deleteUnsentReports();
+
+      await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(
         kReleaseMode && configProvider.crashlyticsConsent,
       );
 
-      FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(
-        kReleaseMode && configProvider.analyticsConsent,
-      );
+      if (kReleaseMode && configProvider.crashlyticsConsent) {
+        FlutterError.onError = (errorDetails) {
+          FirebaseCrashlytics.instance.recordFlutterFatalError(errorDetails);
+        };
+        PlatformDispatcher.instance.onError = (error, stack) {
+          FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+          return true;
+        };
+      } else {
+        FlutterError.onError = null;
+        PlatformDispatcher.instance.onError = null;
+      }
     });
 
     return widget.child;
@@ -111,7 +125,7 @@ class _ConsentDialogState extends State<ConsentDialog> {
               children: [
                 TextSpan(
                   text:
-                      'Diese App befinet sich in der Entwicklung und würde gerne entsprechend unsere ',
+                      'Diese App wird als Teil einer Seminarfacharbeit entwickelt, für dessen Auswertung entsprechend unserer ',
                 ),
                 TextSpan(
                   text: 'Datenschutzerklärung',
@@ -126,13 +140,14 @@ class _ConsentDialogState extends State<ConsentDialog> {
                       launchUrl(Uri.parse(url));
                     },
                 ),
-                TextSpan(
-                  text: ' Daten für Analyse- und Absturzberichte sammeln.',
-                ),
+                TextSpan(text: ' Daten gesammelt werden. '),
                 TextSpan(
                   text:
-                      ' Wir schätzen Ihre Privatsphäre und möchten Ihre '
-                      ' Zustimmung einholen, bevor wir diese Daten erfassen. ',
+                      'Wir schätzen Ihre Privatsphäre und möchten Ihre '
+                      'Zustimmung einholen, bevor wir diese Daten erfassen. '
+                      'Sie können ihre Zustimmung jederzeit in den Konto-Einstellungen der App ändern.'
+                      'Mit der Zustimmung zur Datenerfassung helfen Sie uns, die App zu verbessern und wertvolle Einblicke zu gewinnen.'
+                      'Mit Ihrer Zustimmung bestätigen sie außerdem, dass sie mindestens 16 Jahre alt sind und die Datenschutzerklärung zur Kenntnis genommen haben.',
                 ),
               ],
             ),

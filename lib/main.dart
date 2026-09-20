@@ -67,7 +67,7 @@ void main() async {
     kReleaseMode && configProvider.analyticsConsent,
   );
 
-  if (kReleaseMode) {
+  if (kReleaseMode && configProvider.crashlyticsConsent) {
     FlutterError.onError = (errorDetails) {
       FirebaseCrashlytics.instance.recordFlutterFatalError(errorDetails);
     };

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 
+import '../database/user.dart';
 import '../provider/authentication_provider.dart';
 import '../provider/config_provider.dart';
 import '../provider/credential_provider.dart';
@@ -661,7 +662,9 @@ class _UserContainerState extends State<UserContainer> {
       }
     }
 
-    await authProvider.deleteAccount(method, password);
+    FirestoreUser firestoreUser = context.read<FirestoreUser>();
+
+    await authProvider.deleteAccount(method, firestoreUser, password);
   }
 
   Future<String?> _passwordDialog() {
@@ -702,7 +705,41 @@ class _UserContainerState extends State<UserContainer> {
     bool hasGoogle,
     bool hasApple,
     bool hasEmailPassword,
-  ) {
+  ) async {
+    if (hasApple) {
+      bool confirm = await confirmDialog(
+        title: 'Konto löschen',
+        content:
+            'Um dein Konto zu löschen, musst du dich authentifizieren.'
+            'Da du Anmeldung mit Apple eingerichtet hast, musst du dich zwingend mit Apple authentifizieren, um dein Konto zu löschen.',
+        confirmButtonText: 'Ja, über Apple',
+      );
+      if (confirm) return AuthenticationMethod.apple;
+      return null;
+    }
+    if (hasGoogle && !hasEmailPassword) {
+      bool confirm = await confirmDialog(
+        title: 'Konto löschen',
+        content:
+            'Um dein Konto zu löschen, musst du dich authentifizieren.'
+            'Deine einzige Anmeldungsmethode ist Google, deswegen musst du dich über Google authentifizieren.',
+        confirmButtonText: 'Ja, über Google',
+      );
+      if (confirm) return AuthenticationMethod.google;
+      return null;
+    }
+    if (hasEmailPassword && !hasGoogle) {
+      bool confirm = await confirmDialog(
+        title: 'Konto löschen',
+        content:
+            'Um dein Konto zu löschen, musst du dich authentifizieren.'
+            'Deine einzige Anmeldungsmethode ist E-Mail/Passwort, deswegen musst du dich über E-Mail/Passwort authentifizieren.',
+        confirmButtonText: 'Ja, über E-Mail/Passwort',
+      );
+      if (confirm) return AuthenticationMethod.emailAndPassword;
+      return null;
+    }
+
     return showModalBottomSheet<AuthenticationMethod?>(
       context: context,
       builder: (BuildContext context) => Padding(
@@ -726,13 +763,7 @@ class _UserContainerState extends State<UserContainer> {
                 onTap: () async =>
                     Navigator.of(context).pop(AuthenticationMethod.google),
               ),
-            if (hasApple)
-              ListTile(
-                leading: const FaIcon(FontAwesomeIcons.apple),
-                title: const Text('Apple'),
-                onTap: () async =>
-                    Navigator.of(context).pop(AuthenticationMethod.apple),
-              ),
+
             if (hasEmailPassword)
               ListTile(
                 leading: const FaIcon(FontAwesomeIcons.envelope),

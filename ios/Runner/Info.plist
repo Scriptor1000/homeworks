@@ -93,5 +93,14 @@
 		<array>
 		<string>https</string>
 		</array>
+
+		<key>FIREBASE_ANALYTICS_COLLECTION_ENABLED</key>
+		<false/>
+
+		<key>FirebaseCrashlyticsCollectionEnabled</key>
+		<false/>
+
+		<key>firebase_performance_collection_enabled</key>
+		<false/>
 	</dict>
 </plist>

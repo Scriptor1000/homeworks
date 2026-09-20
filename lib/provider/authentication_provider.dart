@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import '../database/allowed_emails.dart';
+import '../database/user.dart';
 import '../utilities/enums.dart';
 import '../utilities/global_snackbar.dart';
 
@@ -303,6 +304,7 @@ class AuthenticationProvider extends ChangeNotifier {
   /// Deletes the currently signed-in user's account from Firebase Auth WARNING! Use with caution.
   Future<void> deleteAccount(
     AuthenticationMethod reauthenticationMethod,
+    FirestoreUser firestoreUser,
     String? password,
   ) async {
     final user = _firebaseAuth.currentUser;
@@ -310,9 +312,21 @@ class AuthenticationProvider extends ChangeNotifier {
       return;
     }
 
+    if (user.providerData.any(
+      (provider) => provider.providerId == AppleAuthProvider.PROVIDER_ID,
+    )) {
+      reauthenticationMethod = AuthenticationMethod.apple;
+    }
+
     switch (reauthenticationMethod) {
       case .apple:
-        await user.reauthenticateWithProvider(_appleProvider);
+        final credentials = await user.reauthenticateWithProvider(
+          _appleProvider,
+        );
+        if (credentials.additionalUserInfo?.authorizationCode == null) break;
+        _firebaseAuth.revokeTokenWithAuthorizationCode(
+          credentials.additionalUserInfo!.authorizationCode!,
+        );
         break;
       case .google:
         final googleUser = await _googleSignIn.authenticate();
@@ -334,6 +348,7 @@ class AuthenticationProvider extends ChangeNotifier {
         break;
     }
 
+    await firestoreUser.userDocument.delete();
     await user.delete();
   }
 

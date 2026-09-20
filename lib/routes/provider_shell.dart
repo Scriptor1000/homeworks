@@ -134,6 +134,7 @@ class ProviderShell extends StatelessWidget {
           lazy: false,
         ),
 
+        Provider<FirestoreUser>.value(value: firestoreUser),
         // Provides timetable data, updated when UntisProvider changes
         /*ChangeNotifierProvider(
           create: (_) => TimetableProvider(),
