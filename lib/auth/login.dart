@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
+
 import '../web_authentication/web_authentication.dart' as web;
 import '../provider/authentication_provider.dart';
 import '../utilities/enums.dart';
 import '../widgets/fab.dart';
 import 'forgot_pw_page.dart';
+import 'privacy_policy.dart';
 import 'registration.dart';
 
 /// A simple authentication screen that allows users to log in with email/password or Google.
@@ -243,6 +245,8 @@ class _AuthenticationState extends State<Authentication> {
                             standardGap(),
 
                             builderAppleSignInButton(),
+                            standardGap(),
+                            buildPrivacyPolicyText(context),
                           ],
                         ),
                       ),

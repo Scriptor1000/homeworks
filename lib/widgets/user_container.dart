@@ -627,6 +627,7 @@ class _UserContainerState extends State<UserContainer> {
   Future<void> _deleteAccount() async {
     final authProvider = context.read<AuthenticationProvider>();
     final firestoreUser = context.read<FirestoreUser>();
+    final credentialProvider = context.read<CredentialProvider>();
     final user = authProvider.user!;
 
     final hasGoogle = user.providerData.any(
@@ -657,6 +658,7 @@ class _UserContainerState extends State<UserContainer> {
       }
     }
 
+    await credentialProvider.clearCredentialsLocal();
     await authProvider.deleteAccount(method, firestoreUser, password);
   }
 

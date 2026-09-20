@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../provider/authentication_provider.dart';
+import '../widgets/fab.dart';
+import 'privacy_policy.dart';
 
 /// A simple registration screen that allows users to log in with email/password or Google.
 class Registration extends StatefulWidget {
@@ -97,7 +100,7 @@ class _RegistrationState extends State<Registration> {
                         color: colorScheme.onPrimary,
                       ),
 
-                      const SizedBox(height: 24),
+                      standardGap(),
 
                       // App name/title
                       Text(
@@ -109,7 +112,8 @@ class _RegistrationState extends State<Registration> {
                         ),
                       ),
 
-                      const SizedBox(height: 48),
+                      standardGap(),
+                      standardGap(),
 
                       // Login Card with email/password fields and buttons
                       Container(
@@ -140,11 +144,11 @@ class _RegistrationState extends State<Registration> {
                               ),
                               textAlign: TextAlign.center,
                             ),
-                            const SizedBox(height: 24),
+                            standardGap(),
 
                             // Email input field
                             buildEmailField(colorScheme),
-                            const SizedBox(height: 16),
+                            standardGap(),
 
                             // Password input field
                             buildPasswordField(
@@ -152,7 +156,7 @@ class _RegistrationState extends State<Registration> {
                               _passwordController,
                               'Passwort',
                             ),
-                            const SizedBox(height: 24),
+                            standardGap(),
 
                             // second Password input field
                             buildPasswordField(
@@ -160,11 +164,14 @@ class _RegistrationState extends State<Registration> {
                               _passwordController2,
                               'Passwort bestätigen',
                             ),
-                            const SizedBox(height: 24),
+
+                            standardGap(),
 
                             // Register button
                             buildRegisterButton(colorScheme),
-                            const SizedBox(height: 20),
+                            standardGap(),
+                            buildPrivacyPolicyText(context),
+                            standardGap(),
                             GestureDetector(
                               onTap: () {
                                 Navigator.pop(context);
