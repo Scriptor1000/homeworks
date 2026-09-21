@@ -1,10 +1,11 @@
 name: Automated Documentation Generation
 on:
-    push:
-    workflow_dispatch:
+  push:
+  workflow_dispatch:
 
 jobs:
   generate-docs:
+    name: Generate & Deploy Documentation
     runs-on: ubuntu-latest
     steps:
         - name: Checkout Repository
@@ -47,10 +48,10 @@ jobs:
             dart run index_generator build
             dart run dartdoc --output=build/online/doc
 
-        - name: Copy conent to value
+        - name: Copy content final folder
           run: |
-            mv tools/output.pdf build/online
-            mv tools/page/privacy-policy.html build/online
+            mv tools/output.pdf build/online/history.pdf
+            mv tools/legal/privacy-policy.html build/online
 
         - name: Deploy to Cloudflare Pages
           id: deploy

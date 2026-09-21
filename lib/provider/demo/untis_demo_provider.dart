@@ -5,6 +5,7 @@ import 'package:dart_untis_mobile/dart_untis_mobile.dart';
 import 'package:flutter/material.dart';
 
 import '../../database/models/subject.dart';
+import '../../utilities/common.dart';
 import '../../utilities/enums.dart';
 import '../untis_provider.dart';
 
@@ -16,6 +17,9 @@ Subject _exampleSubject(int id, Color backColor) {
     backColor: backColor,
     foreColor: backColor.computeLuminance() > 0.5 ? Colors.black : Colors.white,
     fromUntis: true,
+    nextLesson: normalizeDate(DateTime.now())
+        .add(Duration(days: id + 1))
+        .add(_getTimeOfDayForIndex(id % 5)),
   );
 }
 
@@ -101,13 +105,12 @@ class UntisDemoProvider extends ChangeNotifier implements UntisProvider {
       );
       await Future.delayed(const Duration(milliseconds: 300));
       for (int i = 0; i < _demoWeeklySchedule[day].length; i++) {
+        DateTime startTime = normalizeDate(DateTime.now())
+            .add(Duration(days: day))
+            .add(_getTimeOfDayForIndex(i));
         final period = FoundPeriod(
-          startDateTime: DateTime.now()
-              .add(Duration(days: day))
-              .copyWith(hour: 2 * i + 8),
-          endDateTime: DateTime.now()
-              .add(Duration(days: day))
-              .copyWith(hour: 2 * i + 9),
+          startDateTime: startTime,
+          endDateTime: startTime.add(const Duration(hours: 1)),
           roomNames: ['R00${i + 1}'],
           classNames: ['B${(i + 1) % 3 + 6}'],
           isCancelled: i % 3 == 0,
@@ -121,8 +124,9 @@ class UntisDemoProvider extends ChangeNotifier implements UntisProvider {
 
   @override
   UntisElementDescriptor? getCurrentSubject() {
-    final subject = todaySubjects.firstWhereOrNull(
-      (subject) => subject.id * 2 + 8 == DateTime.now().hour,
+    final subject = todaySubjects.firstWhereIndexedOrNull(
+      ((index, _) =>
+          _getTimeOfDayForIndex(index).inHours == DateTime.now().hour),
     );
     if (subject != null) {
       return UntisElementDescriptor(.subject, subject.id);
@@ -131,26 +135,21 @@ class UntisDemoProvider extends ChangeNotifier implements UntisProvider {
   }
 
   @override
-  Map<String, DateTime> getNextLessonDates() {
-    Map<String, DateTime> nextLessonDates = {};
-    for (int day = 1; day <= 7; day++) {
-      DateTime date = DateTime.now().add(Duration(days: day));
-      if (date.weekday > 5) continue;
-      for (int i = 0; i < _demoWeeklySchedule[date.weekday].length; i++) {
-        Subject subject = _demoWeeklySchedule[date.weekday][i];
-        nextLessonDates[subject.documentId] = date.add(
-          Duration(hours: 2 * i + 8),
-        );
-      }
-    }
-    return nextLessonDates;
-  }
+  Map<String, DateTime> getNextLessonDates() => Map.fromEntries(
+    _demoSubjects
+        .where((subject) => subject.nextLesson != null)
+        .map((subject) => MapEntry(subject.name, subject.nextLesson!)),
+  );
 
   @override
   Duration? getTimeOfSubjectOnDay(DateTime date, Subject subject) {
-    if (date.weekday > 5) return null;
-    final subjectIndex = _demoWeeklySchedule[date.weekday].indexOf(subject);
-    return subjectIndex != -1 ? Duration(hours: subjectIndex * 2 + 8) : null;
+    if (!_demoWeeklySchedule[date.weekday - 1].contains(subject)) {
+      return null;
+    }
+    int index = _demoWeeklySchedule[date.weekday - 1].indexWhere(
+      (s) => s.id == subject.id,
+    );
+    return _getTimeOfDayForIndex(index);
   }
 
   @override
@@ -158,4 +157,8 @@ class UntisDemoProvider extends ChangeNotifier implements UntisProvider {
 
   @override
   Future<void> updateCredentials(UntisSession? session) async {}
+}
+
+Duration _getTimeOfDayForIndex(int index) {
+  return Duration(hours: index * 2 + 8, minutes: 0);
 }

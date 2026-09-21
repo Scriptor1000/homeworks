@@ -1,4 +1,4 @@
-name: Flutter Tests
+name: Tests
 
 on:
   pull_request:
@@ -9,7 +9,7 @@ on:
 
 jobs:
   test:
-    name: Run Flutter Tests
+    name: Run Flutter Tests & Analyzer
     runs-on: ubuntu-latest
 
     steps:

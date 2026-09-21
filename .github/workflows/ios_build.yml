@@ -1,4 +1,4 @@
-name: IOS Build
+name: App deployment
 
 on:
   push:
@@ -13,6 +13,7 @@ concurrency:
 
 jobs:
   test:
+    name: Run Tests
     uses: ./.github/workflows/tests.yml
 
   build-ios:
@@ -115,7 +116,7 @@ jobs:
           cd ios
           bundle install
 
-      - name: Deploy signed iOS IPA
+      - name: Build & deploy signed iOS IPA
         env:
           APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
           IOS_BUNDLE_ID: ${{ vars.IOS_BUNDLE_ID }}
