@@ -20,7 +20,7 @@ version: 0.1.0+1
 
 environment:
   sdk: ^3.13.0
-  flutter: ^3.47.4
+  flutter: 3.47.4
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -99,7 +99,9 @@ dev_dependencies:
   fake_cloud_firestore: ^4.0.0
 
   flutter_launcher_icons: ^0.14.4
+  
   index_generator: ^4.1.2
+  dartdoc: 9.0.8
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

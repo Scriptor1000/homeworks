@@ -72,3 +72,4 @@ ios/fastlane/*.p8
 tools/secret
 tools/**.pdf
 tools/**.tex
+/lib/[A-Z]*.dart
