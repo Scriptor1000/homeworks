@@ -160,8 +160,6 @@ class AuthenticationProvider extends ChangeNotifier {
       }
       await _firebaseAuth.signInWithProvider(_appleProvider);
     } catch (error) {
-      // TODO swich the error code if it is a GoogleSignInException
-      await _googleSignIn.disconnect();
       showSnackBar('Fehler bei der Anmeldung: $error');
     }
   }

@@ -79,9 +79,8 @@ class UntisDemoProvider extends ChangeNotifier implements UntisProvider {
   );
 
   @override
-  List<Subject> get todaySubjects => DateTime.now().weekday <= 5
-      ? _demoWeeklySchedule[DateTime.now().weekday]
-      : [];
+  List<Subject> get todaySubjects =>
+      _demoWeeklySchedule[DateTime.now().weekday - 1];
 
   @override
   List<Subject> get untisSubjects => _demoSubjects;

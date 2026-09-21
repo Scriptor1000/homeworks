@@ -317,7 +317,7 @@ class _UserContainerState extends State<UserContainer> {
       status: hasGoogle ? 'Verknüpft' : 'Nicht verbunden',
       button: FilledButton.icon(
         onPressed: () {
-          if (isGoogleLoading) return;
+          if (isAppleLoading || isGoogleLoading) return;
           if (hasGoogle) {
             if (!hasEmailPassword && !hasApple) {
               showSnackBar(
@@ -387,11 +387,11 @@ class _UserContainerState extends State<UserContainer> {
       status: hasApple ? 'Verknüpft' : 'Nicht verbunden',
       button: FilledButton.icon(
         onPressed: () {
-          if (isGoogleLoading) return;
+          if (isAppleLoading || isGoogleLoading) return;
           if (hasApple) {
             if (!hasEmailPassword && !hasGoogle) {
               showSnackBar(
-                'Google-Konto kann nicht getrennt werden, da es die einzige Anmeldemethode ist',
+                'Apple-Konto kann nicht getrennt werden, da es die einzige Anmeldemethode ist',
               );
               return;
             }
