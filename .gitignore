@@ -69,4 +69,6 @@ ios/fastlane/*.mobileprovision
 ios/fastlane/*.p8
 
 # Helper Scripts
-*.py
+tools/secret
+tools/**.pdf
+tools/**.tex
