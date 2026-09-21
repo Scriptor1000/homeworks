@@ -90,17 +90,17 @@ class CredentialsDemoProvider extends ChangeNotifier
 
       if (storedHash == null) {
         _credentialsOnlineStatus = CredentialsOnlineStatus.offline;
+        return;
+      }
+      if (credentials == null) {
+        _credentialsOnlineStatus = CredentialsOnlineStatus.online;
+        return;
+      }
+      final localHash = await credentials!.calculateHash();
+      if (localHash == storedHash) {
+        _credentialsOnlineStatus = CredentialsOnlineStatus.online;
       } else {
-        if (credentials == null) {
-          _credentialsOnlineStatus = CredentialsOnlineStatus.online;
-        } else {
-          final localHash = await credentials!.calculateHash();
-          if (localHash == storedHash) {
-            _credentialsOnlineStatus = CredentialsOnlineStatus.online;
-          } else {
-            _credentialsOnlineStatus = CredentialsOnlineStatus.changed;
-          }
-        }
+        _credentialsOnlineStatus = CredentialsOnlineStatus.changed;
       }
     } catch (error, stackTrace) {
       _credentialsOnlineStatus = CredentialsOnlineStatus.error;
