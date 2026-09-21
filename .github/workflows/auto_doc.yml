@@ -1,6 +1,8 @@
 name: Automated Documentation Generation
 on:
   push:
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
@@ -35,11 +37,13 @@ jobs:
             cd tools
             python build_history.py
 
+        - name: Setup LaTeX Environment
+          uses: wtfjoke/setup-tectonic@v4
+          
         - name: Generate PDF from TeX
-          uses: xu-cheng/latex-action@4.1.0
-          with:
-            root_file: output.tex
-            working_directory: tools
+          run: |
+            cd tools
+            tectonic output.tex
 
         - name: Generate Dart Documentation
           run: |
@@ -48,10 +52,10 @@ jobs:
             dart run index_generator build
             dart run dartdoc --output=build/online/doc
 
-        - name: Copy content final folder
+        - name: Copy content to publish folder
           run: |
-            mv tools/output.pdf build/online/history.pdf
-            mv tools/legal/privacy-policy.html build/online
+            mv tools/output.pdf build/online/report.pdf
+            mv tools/page/* build/online
 
         - name: Deploy to Cloudflare Pages
           id: deploy
