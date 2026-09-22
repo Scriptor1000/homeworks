@@ -9,6 +9,7 @@ import '../database/allowed_emails.dart';
 import '../database/user.dart';
 import '../utilities/enums.dart';
 import '../utilities/global_snackbar.dart';
+import 'credential_provider.dart';
 
 /// Authentication provider that handles Firebase authentication
 /// via Google Sign-In and email/password login.
@@ -301,6 +302,7 @@ class AuthenticationProvider extends ChangeNotifier {
   Future<void> deleteAccount(
     AuthenticationMethod reauthenticationMethod,
     FirestoreUser firestoreUser,
+    CredentialProvider credentialProvider,
     String? password,
   ) async {
     final user = _firebaseAuth.currentUser;
@@ -319,10 +321,19 @@ class AuthenticationProvider extends ChangeNotifier {
         final credentials = await user.reauthenticateWithProvider(
           _appleProvider,
         );
-        if (credentials.additionalUserInfo?.authorizationCode == null) break;
-        await _firebaseAuth.revokeTokenWithAuthorizationCode(
-          credentials.additionalUserInfo!.authorizationCode!,
-        );
+        if (credentials.additionalUserInfo?.authorizationCode != null) {
+          await _firebaseAuth.revokeTokenWithAuthorizationCode(
+            credentials.additionalUserInfo!.authorizationCode!,
+          );
+        } else if (credentials.credential?.accessToken != null) {
+          await _firebaseAuth.revokeAccessToken(
+            credentials.credential!.accessToken!,
+          );
+        } else {
+          throw Exception(
+            'Apple Auth Token revocation failed: No token or code found',
+          );
+        }
         break;
       case .google:
         final googleUser = await _googleSignIn.authenticate();
@@ -345,6 +356,7 @@ class AuthenticationProvider extends ChangeNotifier {
     }
 
     await firestoreUser.deleteAllData();
+    await credentialProvider.clearCredentialsLocal();
     await user.delete();
   }
 

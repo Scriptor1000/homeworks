@@ -137,18 +137,15 @@ class UntisDemoProvider extends ChangeNotifier implements UntisProvider {
   Map<String, DateTime> getNextLessonDates() => Map.fromEntries(
     _demoSubjects
         .where((subject) => subject.nextLesson != null)
-        .map((subject) => MapEntry(subject.name, subject.nextLesson!)),
+        .map((subject) => MapEntry(subject.documentId, subject.nextLesson!)),
   );
 
   @override
   Duration? getTimeOfSubjectOnDay(DateTime date, Subject subject) {
-    if (!_demoWeeklySchedule[date.weekday - 1].contains(subject)) {
-      return null;
-    }
     int index = _demoWeeklySchedule[date.weekday - 1].indexWhere(
-      (s) => s.id == subject.id,
+      (s) => s.documentId == subject.documentId,
     );
-    return _getTimeOfDayForIndex(index);
+    return index == -1 ? null : _getTimeOfDayForIndex(index);
   }
 
   @override

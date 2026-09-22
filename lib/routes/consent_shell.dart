@@ -37,6 +37,12 @@ class _ConsentDialogShellState extends State<ConsentDialogShell> {
   }
 
   @override
+  void dispose() {
+    configProvider.removeListener(_updateFirebaseCollection);
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     bool consentDialogShown = context.select(
       (ConfigProvider provider) => provider.consentDialogShown,
@@ -88,8 +94,13 @@ class _ConsentDialogShellState extends State<ConsentDialogShell> {
     ConsentDialogResult? results = await showDialog<ConsentDialogResult>(
       context: context,
       barrierDismissible: false,
-      builder: (_) => const ConsentDialog(),
+      builder: (_) => ConsentDialog(
+        crashlyticsConsent: configProvider.crashlyticsConsent,
+        analyticsConsent: configProvider.analyticsConsent,
+        performanceConsent: configProvider.performanceConsent,
+      ),
     );
+    if (!mounted) return;
     setState(() {
       _dialogVisible = false;
     });
@@ -97,7 +108,7 @@ class _ConsentDialogShellState extends State<ConsentDialogShell> {
       showSnackBar(
         'Fehler: Die Auswahl konnte nicht registriert werden. Wiederhole... ',
       );
-      showConsentDialog(currentContext ?? context);
+      showConsentDialog(this.context);
       return;
     }
     configProvider.crashlyticsConsent = results.crashlyticsConsent;
@@ -108,7 +119,15 @@ class _ConsentDialogShellState extends State<ConsentDialogShell> {
 }
 
 class ConsentDialog extends StatefulWidget {
-  const ConsentDialog({super.key});
+  const ConsentDialog({
+    super.key,
+    required this.crashlyticsConsent,
+    required this.analyticsConsent,
+    required this.performanceConsent,
+  });
+  final bool crashlyticsConsent;
+  final bool analyticsConsent;
+  final bool performanceConsent;
 
   @override
   State<ConsentDialog> createState() => _ConsentDialogState();
@@ -120,8 +139,18 @@ class _ConsentDialogState extends State<ConsentDialog> {
   bool performanceConsent = false;
 
   @override
+  void initState() {
+    analyticsConsent = widget.analyticsConsent;
+    crashlyticsConsent = widget.crashlyticsConsent;
+    performanceConsent = widget.performanceConsent;
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final configProvider = context.read<ConfigProvider>();
     return AlertDialog(
+      scrollable: true,
       title: const Text('Zustimmung zur Datenerfassung'),
       content: Column(
         mainAxisSize: MainAxisSize.min,
@@ -140,7 +169,6 @@ class _ConsentDialogState extends State<ConsentDialog> {
                   ),
                   recognizer: TapGestureRecognizer()
                     ..onTap = () {
-                      final configProvider = context.read<ConfigProvider>();
                       final url = configProvider.privacyPolicyUrl;
                       launchUrl(Uri.parse(url));
                     },

@@ -47,6 +47,14 @@ class _UntisLoginState extends State<UntisLogin> {
   @override
   void initState() {
     super.initState();
+
+    final provider = context.read<CredentialProvider>();
+    _usernameController.text = provider.credentials?.username ?? '';
+    _passwordController.text = provider.credentials?.password ?? '';
+    _schoolController.text =
+        provider.credentials?.school ?? 'albert-schweitzer';
+    _serverController.text =
+        provider.credentials?.server ?? 'albert-schweitzer.webuntis.com';
   }
 
   void submit() async {
@@ -65,6 +73,7 @@ class _UntisLoginState extends State<UntisLogin> {
       _isLoading = true;
     });
     final provider = context.read<CredentialProvider>();
+
     await provider
         .setCredentials(credentials)
         .then(
@@ -85,13 +94,6 @@ class _UntisLoginState extends State<UntisLogin> {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<CredentialProvider>();
-
-    _usernameController.text = provider.credentials?.username ?? '';
-    _passwordController.text = provider.credentials?.password ?? '';
-    _schoolController.text =
-        provider.credentials?.school ?? 'albert-schweitzer';
-    _serverController.text =
-        provider.credentials?.server ?? 'albert-schweitzer.webuntis.com';
     return Scaffold(
       appBar: AppBar(title: const Text('Untis Anmeldung')),
       body: withConstrainedWidth(
@@ -148,6 +150,7 @@ class _UntisLoginState extends State<UntisLogin> {
                       ),
                       standardGap(),
                       _buildDemoModeToggle(),
+                      buildFABGap(),
                     ],
                   ),
                 ),

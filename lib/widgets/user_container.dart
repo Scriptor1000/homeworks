@@ -185,8 +185,10 @@ class _UserContainerState extends State<UserContainer> {
               style: Theme.of(context).textTheme.titleSmall
                   ?.copyWith(fontWeight: FontWeight.bold),
             ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            Wrap(
+              alignment: WrapAlignment.spaceEvenly,
+              spacing: 8,
+              runSpacing: 8,
               children: [
                 ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
@@ -658,8 +660,12 @@ class _UserContainerState extends State<UserContainer> {
       }
     }
 
-    await credentialProvider.clearCredentialsLocal();
-    await authProvider.deleteAccount(method, firestoreUser, password);
+    await authProvider.deleteAccount(
+      method,
+      firestoreUser,
+      credentialProvider,
+      password,
+    );
   }
 
   Future<String?> _passwordDialog() {

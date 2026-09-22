@@ -21,8 +21,8 @@ class UntisProvider extends ChangeNotifier {
   UntisSession? _session;
 
   List<UntisPeriod> _todayPeriods = [];
-  List<Subject> _untisSubjects = [];
   List<OwnUntisTeacher> _untisTeachers = [];
+  final List<Subject> _untisSubjects = [];
   final Map<DateTime, List<UntisPeriod>> _timetableCache = {};
   UntisSubjectStatus _untisSubjectStatus = UntisSubjectStatus.untisUnavailable;
 
@@ -139,8 +139,13 @@ class UntisProvider extends ChangeNotifier {
     if (session == _session) {
       return;
     }
+    _untisSubjects.clear();
+    _timetableCache.clear();
+    _untisTeachers.clear();
+    _todayPeriods.clear();
+
     if (session == null) {
-      _untisSubjects = [];
+      _session = null;
       _untisSubjectStatus = UntisSubjectStatus.untisUnavailable;
       notifyListeners();
       return;

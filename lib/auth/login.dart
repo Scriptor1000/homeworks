@@ -45,7 +45,7 @@ class _AuthenticationState extends State<Authentication> {
     final authProvider = context.read<AuthenticationProvider>();
     await authProvider.loginWithEmail(
       _emailController.text.trim(),
-      _passwordController.text.trim(),
+      _passwordController.text,
     );
     if (mounted) {
       setState(() => _isLoading = false);
