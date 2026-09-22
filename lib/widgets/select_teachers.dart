@@ -1,4 +1,3 @@
-import 'package:dart_untis_mobile/dart_untis_mobile.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -19,8 +18,8 @@ class FindTeacherTile extends StatelessWidget {
   }
 
   Future<void> _showTeacherSelectionDialog(BuildContext context) async {
-    final UntisTeacher? selectedTeacher = await Navigator.of(context)
-        .push<UntisTeacher>(
+    final OwnUntisTeacher? selectedTeacher = await Navigator.of(context)
+        .push<OwnUntisTeacher>(
           MaterialPageRoute(
             fullscreenDialog: true,
             builder: (_) {
@@ -46,7 +45,7 @@ class TeacherSelection extends StatelessWidget {
     final teachers = context.select(
       (UntisProvider provider) => provider.teachers,
     );
-    return SearchScreen<UntisTeacher>(
+    return SearchScreen<OwnUntisTeacher>(
       searchableItems: teachers,
       searchHint: 'Lehrer suchen...',
       getQueryString: (teacher) => teacher.fullName,
@@ -57,9 +56,9 @@ class TeacherSelection extends StatelessWidget {
 
   Widget _buildTeacherTile(
     BuildContext context,
-    UntisTeacher teacher,
+    OwnUntisTeacher teacher,
     VoidCallback onTap,
   ) {
-    return ListTile(title: Text(teacher.fullName), onTap: () => onTap());
+    return ListTile(title: Text(teacher.fullName), onTap: onTap);
   }
 }

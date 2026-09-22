@@ -21,22 +21,20 @@ class UntisProvider extends ChangeNotifier {
   UntisSession? _session;
 
   List<UntisPeriod> _todayPeriods = [];
-  List<Subject> _untisSubjects = [];
-  List<UntisTeacher> _untisTeachers = [];
+  List<OwnUntisTeacher> _untisTeachers = [];
+  final List<Subject> _untisSubjects = [];
   final Map<DateTime, List<UntisPeriod>> _timetableCache = {};
   UntisSubjectStatus _untisSubjectStatus = UntisSubjectStatus.untisUnavailable;
 
   final Duration _range;
   final AnalyticsService _analytics;
 
-  UntisProvider({required Duration range, required AnalyticsService analytics})
-    : _range = range,
-      _analytics = analytics;
+  UntisProvider({required this._range, required this._analytics});
 
   /// The List of Subjects from Untis in the next 30 days.
   List<Subject> get untisSubjects => _untisSubjects;
 
-  List<UntisTeacher> get teachers => _untisTeachers;
+  List<OwnUntisTeacher> get teachers => _untisTeachers;
 
   /// The date until the timetable is loaded.
   DateTime get endDate => DateTime.now().add(_range);
@@ -84,7 +82,7 @@ class UntisProvider extends ChangeNotifier {
   /// Checks the [_todayPeriods] and returns the current subject based on the current time.
   ///
   /// The current subject is determined as the last period which started before now and ended in the last 30 minutes.
-  /// This uses [lastWhereOrNull] to ensure that if multiple periods match, the most recent one (closest to now) is selected,
+  /// It is ensured, that if multiple periods match, the most recent one (closest to now) is selected,
   /// which is important for single periods without a pause between.
   UntisElementDescriptor? getCurrentSubject() {
     final now = DateTime.now();
@@ -105,7 +103,7 @@ class UntisProvider extends ChangeNotifier {
   /// Returns the timetable periods for a given date.
   ///
   /// The date is normalized to ensure that only the year, month, and day are considered, ignoring the time component.
-  List<UntisPeriod> getLessonsForDate(DateTime date) {
+  List<UntisPeriod> _getLessonsForDate(DateTime date) {
     final normalizedDate = normalizeDate(date);
     return _timetableCache[normalizedDate] ?? [];
   }
@@ -118,7 +116,7 @@ class UntisProvider extends ChangeNotifier {
     if (!subject.fromUntis) {
       return null;
     }
-    final lessons = getLessonsForDate(date);
+    final lessons = _getLessonsForDate(date);
     final lesson = lessons.firstWhereOrNull(
       (period) =>
           period.subject?.id.id == subject.id &&
@@ -141,8 +139,13 @@ class UntisProvider extends ChangeNotifier {
     if (session == _session) {
       return;
     }
+    _untisSubjects.clear();
+    _timetableCache.clear();
+    _untisTeachers.clear();
+    _todayPeriods.clear();
+
     if (session == null) {
-      _untisSubjects = [];
+      _session = null;
       _untisSubjectStatus = UntisSubjectStatus.untisUnavailable;
       notifyListeners();
       return;
@@ -169,6 +172,7 @@ class UntisProvider extends ChangeNotifier {
       await _session!.getUserData();
       _untisTeachers = (await _session!.teachers)
           .where((t) => t.exitDate == null)
+          .map((e) => OwnUntisTeacher.fromUntisTeacher(e))
           .toList();
 
       // the periods today are loaded extra to find the current subject simpler
@@ -236,7 +240,7 @@ class UntisProvider extends ChangeNotifier {
   Stream<TeacherSearchResult>? findTeacher(
     UntisElementDescriptor teacher, {
     bool searchInRoom = false,
-    Set<UntisPeriod> previousResults = const {},
+    Set<FoundPeriod> previousResults = const {},
   }) async* {
     Future<List<(UntisElementDescriptor, String)>> getSearchPlaces() async {
       return searchInRoom
@@ -251,7 +255,7 @@ class UntisProvider extends ChangeNotifier {
 
     final searchPlaces = await getSearchPlaces();
     final now = DateTime.now();
-    Set<UntisPeriod> foundPeriods = Set.from(previousResults);
+    Set<FoundPeriod> foundPeriods = Set.from(previousResults);
     Set<int> foundIDs = previousResults.map((p) => p.id).toSet();
     for (var (searchId, searchPlace) in searchPlaces) {
       yield TeacherSearchResult(
@@ -266,7 +270,7 @@ class UntisProvider extends ChangeNotifier {
           .where((period) => period.teachers.any((t) => t.id == teacher))
           .where((period) => !foundIDs.contains(period.id))
           .forEach((period) {
-            foundPeriods.add(period);
+            foundPeriods.add(FoundPeriod.fromUntisPeriod(period));
             foundIDs.add(period.id);
           });
     }
@@ -319,7 +323,38 @@ class UntisProvider extends ChangeNotifier {
 /// Result of a teacher search containing found periods and current searching place.
 class TeacherSearchResult {
   final String? currentSearchingPlace;
-  final Set<UntisPeriod> periods;
+  final Set<FoundPeriod> periods;
 
   TeacherSearchResult({this.currentSearchingPlace, required this.periods});
+}
+
+class FoundPeriod({
+  required final DateTime startDateTime,
+  required final DateTime endDateTime,
+  final String? subjectName,
+  required final List<String> roomNames,
+  required final List<String> classNames,
+  required final bool isCancelled,
+  required final int id,
+}) {
+  factory FoundPeriod.fromUntisPeriod(UntisPeriod period) {
+    return FoundPeriod(
+      startDateTime: period.startDateTime,
+      endDateTime: period.endDateTime,
+      subjectName: period.subject?.longName,
+      roomNames: period.rooms.map((r) => r.name).toList(),
+      classNames: period.classes.map((c) => c.name).toList(),
+      isCancelled: period.isCancelled || period.teacher == null,
+      id: period.id,
+    );
+  }
+}
+
+class OwnUntisTeacher({
+  required final UntisElementDescriptor id,
+  required final String fullName,
+}) {
+  factory OwnUntisTeacher.fromUntisTeacher(UntisTeacher teacher) {
+    return OwnUntisTeacher(id: teacher.id, fullName: teacher.fullName);
+  }
 }

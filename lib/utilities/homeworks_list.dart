@@ -1,4 +1,5 @@
 import '../database/models/homework.dart';
+
 import 'dart:collection';
 
 import 'common.dart';
@@ -17,7 +18,7 @@ import 'common.dart';
 class Homeworks extends ListBase<Homework> {
   final List<Homework> _homeworks;
 
-  Homeworks({required List<Homework> homeworks}) : _homeworks = homeworks;
+  Homeworks({required this._homeworks});
 
   Homeworks get urgent =>
       Homeworks(homeworks: _homeworks.where((h) => h.isUrgent).toList());

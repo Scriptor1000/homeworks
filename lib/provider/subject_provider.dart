@@ -72,7 +72,11 @@ class SubjectProvider extends ChangeNotifier {
     _untisSubjects = untisProvider.untisSubjects;
     _untisSubjectStatus = UntisSubjectStatus.loaded;
 
-    // Update next lesson dates in Firestore subjects
+    _updateNextLessonInFirestoreSubjects();
+    notifyListeners();
+  }
+
+  void _updateNextLessonInFirestoreSubjects() {
     for (var untisSubject in _untisSubjects) {
       final existingSubject = _firestoreSubjects.indexWhere(
         // (subject) => subject.documentId == untisSubject.documentId,
@@ -83,14 +87,13 @@ class SubjectProvider extends ChangeNotifier {
             untisSubject.nextLesson;
       }
     }
-
-    notifyListeners();
   }
 
   /// Loads all subjects from Firestore
   Future<void> _loadSubjects() async {
     _firestoreSubjects = await _firestoreSubjectsService.loadAllUntisSubjects();
     _firestoreSubjectsLoaded = true;
+    _updateNextLessonInFirestoreSubjects();
     notifyListeners();
   }
 

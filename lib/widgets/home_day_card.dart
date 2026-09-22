@@ -23,9 +23,11 @@ class HomeDayCard extends StatelessWidget {
   });
 
   Homeworks sortByCompletions(Homeworks homeworks) {
-    List<Homework> completed = homeworks.completed.sortedBy((h) => h.dueDate!);
+    List<Homework> completed = homeworks.completed.sortedBy(
+      (h) => h.dueDate ?? h.createdAt,
+    );
     List<Homework> notCompleted = homeworks.notCompleted.sortedBy(
-      (h) => h.dueDate!,
+      (h) => h.dueDate ?? h.createdAt,
     );
     return Homeworks(homeworks: [...notCompleted, ...completed]);
   }

@@ -2,11 +2,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_performance/firebase_performance.dart';
-import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../database/credentials.dart';
 import '../database/homeworks.dart';
@@ -15,6 +13,8 @@ import '../database/subjects.dart';
 import '../database/user.dart';
 import '../provider/config_provider.dart';
 import '../provider/credential_provider.dart';
+import '../provider/demo/credentials_demo_provider.dart';
+import '../provider/demo/untis_demo_provider.dart';
 import '../provider/homeworks_provider.dart';
 import '../provider/subject_provider.dart';
 import '../provider/untis_provider.dart';
@@ -31,11 +31,11 @@ class ProviderShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Config provider for remote config
-    final configProvider = ConfigProvider(
-      remoteConfig: FirebaseRemoteConfig.instance,
-      sharedPreferences: (SharedPreferencesWithCacheOptions options) async {
-        return SharedPreferencesWithCache.create(cacheOptions: options);
-      },
+    final int untisTimetableLoadDays = context.select(
+      (ConfigProvider p) => p.untisTimetableLoadDays,
+    );
+    final bool untisDemoMode = context.select(
+      (ConfigProvider p) => p.untisDemoMode,
     );
 
     final firestore = FirebaseFirestore.instance;
@@ -43,7 +43,7 @@ class ProviderShell extends StatelessWidget {
     final crashlytics = FirebaseCrashlytics.instance;
     final performance = FirebasePerformance.instance;
     // this could be a constant or config
-    final range = const Duration(days: 30);
+    final range = Duration(days: untisTimetableLoadDays);
 
     // Cryptography utility for encrypting/decrypting credentials
     final cryptography = CredentialCryptography(uid: uid);
@@ -76,30 +76,39 @@ class ProviderShell extends StatelessWidget {
     );
 
     return MultiProvider(
+      key: ValueKey(untisDemoMode),
       providers: [
-        // Provides configuration values from Settings and Remote Config
-        ChangeNotifierProvider(
-          create: (_) => configProvider..initialize(),
-          lazy: false,
-        ),
         // Provides local and online credentials
-        ChangeNotifierProvider(
-          create: (_) => CredentialProvider(
-            firestoreCredentials: firestoreCredentials,
-            itemFactory: itemFactory,
-            storage: storage,
-          )..initialize(),
-          lazy: false,
-        ),
-        // Provides Untis session data based on credentials
-        ChangeNotifierProxyProvider<CredentialProvider, UntisProvider>(
-          create: (_) =>
-              UntisProvider(range: range, analytics: analyticsService),
-          update: (_, untisCredentialProvider, previous) =>
-              (previous?..updateCredentials(untisCredentialProvider.session)) ??
-              UntisProvider(range: range, analytics: analyticsService),
-          lazy: false,
-        ),
+        if (untisDemoMode) ...[
+          ChangeNotifierProvider<CredentialProvider>(
+            create: (_) => CredentialsDemoProvider(
+              firestoreCredentials: firestoreCredentials,
+            )..initialize(),
+          ),
+
+          ChangeNotifierProvider<UntisProvider>(
+            create: (_) => UntisDemoProvider(range: range),
+          ),
+        ] else ...[
+          ChangeNotifierProvider(
+            create: (_) => CredentialProvider(
+              firestoreCredentials: firestoreCredentials,
+              itemFactory: itemFactory,
+              storage: storage,
+            )..initialize(),
+            lazy: false,
+          ),
+          // Provides Untis session data based on credentials
+          ChangeNotifierProxyProvider<CredentialProvider, UntisProvider>(
+            create: (_) =>
+                UntisProvider(range: range, analytics: analyticsService),
+            update: (_, untisCredentialProvider, previous) =>
+                (previous
+                  ?..updateCredentials(untisCredentialProvider.session)) ??
+                UntisProvider(range: range, analytics: analyticsService),
+            lazy: false,
+          ),
+        ],
         // Provides homework data, updated when UntisProvider changes
         ChangeNotifierProxyProvider<UntisProvider, HomeworksProvider>(
           create: (_) => HomeworksProvider(
@@ -125,6 +134,7 @@ class ProviderShell extends StatelessWidget {
           lazy: false,
         ),
 
+        Provider<FirestoreUser>.value(value: firestoreUser),
         // Provides timetable data, updated when UntisProvider changes
         /*ChangeNotifierProvider(
           create: (_) => TimetableProvider(),

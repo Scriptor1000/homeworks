@@ -113,3 +113,6 @@ enum HomeworkEmoji {
 
   const HomeworkEmoji(this.emoji);
 }
+
+/// The various authentication methods supported by the app.
+enum AuthenticationMethod { google, apple, emailAndPassword }

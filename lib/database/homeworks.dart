@@ -12,10 +12,9 @@ class FirestoreHomeworks {
   final ItemFactory _itemFactory;
 
   FirestoreHomeworks({
-    required FirestoreUser firestoreUser,
-    required ItemFactory itemFactory,
-  }) : _firestoreUser = firestoreUser,
-       _itemFactory = itemFactory;
+    required this._firestoreUser,
+    required this._itemFactory,
+  });
 
   CollectionReference<Map<String, dynamic>> get _homeworksCollectionsRef =>
       _firestoreUser.userDocument.collection(homeworksCollections);
@@ -23,11 +22,11 @@ class FirestoreHomeworks {
   /// Saves the homework to Firestore.
   ///
   /// Uploads the [homework] to the [homeworksCollections] of the current user.
-  /// If a document with the same ID already exists, it merges the data.
+  /// If a document with the same ID already exists, it replaces the data.
   Future<void> saveHomework(Homework homework) async {
     await _homeworksCollectionsRef
         .doc(homework.documentId)
-        .set(homework.toDocument(), SetOptions(merge: true));
+        .set(homework.toDocument());
   }
 
   /// Loads all homeworks from Firestore.

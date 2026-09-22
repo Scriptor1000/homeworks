@@ -38,7 +38,7 @@ class _SubjectBottomSheetContentState extends State<SubjectBottomSheetContent> {
     _subjects = List<Subject>.from(widget.initialSubjects);
   }
 
-  Future<void> _handleImport(Subject subject, int index) async {
+  Future<void> _handleImport(Subject subject) async {
     if (_isProcessing[subject.id] == true) return;
 
     setState(() {
@@ -50,7 +50,8 @@ class _SubjectBottomSheetContentState extends State<SubjectBottomSheetContent> {
       listen: false,
     );
     await provider.addSubject(subject);
-    _removeSubjectFromList(subject, index);
+    if (!mounted) return;
+    _removeSubjectFromList(subject);
 
     if (mounted) {
       setState(() {
@@ -76,7 +77,7 @@ class _SubjectBottomSheetContentState extends State<SubjectBottomSheetContent> {
     }
   }
 
-  Future<void> _handleRemove(Subject subject, int index) async {
+  Future<void> _handleRemove(Subject subject) async {
     if (_isProcessing[subject.id] == true) return;
 
     setState(() {
@@ -85,7 +86,8 @@ class _SubjectBottomSheetContentState extends State<SubjectBottomSheetContent> {
 
     SubjectProvider provider = context.read();
     await provider.removeSubject(subject);
-    _removeSubjectFromList(subject, index);
+    if (!mounted) return;
+    _removeSubjectFromList(subject);
 
     if (mounted) {
       setState(() {
@@ -176,7 +178,11 @@ class _SubjectBottomSheetContentState extends State<SubjectBottomSheetContent> {
     }
   }
 
-  void _removeSubjectFromList(Subject subject, int index) {
+  void _removeSubjectFromList(Subject subject) {
+    final index = _subjects.indexWhere(
+      (s) => s.documentId == subject.documentId,
+    );
+    if (index == -1) return;
     if (_subjects.length == 1) {
       // Wenn es das letzte Element ist, schließe das BottomSheet ohne das Element zu entfernen
       // Dies sorgt dafür, dass das Fach weiterhin in der Liste ist, wenn das Sheet wieder geöffnet wird
@@ -340,8 +346,8 @@ class _SubjectBottomSheetContentState extends State<SubjectBottomSheetContent> {
                       SubjectListType.inBoth ||
                       SubjectListType.inFirestoreUntisNotAvailable => Icon(
                         subject.visible
-                            ? Icons.visibility_off_outlined
-                            : Icons.visibility_outlined,
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined,
                       ),
                     },
                     onPressed: () async {
@@ -349,7 +355,7 @@ class _SubjectBottomSheetContentState extends State<SubjectBottomSheetContent> {
                       if (widget.subjectListType ==
                           SubjectListType.inUnitsButNotInFirestore) {
                         // Importieren erfordert keine Bestätigung
-                        _handleImport(currentSubject, index);
+                        _handleImport(currentSubject);
                       } else if (widget.subjectListType ==
                           SubjectListType.inFirestoreButNotInUntis) {
                         // Beim Löschen Bestätigungsdialog anzeigen
@@ -357,7 +363,7 @@ class _SubjectBottomSheetContentState extends State<SubjectBottomSheetContent> {
                           currentSubject,
                         );
                         if (confirm && mounted) {
-                          _handleRemove(currentSubject, index);
+                          _handleRemove(currentSubject);
                         }
                       } else {
                         _handleVisibilityToggle(currentSubject, index);

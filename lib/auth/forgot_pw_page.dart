@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import '../widgets/fab.dart';
+import 'privacy_policy.dart';
+
 /// Page for resetting the user's password via Firebase.
 /// The user enters their email address and receives a
 /// password reset email from Firebase Auth.
@@ -34,8 +37,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       await FirebaseAuth.instance.sendPasswordResetEmail(
         email: _emailController.text.trim(),
       );
-      message =
-          'E-Mail gesendet. Falls sie nicht eingetroffen ist, bitte Spam-Ordner und die eingegebene E-Mail überprüfen.';
+      message = 'E-Mail gesendet. Falls sie nicht eingetroffen ist, bitte Spam-Ordner und die eingegebene E-Mail überprüfen.';
     } on FirebaseAuthException catch (e) {
       message = _getErrorMessage(e.code);
     } finally {
@@ -43,9 +45,8 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     }
 
     if (mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(message)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(message)));
     }
   }
 
@@ -101,7 +102,8 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                         size: 80,
                         color: colorScheme.onPrimary,
                       ),
-                      const SizedBox(height: 24),
+
+                      standardGap(),
 
                       Text(
                         'Passwort zurücksetzen',
@@ -111,7 +113,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                           color: colorScheme.onPrimary,
                         ),
                       ),
-                      const SizedBox(height: 48),
+
+                      standardGap(),
+                      standardGap(),
 
                       Container(
                         padding: const EdgeInsets.all(24),
@@ -140,7 +144,8 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                                 color: colorScheme.primary,
                               ),
                             ),
-                            const SizedBox(height: 24),
+
+                            standardGap(),
 
                             TextField(
                               controller: _emailController,
@@ -160,7 +165,8 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                               ),
                               keyboardType: TextInputType.emailAddress,
                             ),
-                            const SizedBox(height: 24),
+
+                            standardGap(),
 
                             ElevatedButton(
                               onPressed: _isLoading ? null : _sendResetEmail,
@@ -195,9 +201,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                                       ),
                                     ),
                             ),
-
-                            const SizedBox(height: 16),
-
+                            standardGap(),
+                            buildPrivacyPolicyText(context),
+                            standardGap(),
                             GestureDetector(
                               onTap: () {
                                 Navigator.pop(context);

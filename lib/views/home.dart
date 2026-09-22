@@ -107,6 +107,7 @@ class _HomeState extends State<Home> {
     Homeworks homeworks = context.select((HomeworksProvider p) => p.homeworks);
 
     DateTime nextDay = normalizeDate(DateTime.now());
+    final todayHasHomeworks = homeworks.getForDate(nextDay).isNotEmpty;
     List<DateTime> upcomingWorkdays = [];
     while (upcomingWorkdays.length < dayCardCount - 1) {
       nextDay = nextDay.add(oneDay);
@@ -124,15 +125,17 @@ class _HomeState extends State<Home> {
         left: horizontalPadding,
       ),
       children: [
-        if (!hasFreeTime)
+        if (!hasFreeTime || todayHasHomeworks)
           HomeDayCard(date: DateTime.now(), includeOverdueHomeworks: true),
         ...upcomingWorkdays.mapIndexed(
           (i, date) => HomeDayCard(
             date: date,
-            includeOverdueHomeworks: hasFreeTime && i == 0,
+            includeOverdueHomeworks:
+                hasFreeTime && !todayHasHomeworks && i == 0,
           ),
         ),
-        if (homeworks.getForAfterDate(upcomingWorkdays.last).isNotEmpty)
+        if (homeworks.getForAfterDate(upcomingWorkdays.last).isNotEmpty ||
+            homeworks.withoutDueDate.isNotEmpty)
           HomeDayCard(
             date: upcomingWorkdays.last,
             onlyHomeworksAfterDate: true,

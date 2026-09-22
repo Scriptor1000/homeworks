@@ -19,7 +19,7 @@ class FindTeacher extends StatefulWidget {
 
 class _FindTeacherState extends State<FindTeacher> {
   Stream<TeacherSearchResult>? _stream;
-  UntisTeacher? _teacher;
+  OwnUntisTeacher? _teacher;
   bool _lookingInRooms = false;
 
   void initStream() {
@@ -33,7 +33,7 @@ class _FindTeacherState extends State<FindTeacher> {
     }
   }
 
-  void lookAtRooms(Set<UntisPeriod> previousResults) {
+  void lookAtRooms(Set<FoundPeriod> previousResults) {
     if (_teacher == null) return;
     final UntisProvider provider = context.read();
     setState(() {
@@ -119,7 +119,7 @@ class _FindTeacherState extends State<FindTeacher> {
     );
   }
 
-  Widget _formatDate(UntisPeriod period) {
+  Widget _formatDate(FoundPeriod period) {
     String weekday = getWeekday(period.startDateTime);
 
     final bool isToday =
@@ -169,13 +169,13 @@ class _FindTeacherState extends State<FindTeacher> {
     }
   }
 
-  ListTile _buildTile(UntisPeriod period) {
-    String rooms = period.rooms.map((r) => r.name).join(', ');
+  ListTile _buildTile(FoundPeriod period) {
+    String rooms = period.roomNames.join(', ');
     if (rooms.isEmpty) {
       rooms = 'Kein Raum angegeben';
     }
-    String? subtitle = period.subject?.longName;
-    final String classes = period.classes.map((c) => c.name).join(', ');
+    String? subtitle = period.subjectName;
+    final String classes = period.classNames.join(', ');
     if (classes.isNotEmpty) {
       subtitle = '${subtitle ?? ''} bei $classes';
     }

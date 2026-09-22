@@ -22,6 +22,7 @@ import '../views/untis/untis_login.dart';
 import '../views/untis/upload_credentials.dart';
 import '../views/untis_view.dart';
 import '../views/timetable_view.dart';
+import 'consent_shell.dart';
 import 'navigation_shell.dart';
 import 'provider_shell.dart';
 import '../provider/homeworks_provider.dart';
@@ -144,9 +145,11 @@ class NavigationShellRoute extends ShellRouteData {
     return CustomTransitionPage(
       key: state.pageKey,
       // Wrap child with ProviderShell for access to providers
-      child: ProviderShell(
-        uid: user.uid,
-        child: NavigationShell(state: state, child: navigator),
+      child: ConsentDialogShell(
+        child: ProviderShell(
+          uid: user.uid,
+          child: NavigationShell(state: state, child: navigator),
+        ),
       ),
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
         return SharedAxisTransition(

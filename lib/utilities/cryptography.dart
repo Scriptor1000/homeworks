@@ -9,7 +9,7 @@ class CredentialCryptography {
 
   final String _uid;
 
-  CredentialCryptography({required String uid}) : _uid = uid;
+  CredentialCryptography({required this._uid});
 
   /// Encrypts [data] for the database using the [userPassword]
   ///

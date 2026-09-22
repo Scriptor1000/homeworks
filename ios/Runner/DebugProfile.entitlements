@@ -5,5 +5,9 @@
     <key>keychain-access-groups</key>
     <array/>
     
+    <key>com.apple.developer.applesignin</key>
+    <array>
+        <string>Default</string>
+    </array>
 </dict>
 </plist>

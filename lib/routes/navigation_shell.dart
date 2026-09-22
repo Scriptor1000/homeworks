@@ -20,7 +20,7 @@ class NavigationShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    int maxWidth = context.select(
+    double maxWidth = context.select(
       (ConfigProvider provider) => provider.maxWidthThreshold,
     ); // Define the maximum width for the layout
 

@@ -9,8 +9,7 @@ class FirestoreAllowedEmails {
 
   final FirebaseFirestore _firestore;
 
-  FirestoreAllowedEmails({required FirebaseFirestore firestore})
-    : _firestore = firestore;
+  FirestoreAllowedEmails({required this._firestore});
 
   CollectionReference<Map<String, dynamic>> get emailsCollectionRef =>
       _firestore.collection(emailsCollection);
