@@ -144,7 +144,7 @@ class AuthenticationProvider extends ChangeNotifier {
       return await _handleGoogleCredentials(googleUser);
     } catch (error) {
       // TODO swich the error code if it is a GoogleSignInException
-      await _googleSignIn.disconnect();
+      await _googleSignIn.signOut();
       showSnackBar('Fehler bei der Anmeldung: $error');
     }
   }
@@ -205,7 +205,7 @@ class AuthenticationProvider extends ChangeNotifier {
       FirebaseCrashlytics.instance.recordError(error, stackTrace);
       // TODO Future.error
 
-      await _googleSignIn.disconnect();
+      await _googleSignIn.signOut();
       await _firebaseAuth.signOut();
       showSnackBar('Fehler bei der Anmeldung: $error');
       rethrow;
@@ -266,8 +266,13 @@ class AuthenticationProvider extends ChangeNotifier {
   /// In future sign ins, the user will have to select their Google account again.
   /// This method does not unlink the Firebase user from their Google account.
   Future<void> signOut() async {
-    await _googleSignIn.disconnect();
-    await _firebaseAuth.signOut();
+    try {
+      await _googleSignIn.signOut();
+    } catch (e, stackTrace) {
+      FirebaseCrashlytics.instance.recordError(e, stackTrace);
+    } finally {
+      await _firebaseAuth.signOut();
+    }
   }
 
   /// Logs in using email + password via Firebase.
@@ -355,9 +360,15 @@ class AuthenticationProvider extends ChangeNotifier {
         break;
     }
 
-    await firestoreUser.deleteAllData();
-    await credentialProvider.clearCredentialsLocal();
-    await user.delete();
+    try {
+      await firestoreUser.deleteAllData();
+      await credentialProvider.clearCredentialsLocal();
+      await _googleSignIn.signOut();
+    } catch (e, stackTrace) {
+      FirebaseCrashlytics.instance.recordError(e, stackTrace);
+    } finally {
+      await user.delete();
+    }
   }
 
   /// The error messages for FirebaseAuth exceptions.
