@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+    <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://apple.com">
 <plist version="1.0">
 <dict>
@@ -8,5 +8,7 @@
     <array>
         <string>Default</string>
     </array>
+    <key>com.apple.developer.devicecheck.appattest-environment</key>
+<string>production</string>
 </dict>
 </plist>
