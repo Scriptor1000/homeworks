@@ -23,7 +23,7 @@ class FirestoreSubjects {
   Future<void> saveSubject(Subject subject) async {
     await _subjectCollectionRef
         .doc(subject.documentId)
-        .set(subject.toDocument(), SetOptions(merge: true));
+        .set(subject.toDocument());
   }
 
   /// Lädt ein Fach anhand seiner Dokumenten-ID aus Firestore.
@@ -48,6 +48,14 @@ class FirestoreSubjects {
     return snapshot.docs
         .map((doc) => _itemFactory.subjectFromDocument(doc.data()))
         .toList();
+  }
+
+  Stream<List<Subject>> streamAllSubjects() {
+    return _subjectCollectionRef.snapshots().map((snapshot) {
+      return snapshot.docs
+          .map((doc) => _itemFactory.subjectFromDocument(doc.data()))
+          .toList();
+    });
   }
 
   /// Löscht ein Fach aus Firestore.

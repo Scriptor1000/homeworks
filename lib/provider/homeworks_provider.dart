@@ -19,6 +19,7 @@ import 'untis_provider.dart';
 class HomeworksProvider extends ChangeNotifier {
   List<Homework> _homeworks = []; // local list of homeworks
   bool _homeworksLoaded = false; // whether homeworks have been loaded
+  UntisProvider? _untisProvider;
 
   final FirestoreHomeworks _firestoreHomeworks;
   final AnalyticsService _analyticsService;
@@ -49,10 +50,20 @@ class HomeworksProvider extends ChangeNotifier {
   /// Loads all homeworks from Firestore and removes old completed ones
   Future<void> _loadHomeworks() async {
     Trace trace = _analyticsService.startCustomTrace('load_homeworks');
+    Stream<List<Homework>> stream = _firestoreHomeworks.streamAllHomeworks();
+    stream.listen((homeworks) {
+      _homeworks = homeworks;
+      if (!_homeworksLoaded) {
+        _homeworksLoaded = true;
+        trace.stop();
+      }
+      _deleteOldCompletedHomeworks();
+    });
+    notifyListeners();
+  }
 
-    _homeworks = await _firestoreHomeworks.loadAllHomeworks();
+  Future<void> _deleteOldCompletedHomeworks() async {
     final now = DateTime.now();
-    // TODO there is a better place for deleting old homeworks
     final toDelete = _homeworks
         .where(
           (homework) =>
@@ -64,26 +75,23 @@ class HomeworksProvider extends ChangeNotifier {
     for (var homework in toDelete) {
       await _firestoreHomeworks.deleteHomework(homework.documentId);
     }
-
-    // Remove the same homeworks locally
-    _homeworks.removeWhere(
-      (homework) =>
-          homework.dueDate != null &&
-          homework.dueDate!.isBefore(now) &&
-          homework.isCompleted,
-    );
-
-    _homeworksLoaded = true;
-    trace.stop();
     notifyListeners();
   }
 
-  Future<void> updateDueDates(UntisProvider untisProvider) async {
-    if (!untisProvider.untisSubjectsLoaded) {
+  Future<void> setUntisProvider(UntisProvider untisProvider) async {
+    _untisProvider = untisProvider;
+    await updateDueDates();
+  }
+
+  Future<void> updateDueDates() async {
+    if (_untisProvider == null) {
       return;
     }
-    final nextLessonDates = untisProvider.getNextLessonDates();
-    final todaySubjects = untisProvider.todaySubjects;
+    if (!_untisProvider!.untisSubjectsLoaded) {
+      return;
+    }
+    final nextLessonDates = _untisProvider!.getNextLessonDates();
+    final todaySubjects = _untisProvider!.todaySubjects;
     final now = DateTime.now();
     int count = 0;
 
@@ -105,7 +113,7 @@ class HomeworksProvider extends ChangeNotifier {
       // the due date is in the scan range
       if (!nextLessonDates.containsKey(homework.subjectDocId) &&
           homework.dueDate != null &&
-          homework.dueDate!.isBefore(untisProvider.endDate)) {
+          homework.dueDate!.isBefore(_untisProvider!.endDate)) {
         homework.dueDate = null;
         _firestoreHomeworks.saveHomework(homework);
         count++;
@@ -331,7 +339,7 @@ class HomeworksProvider extends ChangeNotifier {
     required Future<void> Function() mutateRemoteState,
     required VoidCallback logAnalytics,
   }) async {
-    mutateLocalState();
+    // mutateLocalState();
     await mutateRemoteState();
     notifyListeners();
     logAnalytics();

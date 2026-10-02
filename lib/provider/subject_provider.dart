@@ -91,23 +91,24 @@ class SubjectProvider extends ChangeNotifier {
 
   /// Loads all subjects from Firestore
   Future<void> _loadSubjects() async {
-    _firestoreSubjects = await _firestoreSubjectsService.loadAllUntisSubjects();
-    _firestoreSubjectsLoaded = true;
-    _updateNextLessonInFirestoreSubjects();
-    notifyListeners();
+    Stream<List<Subject>> stream = _firestoreSubjectsService
+        .streamAllSubjects();
+    stream.listen((subjects) {
+      _firestoreSubjects = subjects;
+      _firestoreSubjectsLoaded = true;
+      notifyListeners();
+    });
   }
 
   /// Adds a new subject to Firestore and local list
   Future<void> addSubject(Subject subject) async {
     await _firestoreSubjectsService.saveSubject(subject);
-    _firestoreSubjects.add(subject);
     notifyListeners();
   }
 
   /// Deletes a subject from Firestore and local list
   Future<void> removeSubject(Subject subject) async {
     await _firestoreSubjectsService.deleteSubject(subject);
-    _firestoreSubjects.removeWhere((s) => s.id == subject.id);
     notifyListeners();
   }
 
