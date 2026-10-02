@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dart_untis_mobile/dart_untis_mobile.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:homeworks/database/models/subject.dart';
@@ -31,6 +33,7 @@ void main() {
     late MockFirestoreSubjects mockFirestoreSubjects;
     late MockUntisProvider mockUntisProvider;
     late SubjectProvider subjectProvider;
+    late StreamController<List<Subject>> subjectsStream;
 
     late List<Subject> firestoreSubjects;
     late List<Subject> untisSubjects;
@@ -40,6 +43,10 @@ void main() {
     setUp(() {
       mockFirestoreSubjects = MockFirestoreSubjects();
       mockUntisProvider = MockUntisProvider();
+      subjectsStream = StreamController<List<Subject>>();
+      addTearDown(() {
+        subjectsStream.close();
+      });
 
       subjectProvider = SubjectProvider(
         firestoreSubjects: mockFirestoreSubjects,
@@ -55,8 +62,20 @@ void main() {
       ).toList();
 
       when(
-        mockFirestoreSubjects.loadAllUntisSubjects(),
-      ).thenAnswer((_) async => firestoreSubjects);
+        mockFirestoreSubjects.streamAllSubjects(),
+      ).thenAnswer((_) => subjectsStream.stream);
+      subjectsStream.add(List.of(firestoreSubjects));
+      when(mockFirestoreSubjects.saveSubject(any)).thenAnswer((i) async {
+        final subject = i.positionalArguments[0] as Subject;
+        if (!firestoreSubjects.contains(subject)) {
+          firestoreSubjects.add(subject);
+        }
+        subjectsStream.add(List.of(firestoreSubjects));
+      });
+      when(mockFirestoreSubjects.deleteSubject(any)).thenAnswer((i) async {
+        firestoreSubjects.remove(i.positionalArguments[0]);
+        subjectsStream.add(List.of(firestoreSubjects));
+      });
       when(mockUntisProvider.untisSubjects).thenReturn(untisSubjects);
     });
 
@@ -83,6 +102,7 @@ void main() {
       // setup
       final newSubject = MockSubject();
       when(newSubject.documentId).thenReturn('subject_new');
+      await subjectProvider.initialize();
       // test
       await subjectProvider.addSubject(newSubject);
       // verify

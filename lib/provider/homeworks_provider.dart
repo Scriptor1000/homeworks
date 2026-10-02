@@ -166,7 +166,6 @@ class HomeworksProvider extends ChangeNotifier {
       emoji: null,
     );
     return _mutateState(
-      mutateLocalState: () => _homeworks.add(homework),
       mutateRemoteState: () async =>
           await _firestoreHomeworks.saveHomework(homework),
       logAnalytics: () => _analyticsService.createHomework(
@@ -182,7 +181,6 @@ class HomeworksProvider extends ChangeNotifier {
   /// Adds it to the local list and saves in Firestore.
   Future<void> createHomework(Homework homework) async {
     return _mutateState(
-      mutateLocalState: () => _homeworks.add(homework),
       mutateRemoteState: () async =>
           await _firestoreHomeworks.saveHomework(homework),
       logAnalytics: () => _analyticsService.createHomework(
@@ -207,7 +205,7 @@ class HomeworksProvider extends ChangeNotifier {
       return;
     }
     return _mutateState(
-      mutateLocalState: () {
+      updateFields: () {
         homework.title = updatedHomework.title;
         homework.description = updatedHomework.description;
         homework.subjectDocId = updatedHomework.subjectDocId;
@@ -231,7 +229,6 @@ class HomeworksProvider extends ChangeNotifier {
     final homework = _homeworks.firstWhereOrNull((hw) => hw.id == homeworkID);
     if (homework != null) {
       return _mutateState(
-        mutateLocalState: () => _homeworks.remove(homework),
         mutateRemoteState: () async =>
             await _firestoreHomeworks.deleteHomework(homework.documentId),
         logAnalytics: () => _analyticsService.deleteHomework(
@@ -259,7 +256,7 @@ class HomeworksProvider extends ChangeNotifier {
     final homework = _homeworks.firstWhereOrNull((hw) => hw.id == homeworkID);
     if (homework != null) {
       return _mutateState(
-        mutateLocalState: () => homework.dueDate = dueDate,
+        updateFields: () => homework.dueDate = dueDate,
         mutateRemoteState: () async =>
             await _firestoreHomeworks.saveHomework(homework),
         logAnalytics: () =>
@@ -299,7 +296,6 @@ class HomeworksProvider extends ChangeNotifier {
     if (homework.dueDate != null &&
         homework.dueDate!.isBefore(DateTime.now())) {
       return _mutateState(
-        mutateLocalState: () => _homeworks.remove(homework),
         mutateRemoteState: () async =>
             await _firestoreHomeworks.deleteHomework(homework.documentId),
         logAnalytics: () => _analyticsService.completeAndDeleteHomework(
@@ -309,7 +305,7 @@ class HomeworksProvider extends ChangeNotifier {
       );
     } else {
       return _mutateState(
-        mutateLocalState: () => homework.isCompleted = true,
+        updateFields: () => homework.isCompleted = true,
         mutateRemoteState: () async =>
             await _firestoreHomeworks.saveHomework(homework),
         logAnalytics: () => _analyticsService.completeHomework(
@@ -324,7 +320,7 @@ class HomeworksProvider extends ChangeNotifier {
 
   Future<void> _uncompleteHomework(Homework homework) async {
     return _mutateState(
-      mutateLocalState: () => homework.isCompleted = false,
+      updateFields: () => homework.isCompleted = false,
       mutateRemoteState: () async =>
           await _firestoreHomeworks.saveHomework(homework),
       logAnalytics: () => _analyticsService.uncompleteHomework(
@@ -335,11 +331,11 @@ class HomeworksProvider extends ChangeNotifier {
   }
 
   Future<void> _mutateState({
-    required VoidCallback mutateLocalState,
+    VoidCallback? updateFields,
     required Future<void> Function() mutateRemoteState,
     required VoidCallback logAnalytics,
   }) async {
-    // mutateLocalState();
+    updateFields?.call();
     await mutateRemoteState();
     notifyListeners();
     logAnalytics();

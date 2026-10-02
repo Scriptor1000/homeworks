@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_performance/firebase_performance.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:homeworks/database/homeworks.dart';
@@ -24,6 +26,8 @@ void main() {
     late MockFirestoreHomeworks mockFirestoreHomeworks;
     late MockAnalyticsService mockAnalyticsService;
     late HomeworksProvider homeworksProvider;
+    late StreamController<List<Homework>> homeworksStream;
+    late List<Homework> firestoreHomeworks;
 
     final now = DateTime.now();
     const scanRange = Duration(days: 2);
@@ -37,6 +41,27 @@ void main() {
     setUp(() {
       mockFirestoreHomeworks = MockFirestoreHomeworks();
       mockAnalyticsService = MockAnalyticsService();
+      homeworksStream = StreamController<List<Homework>>();
+      firestoreHomeworks = [];
+      addTearDown(() {
+        homeworksStream.close();
+      });
+      when(
+        mockFirestoreHomeworks.streamAllHomeworks(),
+      ).thenAnswer((_) => homeworksStream.stream);
+      when(mockFirestoreHomeworks.saveHomework(any)).thenAnswer((i) async {
+        final homework = i.positionalArguments[0] as Homework;
+        if (!firestoreHomeworks.contains(homework)) {
+          firestoreHomeworks.add(homework);
+        }
+        homeworksStream.add(List.of(firestoreHomeworks));
+      });
+      when(mockFirestoreHomeworks.deleteHomework(any)).thenAnswer((i) async {
+        firestoreHomeworks.removeWhere(
+          (homework) => homework.documentId == i.positionalArguments[0],
+        );
+        Timer.run(() => homeworksStream.add(List.of(firestoreHomeworks)));
+      });
       homeworksProvider = HomeworksProvider(
         firestoreHomeworks: mockFirestoreHomeworks,
         analyticsService: mockAnalyticsService,
@@ -106,16 +131,21 @@ void main() {
     test('should load and delete old Homeworks on initialisation', () async {
       // setup
       when(
-        mockFirestoreHomeworks.loadAllHomeworks(),
-      ).thenAnswer((_) async => toDeleteHomeworks);
+        mockFirestoreHomeworks.streamAllHomeworks(),
+      ).thenAnswer((_) {
+        firestoreHomeworks = List.of(toDeleteHomeworks);
+        homeworksStream.add(List.of(firestoreHomeworks));
+        return homeworksStream.stream;
+      });
       // test
       await homeworksProvider.initialize();
+      await pumpEventQueue();
       // verify
       expect(homeworksProvider.homeworks.length, equals(3));
       expect(homeworksProvider.homeworksLoaded, isTrue);
       verify(mockFirestoreHomeworks.deleteHomework('4')).called(1);
       verify(mockFirestoreHomeworks.deleteHomework('5')).called(1);
-      verify(mockFirestoreHomeworks.loadAllHomeworks()).called(1);
+      verify(mockFirestoreHomeworks.streamAllHomeworks()).called(1);
       verifyNoMoreInteractions(mockFirestoreHomeworks);
     });
 
@@ -123,7 +153,7 @@ void main() {
       'should update due dates only when toNextLesson, not fromUntis, after now and in range',
       () async {
         // setup
-        when(mockFirestoreHomeworks.loadAllHomeworks()).thenAnswer((_) {
+        when(mockFirestoreHomeworks.streamAllHomeworks()).thenAnswer((_) {
           final afterRange = now.add(const Duration(days: 1)).add(scanRange);
           final inRange = now.add(Duration(hours: scanRange.inHours ~/ 2));
           final yesterday = now.subtract(const Duration(days: 1));
@@ -182,7 +212,9 @@ void main() {
               ),
             );
           }
-          return Future.value(homeworks);
+          firestoreHomeworks = homeworks;
+          homeworksStream.add(List.of(firestoreHomeworks));
+          return homeworksStream.stream;
         });
         final mockUntisProvider = MockUntisProvider();
         when(mockUntisProvider.untisSubjectsLoaded).thenReturn(true);
@@ -196,12 +228,13 @@ void main() {
         });
 
         await homeworksProvider.initialize();
+        await pumpEventQueue();
         // verify setup
         expect(homeworksProvider.homeworks.length, equals(7));
         expect(homeworksProvider.homeworksLoaded, isTrue);
-        verify(mockFirestoreHomeworks.loadAllHomeworks()).called(1);
+        verify(mockFirestoreHomeworks.streamAllHomeworks()).called(1);
         // test
-        await homeworksProvider.updateDueDates(mockUntisProvider);
+        await homeworksProvider.setUntisProvider(mockUntisProvider);
         // verify
         final homeworks = homeworksProvider.homeworks;
         expect(
@@ -259,22 +292,29 @@ void main() {
       () async {
         // setup
         when(
-          mockFirestoreHomeworks.loadAllHomeworks(),
-        ).thenAnswer((_) async => toDeleteHomeworks);
+          mockFirestoreHomeworks.streamAllHomeworks(),
+        ).thenAnswer((_) {
+          firestoreHomeworks = List.of(toDeleteHomeworks);
+          homeworksStream.add(List.of(firestoreHomeworks));
+          return homeworksStream.stream;
+        });
         final mockUntisProvider = MockUntisProvider();
         when(mockUntisProvider.untisSubjectsLoaded).thenReturn(false);
 
         await homeworksProvider.initialize();
+        await pumpEventQueue();
         // verify setup
         expect(homeworksProvider.homeworks.length, equals(3));
         expect(homeworksProvider.homeworksLoaded, isTrue);
-        verify(mockFirestoreHomeworks.loadAllHomeworks()).called(1);
+        verify(mockFirestoreHomeworks.streamAllHomeworks()).called(1);
         // test
-        await homeworksProvider.updateDueDates(mockUntisProvider);
+        await homeworksProvider.setUntisProvider(mockUntisProvider);
         // verify
         verify(mockUntisProvider.untisSubjectsLoaded).called(1);
         verifyNever(mockUntisProvider.getNextLessonDates());
         verifyNoMoreInteractions(mockUntisProvider);
+        verify(mockFirestoreHomeworks.deleteHomework('4')).called(1);
+        verify(mockFirestoreHomeworks.deleteHomework('5')).called(1);
         verifyNoMoreInteractions(mockFirestoreHomeworks);
       },
     );
@@ -295,13 +335,18 @@ void main() {
         emoji: HomeworkEmoji.crying,
       );
       when(
-        mockFirestoreHomeworks.loadAllHomeworks(),
-      ).thenAnswer((_) async => [homework]);
+        mockFirestoreHomeworks.streamAllHomeworks(),
+      ).thenAnswer((_) {
+        firestoreHomeworks = [homework];
+        homeworksStream.add(List.of(firestoreHomeworks));
+        return homeworksStream.stream;
+      });
       await homeworksProvider.initialize();
+      await pumpEventQueue();
       // verify setup
       expect(homeworksProvider.homeworks.length, equals(1));
       expect(homeworksProvider.homeworksLoaded, isTrue);
-      verify(mockFirestoreHomeworks.loadAllHomeworks()).called(1);
+      verify(mockFirestoreHomeworks.streamAllHomeworks()).called(1);
 
       return homework;
     }
@@ -360,6 +405,7 @@ void main() {
         'name': 'Mathematik',
         'shortName': 'M',
       });
+      await homeworksProvider.initialize();
       // test
       await homeworksProvider.fastCreateHomework('LB.S.pi/e', testSubject);
       // verify
@@ -388,6 +434,7 @@ void main() {
         'shortName': 'M',
       });
       final prefixes = examPrefixes;
+      await homeworksProvider.initialize();
       // test
       for (final prefix in prefixes) {
         await homeworksProvider.fastCreateHomework(
@@ -425,6 +472,7 @@ void main() {
         fromUntis: false,
         emoji: HomeworkEmoji.crying,
       );
+      await homeworksProvider.initialize();
       // test
       await homeworksProvider.createHomework(homework);
       // verify
@@ -438,6 +486,7 @@ void main() {
       final homework = await oneHomeworkTestSetup();
       // test
       await homeworksProvider.toggleHomeworkCompletion(homework.id);
+      await pumpEventQueue();
       // verify
       expect(homeworksProvider.homeworks.length, equals(1));
       expect(homeworksProvider.homeworks[0].isCompleted, isTrue);
@@ -457,6 +506,7 @@ void main() {
       );
       // test
       await homeworksProvider.toggleHomeworkCompletion(homework.id);
+      await pumpEventQueue();
       // verify
       expect(homeworksProvider.homeworks.length, equals(0));
       verify(
@@ -490,6 +540,7 @@ void main() {
       final homework = await oneHomeworkTestSetup(completed: true);
       // test
       await homeworksProvider.toggleHomeworkCompletion(homework.id);
+      await pumpEventQueue();
       // verify
       expect(homeworksProvider.homeworks.length, equals(1));
       expect(homeworksProvider.homeworks[0].isCompleted, isFalse);
@@ -516,15 +567,21 @@ void main() {
         emoji: HomeworkEmoji.crying,
       );
       when(
-        mockFirestoreHomeworks.loadAllHomeworks(),
-      ).thenAnswer((_) async => [homework]);
+        mockFirestoreHomeworks.streamAllHomeworks(),
+      ).thenAnswer((_) {
+        firestoreHomeworks = [homework];
+        homeworksStream.add(List.of(firestoreHomeworks));
+        return homeworksStream.stream;
+      });
       await homeworksProvider.initialize();
+      await pumpEventQueue();
       // verify setup
       expect(homeworksProvider.homeworks.length, equals(1));
       expect(homeworksProvider.homeworksLoaded, isTrue);
-      verify(mockFirestoreHomeworks.loadAllHomeworks()).called(1);
+      verify(mockFirestoreHomeworks.streamAllHomeworks()).called(1);
       // test
       await homeworksProvider.deleteHomework(homework.id);
+      await pumpEventQueue();
       // verify
       expect(homeworksProvider.homeworks.length, equals(0));
       verify(
@@ -575,10 +632,15 @@ void main() {
       );
 
       when(
-        mockFirestoreHomeworks.loadAllHomeworks(),
-      ).thenAnswer((_) async => [homework]);
+        mockFirestoreHomeworks.streamAllHomeworks(),
+      ).thenAnswer((_) {
+        firestoreHomeworks = [homework];
+        homeworksStream.add(List.of(firestoreHomeworks));
+        return homeworksStream.stream;
+      });
 
       await homeworksProvider.initialize();
+      await pumpEventQueue();
 
       // test
       final result = homeworksProvider.getById(homework.documentId);
@@ -601,9 +663,14 @@ void main() {
         emoji: HomeworkEmoji.crying,
       );
       when(
-        mockFirestoreHomeworks.loadAllHomeworks(),
-      ).thenAnswer((_) async => [homework]);
+        mockFirestoreHomeworks.streamAllHomeworks(),
+      ).thenAnswer((_) {
+        firestoreHomeworks = [homework];
+        homeworksStream.add(List.of(firestoreHomeworks));
+        return homeworksStream.stream;
+      });
       await homeworksProvider.initialize();
+      await pumpEventQueue();
       // test
       final result = homeworksProvider.getById(homework.documentId);
       // verify
@@ -613,10 +680,11 @@ void main() {
     test('should return null when id does not exist', () async {
       // setup
       when(
-        mockFirestoreHomeworks.loadAllHomeworks(),
-      ).thenAnswer((_) async => []);
+        mockFirestoreHomeworks.streamAllHomeworks(),
+      ).thenAnswer((_) => Stream.value([]));
 
       await homeworksProvider.initialize();
+      await pumpEventQueue();
 
       // test
       final result = homeworksProvider.getById('non_existing_id');
