@@ -19,6 +19,7 @@ const defaultConfig = <String, dynamic>{
   'performanceConsent': false,
   'consentDialogShown': false,
   'privacyPolicyUrl': 'https://asg-homeworks.pages.dev/privacy-policy.html',
+  'supportUrl': 'https://asg-homeworks.pages.dev/support.html',
 };
 
 /// A provider for accessing configured values from either Firebase Remote Config or local SharedPreferences.
@@ -49,8 +50,9 @@ class ConfigProvider extends ChangeNotifier {
   bool get untisDemoMode => _getValue<bool>('untisDemoMode');
   set untisDemoMode(bool value) => _setValue<bool>('untisDemoMode', value);
 
-  // Privacy config
+  // Link config
   String get privacyPolicyUrl => _getValue<String>('privacyPolicyUrl');
+  String get supportUrl => _getValue<String>('supportUrl');
 
   bool get consentDialogShown =>
       _getValue<bool>('consentDialogShown', localOnly: true);
