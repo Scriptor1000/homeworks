@@ -294,6 +294,25 @@ class AuthenticationProvider extends ChangeNotifier {
     }
   }
 
+  /// Links an email + password credential to the currently signed-in Firebase user.
+  ///
+  /// This method is used to link an email/password credential to the currently signed-in Firebase user. It is typically used when a user wants to add an email/password login method to their existing account (e.g., after signing in with Google or Apple). If the linking fails, a snackbar will be shown with the error message.
+  Future<void> linkEmailAndPassword(String email, String password) async {
+    final trimmedEmail = email.trim();
+    final credentials = EmailAuthProvider.credential(
+      email: trimmedEmail,
+      password: password,
+    );
+
+    try {
+      await _firebaseAuth.currentUser?.linkWithCredential(credentials);
+    } catch (e) {
+      showSnackBar(
+        'Verknüpfung fehlgeschlagen: ${e is FirebaseAuthException ? _getErrorMessage(e) : e.toString()}',
+      );
+    }
+  }
+
   /// Sends a password reset email to the currently signed-in user.
   Future<void> sendResetEmail() async {
     final user = _firebaseAuth.currentUser;
