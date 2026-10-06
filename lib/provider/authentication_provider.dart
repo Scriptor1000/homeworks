@@ -279,14 +279,10 @@ class AuthenticationProvider extends ChangeNotifier {
   ///
   /// Shows a snackbar on failure.
   Future<void> loginWithEmail(String email, String password) async {
-    final trimmedEmail = email.trim();
-    final credentials = EmailAuthProvider.credential(
-      email: trimmedEmail,
-      password: password,
-    );
-
     try {
-      await _firebaseAuth.signInWithCredential(credentials);
+      await _firebaseAuth.signInWithCredential(
+        _getEmailPasswordCredentials(email, password),
+      );
     } catch (e) {
       showSnackBar(
         'Anmeldung fehlgeschlagen: ${e is FirebaseAuthException ? _getErrorMessage(e) : e.toString()}',
@@ -294,18 +290,22 @@ class AuthenticationProvider extends ChangeNotifier {
     }
   }
 
+  AuthCredential _getEmailPasswordCredentials(String email, String password) {
+    final trimmedEmail = email.trim();
+    return EmailAuthProvider.credential(
+      email: trimmedEmail,
+      password: password,
+    );
+  }
+
   /// Links an email + password credential to the currently signed-in Firebase user.
   ///
   /// This method is used to link an email/password credential to the currently signed-in Firebase user. It is typically used when a user wants to add an email/password login method to their existing account (e.g., after signing in with Google or Apple). If the linking fails, a snackbar will be shown with the error message.
   Future<void> linkEmailAndPassword(String email, String password) async {
-    final trimmedEmail = email.trim();
-    final credentials = EmailAuthProvider.credential(
-      email: trimmedEmail,
-      password: password,
-    );
-
     try {
-      await _firebaseAuth.currentUser?.linkWithCredential(credentials);
+      await _firebaseAuth.currentUser?.linkWithCredential(
+        _getEmailPasswordCredentials(email, password),
+      );
     } catch (e) {
       showSnackBar(
         'Verknüpfung fehlgeschlagen: ${e is FirebaseAuthException ? _getErrorMessage(e) : e.toString()}',
