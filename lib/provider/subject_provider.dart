@@ -1,8 +1,9 @@
+import 'dart:async';
+
 import 'package:collection/collection.dart';
 import 'package:dart_untis_mobile/dart_untis_mobile.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 
-import 'untis_provider.dart';
 import '../utilities/enums.dart';
 import '../database/subjects.dart';
 import '../database/models/subject.dart';
@@ -20,10 +21,28 @@ class SubjectProvider extends ChangeNotifier {
   UntisSubjectStatus _untisSubjectStatus =
       UntisSubjectStatus.untisUnavailable; // status of Untis subjects
 
+  final Stream<List<Subject>> _stream;
+  late StreamSubscription _streamSubscription;
+
   final FirestoreSubjects _firestoreSubjectsService; // Firestore service
 
   SubjectProvider({required FirestoreSubjects firestoreSubjects})
-    : _firestoreSubjectsService = firestoreSubjects;
+    : _firestoreSubjectsService = firestoreSubjects,
+      _stream = firestoreSubjects.streamAllSubjects() {
+    _streamSubscription = _stream.listen(_streamListener);
+  }
+
+  @override
+  dispose() {
+    _streamSubscription.cancel();
+    super.dispose();
+  }
+
+  void _streamListener(List<Subject> subjects) {
+    _firestoreSubjects = subjects;
+    _firestoreSubjectsLoaded = true;
+    notifyListeners();
+  }
 
   /// The list of all subjects, currently only from Firestore
   List<Subject> get subjects => _firestoreSubjects;
@@ -37,14 +56,6 @@ class SubjectProvider extends ChangeNotifier {
   /// Status of the Untis subjects
   UntisSubjectStatus get untisSubjectStatus => _untisSubjectStatus;
 
-  /// Initializes the provider by loading subjects from Firestore
-  ///
-  /// Should be called at app start to load or refresh subjects.
-  Future<void> initialize() async {
-    await _loadSubjects();
-    notifyListeners();
-  }
-
   /// The subject associated with the given [UntisElementDescriptor].
   ///
   /// Returns null if no such subject exists within [_firestoreSubjects].
@@ -57,47 +68,23 @@ class SubjectProvider extends ChangeNotifier {
     );
   }
 
-  /// Updates Untis subjects based on data from [UntisProvider]
-  ///
-  /// Updates [_untisSubjects] and [_untisSubjectStatus], and also updates
-  /// the next lesson dates in [_firestoreSubjects] if they match.
-  void updateUntisSubjects(UntisProvider untisProvider) {
-    if (!untisProvider.untisSubjectsLoaded) {
-      _untisSubjects = [];
-      _untisSubjectStatus = untisProvider.untisSubjectStatus;
-      notifyListeners();
-      return;
-    }
-
-    _untisSubjects = untisProvider.untisSubjects;
-    _untisSubjectStatus = UntisSubjectStatus.loaded;
-
-    _updateNextLessonInFirestoreSubjects();
+  void setUntisSubjects(
+    List<Subject>? untisSubjects,
+    UntisSubjectStatus status,
+  ) {
+    _untisSubjects = untisSubjects ?? [];
+    _untisSubjectStatus = status;
     notifyListeners();
   }
 
-  void _updateNextLessonInFirestoreSubjects() {
-    for (var untisSubject in _untisSubjects) {
-      final existingSubject = _firestoreSubjects.indexWhere(
-        // (subject) => subject.documentId == untisSubject.documentId,
-        (subject) => subject.id == untisSubject.id && subject.fromUntis,
-      );
-      if (existingSubject != -1) {
-        _firestoreSubjects[existingSubject].nextLesson =
-            untisSubject.nextLesson;
-      }
-    }
-  }
-
-  /// Loads all subjects from Firestore
-  Future<void> _loadSubjects() async {
-    Stream<List<Subject>> stream = _firestoreSubjectsService
-        .streamAllSubjects();
-    stream.listen((subjects) {
-      _firestoreSubjects = subjects;
-      _firestoreSubjectsLoaded = true;
+  void updateNextLessonForSubject(String subjectDocId, DateTime? nextLesson) {
+    final subjectIndex = _firestoreSubjects.indexWhere(
+      (subject) => subject.documentId == subjectDocId,
+    );
+    if (subjectIndex != -1) {
+      _firestoreSubjects[subjectIndex].nextLesson = nextLesson;
       notifyListeners();
-    });
+    }
   }
 
   /// Adds a new subject to Firestore and local list

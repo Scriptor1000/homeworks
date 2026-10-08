@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_performance/firebase_performance.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
 
@@ -17,6 +17,7 @@ import '../provider/demo/credentials_demo_provider.dart';
 import '../provider/demo/untis_demo_provider.dart';
 import '../provider/homeworks_provider.dart';
 import '../provider/subject_provider.dart';
+import '../provider/sync_provider.dart';
 import '../provider/untis_provider.dart';
 import '../utilities/analytics_service.dart';
 import '../utilities/cryptography.dart';
@@ -75,6 +76,18 @@ class ProviderShell extends StatelessWidget {
       itemFactory: itemFactory,
     );
 
+    final untisProvider = UntisProvider(
+      range: range,
+      analytics: analyticsService,
+    );
+    final homeworksProvider = HomeworksProvider(
+      firestoreHomeworks: firestoreHomeworks,
+      analyticsService: analyticsService,
+    );
+    final subjectProvider = SubjectProvider(
+      firestoreSubjects: firestoreSubjects,
+    );
+
     return MultiProvider(
       key: ValueKey(untisDemoMode),
       providers: [
@@ -100,8 +113,7 @@ class ProviderShell extends StatelessWidget {
           ),
           // Provides Untis session data based on credentials
           ChangeNotifierProxyProvider<CredentialProvider, UntisProvider>(
-            create: (_) =>
-                UntisProvider(range: range, analytics: analyticsService),
+            create: (_) => untisProvider,
             update: (_, untisCredentialProvider, previous) =>
                 (previous
                   ?..updateCredentials(untisCredentialProvider.session)) ??
@@ -110,28 +122,34 @@ class ProviderShell extends StatelessWidget {
           ),
         ],
         // Provides homework data, updated when UntisProvider changes
-        ChangeNotifierProxyProvider<UntisProvider, HomeworksProvider>(
-          create: (_) => HomeworksProvider(
-            firestoreHomeworks: firestoreHomeworks,
-            analyticsService: analyticsService,
-          )..initialize(),
-          update: (_, untisProvider, previous) =>
-              (previous?..setUntisProvider(untisProvider)) ??
-              HomeworksProvider(
-                firestoreHomeworks: firestoreHomeworks,
-                analyticsService: analyticsService,
-              ),
+        ChangeNotifierProvider<HomeworksProvider>(
+          create: (_) => homeworksProvider,
           lazy: false,
         ),
         // Provides subject data, updated when UntisProvider changes
-        ChangeNotifierProxyProvider<UntisProvider, SubjectProvider>(
-          create: (_) =>
-              SubjectProvider(firestoreSubjects: firestoreSubjects)
-                ..initialize(),
-          update: (_, untisAPIProvider, previous) =>
-              (previous?..updateUntisSubjects(untisAPIProvider)) ??
-              SubjectProvider(firestoreSubjects: firestoreSubjects),
+        ChangeNotifierProvider<SubjectProvider>(
+          create: (_) => subjectProvider,
           lazy: false,
+        ),
+        ChangeNotifierProxyProvider3<
+          UntisProvider,
+          HomeworksProvider,
+          SubjectProvider,
+          SyncProvider
+        >(
+          create: (c) => SyncProvider(
+            homeworksProvider: c.read(),
+            untisProvider: c.read(),
+            subjectProvider: c.read(),
+            analyticsService: analyticsService,
+          ),
+          update: (
+            _,
+            untisProvider,
+            homeworksProvider,
+            subjectProvider,
+            previous,
+          ) => previous!..notifyListeners(),
         ),
 
         Provider<FirestoreUser>.value(value: firestoreUser),

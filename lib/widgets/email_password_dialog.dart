@@ -84,10 +84,24 @@ class _EmailPasswordDialogState extends State<EmailPasswordDialog> {
       final password = _passwordController.text;
 
       AuthenticationProvider provider = context.read();
-      await provider.linkEmailAndPassword(email, password);
-      if (mounted) {
-        Navigator.of(context).pop();
-      }
+      await provider
+          .linkEmailAndPassword(email, password)
+          .then(
+            (_) {
+              if (mounted) {
+                Navigator.of(context).pop();
+              }
+            },
+            onError: (e) {
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Fehler beim Anlegen der Anmeldedaten: $e'),
+                  ),
+                );
+              }
+            },
+          );
     }
   }
 

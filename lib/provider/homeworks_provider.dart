@@ -1,6 +1,7 @@
+import 'dart:async';
+
 import 'package:collection/collection.dart';
-import 'package:firebase_performance/firebase_performance.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 
 import '../database/homeworks.dart';
 import '../database/models/homework.dart';
@@ -9,7 +10,6 @@ import '../utilities/analytics_service.dart';
 import '../utilities/enums.dart';
 import '../utilities/homeworks_list.dart';
 import '../utilities/constants.dart';
-import 'untis_provider.dart';
 
 /// Provider for managing homeworks
 ///
@@ -19,7 +19,9 @@ import 'untis_provider.dart';
 class HomeworksProvider extends ChangeNotifier {
   List<Homework> _homeworks = []; // local list of homeworks
   bool _homeworksLoaded = false; // whether homeworks have been loaded
-  UntisProvider? _untisProvider;
+
+  final Stream<List<Homework>> _stream;
+  late StreamSubscription _streamSubscription;
 
   final FirestoreHomeworks _firestoreHomeworks;
   final AnalyticsService _analyticsService;
@@ -27,7 +29,21 @@ class HomeworksProvider extends ChangeNotifier {
   HomeworksProvider({
     required this._firestoreHomeworks,
     required this._analyticsService,
-  });
+  }) : _stream = _firestoreHomeworks.streamAllHomeworks() {
+    _streamSubscription = _stream.listen(_streamListener);
+  }
+
+  @override
+  dispose() {
+    _streamSubscription.cancel();
+    super.dispose();
+  }
+
+  void _streamListener(List<Homework> homeworks) {
+    _homeworks = homeworks;
+    _homeworksLoaded = true;
+    notifyListeners();
+  }
 
   /// The list of homeworks which have a due date.
   ///
@@ -37,99 +53,6 @@ class HomeworksProvider extends ChangeNotifier {
 
   /// Wheter the homeworks are loaded from Firestore.
   bool get homeworksLoaded => _homeworksLoaded;
-
-  /// Initializes the provider by loading subjects and homeworks from Firestore.
-  ///
-  /// This method should be called at the start of the application to ensure data is loaded or
-  /// to refresh the data.
-  Future<void> initialize() async {
-    await _loadHomeworks();
-    notifyListeners();
-  }
-
-  /// Loads all homeworks from Firestore and removes old completed ones
-  Future<void> _loadHomeworks() async {
-    Trace trace = _analyticsService.startCustomTrace('load_homeworks');
-    Stream<List<Homework>> stream = _firestoreHomeworks.streamAllHomeworks();
-    stream.listen((homeworks) {
-      _homeworks = homeworks;
-      if (!_homeworksLoaded) {
-        _homeworksLoaded = true;
-        trace.stop();
-      }
-      _deleteOldCompletedHomeworks();
-    });
-    notifyListeners();
-  }
-
-  Future<void> _deleteOldCompletedHomeworks() async {
-    final now = DateTime.now();
-    final toDelete = _homeworks
-        .where(
-          (homework) =>
-              homework.dueDate != null &&
-              homework.dueDate!.isBefore(now) &&
-              homework.isCompleted,
-        )
-        .toList();
-    for (var homework in toDelete) {
-      await _firestoreHomeworks.deleteHomework(homework.documentId);
-    }
-    notifyListeners();
-  }
-
-  Future<void> setUntisProvider(UntisProvider untisProvider) async {
-    _untisProvider = untisProvider;
-    await updateDueDates();
-  }
-
-  Future<void> updateDueDates() async {
-    if (_untisProvider == null) {
-      return;
-    }
-    if (!_untisProvider!.untisSubjectsLoaded) {
-      return;
-    }
-    final nextLessonDates = _untisProvider!.getNextLessonDates();
-    final todaySubjects = _untisProvider!.todaySubjects;
-    final now = DateTime.now();
-    int count = 0;
-
-    bool isPastDue(DateTime? dueDate) =>
-        dueDate != null && dueDate.isBefore(now);
-    bool happensToday(Homework homework) =>
-        todaySubjects.any((s) => s.documentId == homework.subjectDocId);
-
-    for (var homework in _homeworks) {
-      // Check if homework is addressed
-      if (!homework.toNextLesson ||
-          homework.fromUntis ||
-          isPastDue(homework.dueDate) ||
-          happensToday(homework)) {
-        continue;
-      }
-
-      // If there is no next lesson date and
-      // the due date is in the scan range
-      if (!nextLessonDates.containsKey(homework.subjectDocId) &&
-          homework.dueDate != null &&
-          homework.dueDate!.isBefore(_untisProvider!.endDate)) {
-        homework.dueDate = null;
-        _firestoreHomeworks.saveHomework(homework);
-        count++;
-      } else
-      // If there is a next lesson date which differs from the due date
-      if (nextLessonDates.containsKey(homework.subjectDocId) &&
-          nextLessonDates[homework.subjectDocId] != homework.dueDate) {
-        homework.dueDate = nextLessonDates[homework.subjectDocId];
-        _firestoreHomeworks.saveHomework(homework);
-        count++;
-      }
-    }
-    notifyListeners();
-
-    _analyticsService.updateDueDates(count);
-  }
 
   Homework? getById(String id) {
     return _homeworks.firstWhereOrNull(
