@@ -14,7 +14,7 @@ class SyncProvider extends ChangeNotifier {
   UntisProvider _untisProvider;
   SubjectProvider _subjectProvider;
 
-  AnalyticsService _analyticsService;
+  final AnalyticsService _analyticsService;
 
   new({
     required this._homeworksProvider,

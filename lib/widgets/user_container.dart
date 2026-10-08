@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 
@@ -657,12 +658,12 @@ class _UserContainerState extends State<UserContainer> {
       }
     }
 
-    await authProvider.deleteAccount(
-      method,
-      firestoreUser,
-      credentialProvider,
-      password,
-    );
+    await authProvider
+        .deleteAccount(method, firestoreUser, credentialProvider, password)
+        .onError((e, stackTrace) {
+          FirebaseCrashlytics.instance.recordError(e, stackTrace);
+          showSnackBar('Fehler beim Löschen des Kontos: $e');
+        });
   }
 
   Future<String?> _passwordDialog() {

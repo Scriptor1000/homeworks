@@ -1,7 +1,7 @@
 import 'package:cryptography/cryptography.dart';
 import 'package:dart_untis_mobile/dart_untis_mobile.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../database/credentials.dart';
 import '../../database/models/credentials.dart';

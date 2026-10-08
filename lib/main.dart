@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:dynamic_color/dynamic_color.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -8,8 +7,9 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_performance/firebase_performance.dart';
 import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:flutter_localizations/flutter_localizations.dart'
+    hide GlobalMaterialLocalizations;
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -94,39 +94,30 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // DynamicColorBuilder automatically adapts the app colors to system theme
-    // (Android 12+), falling back to a seeded color scheme otherwise.
-    return DynamicColorBuilder(
-      builder: (light, dark) {
-        light ??= ColorScheme.fromSeed(
-          seedColor: Colors.blue,
-          brightness: Brightness.light,
-        );
-        dark ??= ColorScheme.fromSeed(
-          seedColor: Colors.blue,
-          brightness: Brightness.dark,
-        );
+    final lightScheme = ColorScheme.fromSeed(
+      seedColor: Colors.blue,
+      brightness: Brightness.light,
+    );
+    final darkScheme = ColorScheme.fromSeed(
+      seedColor: Colors.blue,
+      brightness: Brightness.dark,
+    );
 
-        // Wrap the MaterialApp in the authentication provider shell
-        // so the whole widget tree has access to AuthenticationProvider.
-        return authenticationProviderShell(
-          child: MaterialApp.router(
-            debugShowCheckedModeBanner: false,
-            scaffoldMessengerKey: scaffoldMessengerKey, // Snackbar manager
-            localizationsDelegates: const [
-              GlobalMaterialLocalizations.delegate,
-              GlobalWidgetsLocalizations.delegate,
-              GlobalCupertinoLocalizations.delegate,
-            ],
-            theme: _buildTheme(light, Brightness.light),
-            darkTheme: _buildTheme(dark, Brightness.dark),
-            themeMode: ThemeMode.system, // Use system light/dark preference
-            routerConfig: appRouter, // Main router
-            supportedLocales: const [Locale('de', 'DE'), Locale('en', 'US')],
-            locale: const Locale('de', 'DE'),
-          ),
-        );
-      },
+    return authenticationProviderShell(
+      child: MaterialApp.router(
+        debugShowCheckedModeBanner: false,
+        scaffoldMessengerKey: scaffoldMessengerKey,
+        localizationsDelegates: [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+        ],
+        theme: _buildTheme(lightScheme, Brightness.light),
+        darkTheme: _buildTheme(darkScheme, Brightness.dark),
+        themeMode: ThemeMode.system,
+        routerConfig: appRouter,
+        supportedLocales: const [Locale('de', 'DE'), Locale('en', 'US')],
+        locale: const Locale('de', 'DE'),
+      ),
     );
   }
 

@@ -378,16 +378,13 @@ class AuthenticationProvider extends ChangeNotifier {
         await user.reauthenticateWithCredential(credential);
         break;
     }
-
-    try {
-      await firestoreUser.deleteAllData();
-      await credentialProvider.clearCredentialsLocal();
-      await _googleSignIn.signOut();
-    } catch (e, stackTrace) {
-      FirebaseCrashlytics.instance.recordError(e, stackTrace);
-    } finally {
-      await user.delete();
-    }
+    await firestoreUser.deleteAllData();
+    await credentialProvider.clearCredentialsLocal();
+    await _googleSignIn.signOut().onError(
+      (e, stackTrace) =>
+          FirebaseCrashlytics.instance.recordError(e, stackTrace),
+    );
+    await user.delete();
   }
 
   /// The error messages for FirebaseAuth exceptions.

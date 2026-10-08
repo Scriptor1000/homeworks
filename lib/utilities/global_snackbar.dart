@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Global key for the ScaffoldMessenger to show SnackBars across the app,
 /// even in async operations wihtout a context.
