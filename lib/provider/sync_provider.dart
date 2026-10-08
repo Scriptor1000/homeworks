@@ -34,6 +34,8 @@ class SyncProvider extends ChangeNotifier {
     _isSyncing = true;
     notifyListeners();
     _deleteOldCompletedHomeworks();
+    _updateUntisSubjects();
+    _updateNextLessons();
     _updateDueDates();
     _isSyncing = false;
     notifyListeners();
@@ -50,7 +52,7 @@ class SyncProvider extends ChangeNotifier {
         )
         .toList();
     for (var homework in toDelete) {
-      await _homeworksProvider.deleteHomework(homework.documentId);
+      await _homeworksProvider.deleteHomework(homework.id);
     }
     notifyListeners();
   }
@@ -100,7 +102,7 @@ class SyncProvider extends ChangeNotifier {
     _analyticsService.updateDueDates(count);
   }
 
-  void updateNextLessons() {
+  void _updateNextLessons() {
     if (!_untisProvider.untisSubjectsLoaded) {
       return;
     }
@@ -110,10 +112,7 @@ class SyncProvider extends ChangeNotifier {
     }
   }
 
-  void updateUntisSubjects() {
-    if (!_untisProvider.untisSubjectsLoaded) {
-      return;
-    }
+  void _updateUntisSubjects() {
     _subjectProvider.setUntisSubjects(
       _untisProvider.untisSubjects,
       _untisProvider.untisSubjectStatus,

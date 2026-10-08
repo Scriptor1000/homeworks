@@ -76,18 +76,6 @@ class ProviderShell extends StatelessWidget {
       itemFactory: itemFactory,
     );
 
-    final untisProvider = UntisProvider(
-      range: range,
-      analytics: analyticsService,
-    );
-    final homeworksProvider = HomeworksProvider(
-      firestoreHomeworks: firestoreHomeworks,
-      analyticsService: analyticsService,
-    );
-    final subjectProvider = SubjectProvider(
-      firestoreSubjects: firestoreSubjects,
-    );
-
     return MultiProvider(
       key: ValueKey(untisDemoMode),
       providers: [
@@ -113,7 +101,8 @@ class ProviderShell extends StatelessWidget {
           ),
           // Provides Untis session data based on credentials
           ChangeNotifierProxyProvider<CredentialProvider, UntisProvider>(
-            create: (_) => untisProvider,
+            create: (_) =>
+                UntisProvider(range: range, analytics: analyticsService),
             update: (_, untisCredentialProvider, previous) =>
                 (previous
                   ?..updateCredentials(untisCredentialProvider.session)) ??
@@ -123,12 +112,15 @@ class ProviderShell extends StatelessWidget {
         ],
         // Provides homework data, updated when UntisProvider changes
         ChangeNotifierProvider<HomeworksProvider>(
-          create: (_) => homeworksProvider,
+          create: (_) => HomeworksProvider(
+            firestoreHomeworks: firestoreHomeworks,
+            analyticsService: analyticsService,
+          ),
           lazy: false,
         ),
         // Provides subject data, updated when UntisProvider changes
         ChangeNotifierProvider<SubjectProvider>(
-          create: (_) => subjectProvider,
+          create: (_) => SubjectProvider(firestoreSubjects: firestoreSubjects),
           lazy: false,
         ),
         ChangeNotifierProxyProvider3<
@@ -143,13 +135,26 @@ class ProviderShell extends StatelessWidget {
             subjectProvider: c.read(),
             analyticsService: analyticsService,
           ),
-          update: (
-            _,
-            untisProvider,
-            homeworksProvider,
-            subjectProvider,
-            previous,
-          ) => previous!..notifyListeners(),
+          update:
+              (
+                c,
+                untisProvider,
+                homeworksProvider,
+                subjectProvider,
+                previous,
+              ) =>
+                  (previous?..providerUpdate(
+                    untisProvider: untisProvider,
+                    homeworksProvider: homeworksProvider,
+                    subjectProvider: subjectProvider,
+                  )) ??
+                  SyncProvider(
+                    homeworksProvider: c.read(),
+                    untisProvider: c.read(),
+                    subjectProvider: c.read(),
+                    analyticsService: analyticsService,
+                  ),
+          lazy: false,
         ),
 
         Provider<FirestoreUser>.value(value: firestoreUser),
