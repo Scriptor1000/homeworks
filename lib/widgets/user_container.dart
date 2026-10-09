@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 
@@ -8,6 +9,7 @@ import '../provider/config_provider.dart';
 import '../provider/credential_provider.dart';
 import '../utilities/enums.dart';
 import '../utilities/global_snackbar.dart';
+import 'email_password_dialog.dart';
 import 'fab.dart';
 
 import 'package:firebase_auth/firebase_auth.dart';
@@ -559,11 +561,11 @@ class _UserContainerState extends State<UserContainer> {
   }
 
   Future<void> _setupEmailPassword() async {
-    // TODO: Implementiere E-Mail/Passwort-Einrichtung
-    // Diese Funktion sollte einen Dialog oder eine neue Seite öffnen,
-    // in der der Benutzer ein Passwort für seine E-Mail-Adresse festlegen kann.
-    // Verwende FirebaseAuth.linkWithCredential() mit EmailAuthProvider.credential()
-    showSnackBar('E-Mail/Passwort-Einrichtung noch nicht implementiert');
+    await showDialog(
+      context: context,
+      builder: (context) => Dialog.fullscreen(child: EmailPasswordDialog()),
+    );
+    setState(() {}); // Refresh the state to reflect any changes
   }
 
   Future<void> _changeEmailPassword() async {
@@ -589,10 +591,6 @@ class _UserContainerState extends State<UserContainer> {
         ],
       ),
     );
-    // TODO: Implementiere Passwort-Änderung
-    // Diese Funktion sollte einen Dialog öffnen, in dem der Benutzer
-    // sein aktuelles Passwort bestätigt und ein neues festlegt.
-    // Verwende FirebaseAuth.updatePassword() nach Re-Authentifizierung
   }
 
   Future<void> _sendResetEmail() async {
@@ -660,12 +658,12 @@ class _UserContainerState extends State<UserContainer> {
       }
     }
 
-    await authProvider.deleteAccount(
-      method,
-      firestoreUser,
-      credentialProvider,
-      password,
-    );
+    await authProvider
+        .deleteAccount(method, firestoreUser, credentialProvider, password)
+        .onError((e, stackTrace) {
+          FirebaseCrashlytics.instance.recordError(e, stackTrace);
+          showSnackBar('Fehler beim Löschen des Kontos: $e');
+        });
   }
 
   Future<String?> _passwordDialog() {

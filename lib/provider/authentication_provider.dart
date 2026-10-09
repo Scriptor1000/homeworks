@@ -144,7 +144,7 @@ class AuthenticationProvider extends ChangeNotifier {
       return await _handleGoogleCredentials(googleUser);
     } catch (error) {
       // TODO swich the error code if it is a GoogleSignInException
-      await _googleSignIn.disconnect();
+      await _googleSignIn.signOut();
       showSnackBar('Fehler bei der Anmeldung: $error');
     }
   }
@@ -205,7 +205,7 @@ class AuthenticationProvider extends ChangeNotifier {
       FirebaseCrashlytics.instance.recordError(error, stackTrace);
       // TODO Future.error
 
-      await _googleSignIn.disconnect();
+      await _googleSignIn.signOut();
       await _firebaseAuth.signOut();
       showSnackBar('Fehler bei der Anmeldung: $error');
       rethrow;
@@ -266,27 +266,45 @@ class AuthenticationProvider extends ChangeNotifier {
   /// In future sign ins, the user will have to select their Google account again.
   /// This method does not unlink the Firebase user from their Google account.
   Future<void> signOut() async {
-    await _googleSignIn.disconnect();
-    await _firebaseAuth.signOut();
+    try {
+      await _googleSignIn.signOut();
+    } catch (e, stackTrace) {
+      FirebaseCrashlytics.instance.recordError(e, stackTrace);
+    } finally {
+      await _firebaseAuth.signOut();
+    }
   }
 
   /// Logs in using email + password via Firebase.
   ///
   /// Shows a snackbar on failure.
   Future<void> loginWithEmail(String email, String password) async {
-    final trimmedEmail = email.trim();
-    final credentials = EmailAuthProvider.credential(
-      email: trimmedEmail,
-      password: password,
-    );
-
     try {
-      await _firebaseAuth.signInWithCredential(credentials);
+      await _firebaseAuth.signInWithCredential(
+        _getEmailPasswordCredentials(email, password),
+      );
     } catch (e) {
       showSnackBar(
         'Anmeldung fehlgeschlagen: ${e is FirebaseAuthException ? _getErrorMessage(e) : e.toString()}',
       );
     }
+  }
+
+  AuthCredential _getEmailPasswordCredentials(String email, String password) {
+    final trimmedEmail = email.trim();
+    return EmailAuthProvider.credential(
+      email: trimmedEmail,
+      password: password,
+    );
+  }
+
+  /// Links an email + password credential to the currently signed-in Firebase user.
+  ///
+  /// This method is used to link an email/password credential to the currently signed-in Firebase user. It is typically used when a user wants to add an email/password login method to their existing account (e.g., after signing in with Google or Apple). If the linking fails, a snackbar will be shown with the error message.
+  Future<void> linkEmailAndPassword(String email, String password) async {
+    await _firebaseAuth.currentUser?.linkWithCredential(
+      _getEmailPasswordCredentials(email, password),
+    );
   }
 
   /// Sends a password reset email to the currently signed-in user.
@@ -354,9 +372,12 @@ class AuthenticationProvider extends ChangeNotifier {
         await user.reauthenticateWithCredential(credential);
         break;
     }
-
     await firestoreUser.deleteAllData();
     await credentialProvider.clearCredentialsLocal();
+    await _googleSignIn.signOut().onError(
+      (e, stackTrace) =>
+          FirebaseCrashlytics.instance.recordError(e, stackTrace),
+    );
     await user.delete();
   }
 

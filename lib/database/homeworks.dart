@@ -41,6 +41,18 @@ class FirestoreHomeworks {
     ];
   }
 
+  /// Returns a stream which gives always all Homeworks
+  ///
+  /// The stream uses the local cache, so it loads fast.
+  /// Also, any data change does appear even before send to firestore.
+  Stream<List<Homework>> streamAllHomeworks() {
+    return _homeworksCollectionsRef.snapshots().map((snapshot) {
+      return snapshot.docs
+          .map((doc) => _itemFactory.homeworkFromDocument(doc.data()))
+          .toList();
+    });
+  }
+
   /// Deletes all Homeworks wich are done and are due before now.
   Future<void> deleteCompletedHomeworks() async {
     final now = DateTime.now();

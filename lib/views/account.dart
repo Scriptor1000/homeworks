@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -15,6 +15,8 @@ class AccountView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final configProvider = context.watch<ConfigProvider>();
+
     return Scaffold(
       appBar: AppBar(title: const Text('Konto')),
       body: withConstrainedWidth(
@@ -30,7 +32,11 @@ class AccountView extends StatelessWidget {
                 littleGap(),
                 _buildConsentDialogButton(context),
                 littleGap(),
-                _buildLinkToPrivacyPolicy(context),
+                _buildLinkToPrivacyPolicy(
+                  Uri.parse(configProvider.privacyPolicyUrl),
+                ),
+                littleGap(),
+                _buildLinkToSupport(Uri.parse(configProvider.supportUrl)),
               ],
             ),
           ),
@@ -59,15 +65,21 @@ class AccountView extends StatelessWidget {
     );
   }
 
-  Widget _buildLinkToPrivacyPolicy(BuildContext context) {
+  Widget _buildLinkToPrivacyPolicy(Uri url) {
     return ListTile(
-      onTap: () {
-        final configProvider = context.read<ConfigProvider>();
-        final url = configProvider.privacyPolicyUrl;
-        launchUrl(Uri.parse(url));
-      },
+      onTap: () => launchUrl(url),
       title: Text('Datenschutzerklärung'),
       leading: Icon(Icons.link),
+      trailing: Icon(Icons.open_in_new),
+    );
+  }
+
+  Widget _buildLinkToSupport(Uri url) {
+    return ListTile(
+      onTap: () => launchUrl(url),
+      title: Text('Support'),
+      leading: Icon(Icons.link),
+      trailing: Icon(Icons.open_in_new),
     );
   }
 }

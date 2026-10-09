@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dart_untis_mobile/dart_untis_mobile.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:homeworks/database/models/subject.dart';
@@ -31,6 +33,7 @@ void main() {
     late MockFirestoreSubjects mockFirestoreSubjects;
     late MockUntisProvider mockUntisProvider;
     late SubjectProvider subjectProvider;
+    late StreamController<List<Subject>> subjectsStream;
 
     late List<Subject> firestoreSubjects;
     late List<Subject> untisSubjects;
@@ -40,10 +43,10 @@ void main() {
     setUp(() {
       mockFirestoreSubjects = MockFirestoreSubjects();
       mockUntisProvider = MockUntisProvider();
-
-      subjectProvider = SubjectProvider(
-        firestoreSubjects: mockFirestoreSubjects,
-      );
+      subjectsStream = StreamController<List<Subject>>();
+      addTearDown(() {
+        subjectsStream.close();
+      });
 
       firestoreSubjects = List.generate(
         6,
@@ -55,9 +58,24 @@ void main() {
       ).toList();
 
       when(
-        mockFirestoreSubjects.loadAllUntisSubjects(),
-      ).thenAnswer((_) async => firestoreSubjects);
+        mockFirestoreSubjects.streamAllSubjects(),
+      ).thenAnswer((_) => subjectsStream.stream);
+      when(mockFirestoreSubjects.saveSubject(any)).thenAnswer((i) async {
+        final subject = i.positionalArguments[0] as Subject;
+        if (!firestoreSubjects.contains(subject)) {
+          firestoreSubjects.add(subject);
+        }
+        subjectsStream.add(List.of(firestoreSubjects));
+      });
+      when(mockFirestoreSubjects.deleteSubject(any)).thenAnswer((i) async {
+        firestoreSubjects.remove(i.positionalArguments[0]);
+        subjectsStream.add(List.of(firestoreSubjects));
+      });
       when(mockUntisProvider.untisSubjects).thenReturn(untisSubjects);
+      subjectProvider = SubjectProvider(
+        firestoreSubjects: mockFirestoreSubjects,
+      );
+      addTearDown(subjectProvider.dispose);
     });
 
     test('Initial values are correct', () {
@@ -73,7 +91,8 @@ void main() {
 
     test('should load subjects from firestore on initialization', () async {
       // test
-      await subjectProvider.initialize();
+      subjectsStream.add(List.of(firestoreSubjects));
+      await pumpEventQueue();
       // verify
       expect(subjectProvider.subjects, equals(firestoreSubjects));
       expect(subjectProvider.firestoreSubjectsLoaded, isTrue);
@@ -83,6 +102,8 @@ void main() {
       // setup
       final newSubject = MockSubject();
       when(newSubject.documentId).thenReturn('subject_new');
+      subjectsStream.add(List.of(firestoreSubjects));
+      await pumpEventQueue();
       // test
       await subjectProvider.addSubject(newSubject);
       // verify
@@ -93,7 +114,8 @@ void main() {
     test('should delete a subject from firestore and memory', () async {
       // setup
       final subjectToDelete = firestoreSubjects[0];
-      await subjectProvider.initialize();
+      subjectsStream.add(List.of(firestoreSubjects));
+      await pumpEventQueue();
       // verify setup
       expect(subjectProvider.subjects, equals(firestoreSubjects));
       // test
@@ -110,7 +132,10 @@ void main() {
       ).thenReturn(UntisSubjectStatus.loaded);
       when(mockUntisProvider.untisSubjectsLoaded).thenReturn(true);
       // test
-      subjectProvider.updateUntisSubjects(mockUntisProvider);
+      subjectProvider.setUntisSubjects(
+        mockUntisProvider.untisSubjects,
+        mockUntisProvider.untisSubjectStatus,
+      );
       // verify
       expect(subjectProvider.untisSubjects, equals(untisSubjects));
       expect(
@@ -127,11 +152,21 @@ void main() {
           mockUntisProvider.untisSubjectStatus,
         ).thenReturn(UntisSubjectStatus.loaded);
         when(mockUntisProvider.untisSubjectsLoaded).thenReturn(true);
-        await subjectProvider.initialize();
+        subjectsStream.add(List.of(firestoreSubjects));
+        await pumpEventQueue();
         // verify setup
         expect(subjectProvider.subjects, equals(firestoreSubjects));
         // test
-        subjectProvider.updateUntisSubjects(mockUntisProvider);
+        subjectProvider.setUntisSubjects(
+          mockUntisProvider.untisSubjects,
+          mockUntisProvider.untisSubjectStatus,
+        );
+        for (final subject in untisSubjects) {
+          subjectProvider.updateNextLessonForSubject(
+            subject.documentId,
+            subject.nextLesson,
+          );
+        }
         // verify
         for (int index = 0; index < indexTillUntisSubjects; index++) {
           final firestoreSubject = subjectProvider.subjects[index];
@@ -155,16 +190,23 @@ void main() {
         mockUntisProvider.untisSubjectStatus,
       ).thenReturn(UntisSubjectStatus.loaded);
       when(mockUntisProvider.untisSubjectsLoaded).thenReturn(true);
-      subjectProvider.updateUntisSubjects(mockUntisProvider);
+      subjectProvider.setUntisSubjects(
+        mockUntisProvider.untisSubjects,
+        mockUntisProvider.untisSubjectStatus,
+      );
       // verify setup
       expect(subjectProvider.untisSubjects, equals(untisSubjects));
       // change untisProvider to not loaded
+      when(mockUntisProvider.untisSubjects).thenReturn([]);
       when(mockUntisProvider.untisSubjectsLoaded).thenReturn(false);
       when(
         mockUntisProvider.untisSubjectStatus,
       ).thenReturn(UntisSubjectStatus.error);
       // test
-      subjectProvider.updateUntisSubjects(mockUntisProvider);
+      subjectProvider.setUntisSubjects(
+        mockUntisProvider.untisSubjects,
+        mockUntisProvider.untisSubjectStatus,
+      );
       // verify
       expect(subjectProvider.untisSubjects, isEmpty);
       expect(
@@ -175,12 +217,16 @@ void main() {
 
     test('should only get firestore subject by untis id', () async {
       // setup
-      await subjectProvider.initialize();
+      subjectsStream.add(List.of(firestoreSubjects));
+      await pumpEventQueue();
       when(
         mockUntisProvider.untisSubjectStatus,
       ).thenReturn(UntisSubjectStatus.loaded);
       when(mockUntisProvider.untisSubjectsLoaded).thenReturn(true);
-      subjectProvider.updateUntisSubjects(mockUntisProvider);
+      subjectProvider.setUntisSubjects(
+        mockUntisProvider.untisSubjects,
+        mockUntisProvider.untisSubjectStatus,
+      );
       final untisId = UntisElementDescriptor(UntisElementType.subject, 7);
       // test
       final subject = subjectProvider.getSubjectByUntisId(untisId);
@@ -190,7 +236,8 @@ void main() {
 
     test('should toggle visibility correctly on call', () async {
       // setup
-      await subjectProvider.initialize();
+      subjectsStream.add(List.of(firestoreSubjects));
+      await pumpEventQueue();
       final subjectToToggle = firestoreSubjects[0];
       // verify setup
       expect(subjectProvider.subjects, equals(firestoreSubjects));
@@ -203,7 +250,8 @@ void main() {
 
     test('get correct subject by untis id', () async {
       // setup
-      await subjectProvider.initialize();
+      subjectsStream.add(List.of(firestoreSubjects));
+      await pumpEventQueue();
       final untisId = UntisElementDescriptor(UntisElementType.subject, 2);
       // test
       final subject = subjectProvider.getSubjectByUntisId(untisId);
@@ -216,7 +264,8 @@ void main() {
 
     test('should only get subjects from untis by untis id', () async {
       // setup
-      await subjectProvider.initialize();
+      subjectsStream.add(List.of(firestoreSubjects));
+      await pumpEventQueue();
       final untisId = UntisElementDescriptor(
         UntisElementType.subject,
         indexTillUntisSubjects + 1,

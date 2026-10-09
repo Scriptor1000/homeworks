@@ -1,5 +1,5 @@
 import 'package:dynamic_color/dynamic_color.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:provider/provider.dart';
 
 import '../database/models/subject.dart';
@@ -67,11 +67,14 @@ class _SubjectBottomSheetContentState extends State<SubjectBottomSheetContent> {
       _isProcessing[subject.id] = true;
     });
 
+    bool isVisible = subject.visible;
+
     SubjectProvider provider = context.read();
     await provider.toggleSubjectVisibility(subject.documentId);
 
     if (mounted) {
       setState(() {
+        subject.visible = !isVisible;
         _isProcessing.remove(subject.id);
       });
     }
@@ -401,9 +404,8 @@ class _SubjectBottomSheetContentState extends State<SubjectBottomSheetContent> {
         ListTile(
           title: Text(
             widget.title,
-            style: Theme.of(
-              context,
-            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+            style: Theme.of(context).textTheme.titleLarge
+                ?.copyWith(fontWeight: FontWeight.bold),
           ),
           trailing: IconButton(
             icon: const Icon(Icons.close),
@@ -426,9 +428,8 @@ class _SubjectBottomSheetContentState extends State<SubjectBottomSheetContent> {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
               decoration: BoxDecoration(
-                color: Theme.of(
-                  context,
-                ).colorScheme.surfaceContainerHighest.withValues(alpha: .5),
+                color: Theme.of(context).colorScheme.surfaceContainerHighest
+                    .withValues(alpha: .5),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(

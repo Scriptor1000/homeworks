@@ -1,6 +1,7 @@
+import 'dart:async';
+
 import 'package:collection/collection.dart';
-import 'package:firebase_performance/firebase_performance.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 
 import '../database/homeworks.dart';
 import '../database/models/homework.dart';
@@ -9,7 +10,6 @@ import '../utilities/analytics_service.dart';
 import '../utilities/enums.dart';
 import '../utilities/homeworks_list.dart';
 import '../utilities/constants.dart';
-import 'untis_provider.dart';
 
 /// Provider for managing homeworks
 ///
@@ -20,13 +20,30 @@ class HomeworksProvider extends ChangeNotifier {
   List<Homework> _homeworks = []; // local list of homeworks
   bool _homeworksLoaded = false; // whether homeworks have been loaded
 
+  final Stream<List<Homework>> _stream;
+  late StreamSubscription _streamSubscription;
+
   final FirestoreHomeworks _firestoreHomeworks;
   final AnalyticsService _analyticsService;
 
   HomeworksProvider({
     required this._firestoreHomeworks,
     required this._analyticsService,
-  });
+  }) : _stream = _firestoreHomeworks.streamAllHomeworks() {
+    _streamSubscription = _stream.listen(_streamListener);
+  }
+
+  @override
+  dispose() {
+    _streamSubscription.cancel();
+    super.dispose();
+  }
+
+  void _streamListener(List<Homework> homeworks) {
+    _homeworks = homeworks;
+    _homeworksLoaded = true;
+    notifyListeners();
+  }
 
   /// The list of homeworks which have a due date.
   ///
@@ -36,92 +53,6 @@ class HomeworksProvider extends ChangeNotifier {
 
   /// Wheter the homeworks are loaded from Firestore.
   bool get homeworksLoaded => _homeworksLoaded;
-
-  /// Initializes the provider by loading subjects and homeworks from Firestore.
-  ///
-  /// This method should be called at the start of the application to ensure data is loaded or
-  /// to refresh the data.
-  Future<void> initialize() async {
-    await _loadHomeworks();
-    notifyListeners();
-  }
-
-  /// Loads all homeworks from Firestore and removes old completed ones
-  Future<void> _loadHomeworks() async {
-    Trace trace = _analyticsService.startCustomTrace('load_homeworks');
-
-    _homeworks = await _firestoreHomeworks.loadAllHomeworks();
-    final now = DateTime.now();
-    // TODO there is a better place for deleting old homeworks
-    final toDelete = _homeworks
-        .where(
-          (homework) =>
-              homework.dueDate != null &&
-              homework.dueDate!.isBefore(now) &&
-              homework.isCompleted,
-        )
-        .toList();
-    for (var homework in toDelete) {
-      await _firestoreHomeworks.deleteHomework(homework.documentId);
-    }
-
-    // Remove the same homeworks locally
-    _homeworks.removeWhere(
-      (homework) =>
-          homework.dueDate != null &&
-          homework.dueDate!.isBefore(now) &&
-          homework.isCompleted,
-    );
-
-    _homeworksLoaded = true;
-    trace.stop();
-    notifyListeners();
-  }
-
-  Future<void> updateDueDates(UntisProvider untisProvider) async {
-    if (!untisProvider.untisSubjectsLoaded) {
-      return;
-    }
-    final nextLessonDates = untisProvider.getNextLessonDates();
-    final todaySubjects = untisProvider.todaySubjects;
-    final now = DateTime.now();
-    int count = 0;
-
-    bool isPastDue(DateTime? dueDate) =>
-        dueDate != null && dueDate.isBefore(now);
-    bool happensToday(Homework homework) =>
-        todaySubjects.any((s) => s.documentId == homework.subjectDocId);
-
-    for (var homework in _homeworks) {
-      // Check if homework is addressed
-      if (!homework.toNextLesson ||
-          homework.fromUntis ||
-          isPastDue(homework.dueDate) ||
-          happensToday(homework)) {
-        continue;
-      }
-
-      // If there is no next lesson date and
-      // the due date is in the scan range
-      if (!nextLessonDates.containsKey(homework.subjectDocId) &&
-          homework.dueDate != null &&
-          homework.dueDate!.isBefore(untisProvider.endDate)) {
-        homework.dueDate = null;
-        _firestoreHomeworks.saveHomework(homework);
-        count++;
-      } else
-      // If there is a next lesson date which differs from the due date
-      if (nextLessonDates.containsKey(homework.subjectDocId) &&
-          nextLessonDates[homework.subjectDocId] != homework.dueDate) {
-        homework.dueDate = nextLessonDates[homework.subjectDocId];
-        _firestoreHomeworks.saveHomework(homework);
-        count++;
-      }
-    }
-    notifyListeners();
-
-    _analyticsService.updateDueDates(count);
-  }
 
   Homework? getById(String id) {
     return _homeworks.firstWhereOrNull(
@@ -158,7 +89,6 @@ class HomeworksProvider extends ChangeNotifier {
       emoji: null,
     );
     return _mutateState(
-      mutateLocalState: () => _homeworks.add(homework),
       mutateRemoteState: () async =>
           await _firestoreHomeworks.saveHomework(homework),
       logAnalytics: () => _analyticsService.createHomework(
@@ -174,7 +104,6 @@ class HomeworksProvider extends ChangeNotifier {
   /// Adds it to the local list and saves in Firestore.
   Future<void> createHomework(Homework homework) async {
     return _mutateState(
-      mutateLocalState: () => _homeworks.add(homework),
       mutateRemoteState: () async =>
           await _firestoreHomeworks.saveHomework(homework),
       logAnalytics: () => _analyticsService.createHomework(
@@ -199,7 +128,7 @@ class HomeworksProvider extends ChangeNotifier {
       return;
     }
     return _mutateState(
-      mutateLocalState: () {
+      updateFields: () {
         homework.title = updatedHomework.title;
         homework.description = updatedHomework.description;
         homework.subjectDocId = updatedHomework.subjectDocId;
@@ -223,7 +152,6 @@ class HomeworksProvider extends ChangeNotifier {
     final homework = _homeworks.firstWhereOrNull((hw) => hw.id == homeworkID);
     if (homework != null) {
       return _mutateState(
-        mutateLocalState: () => _homeworks.remove(homework),
         mutateRemoteState: () async =>
             await _firestoreHomeworks.deleteHomework(homework.documentId),
         logAnalytics: () => _analyticsService.deleteHomework(
@@ -251,7 +179,7 @@ class HomeworksProvider extends ChangeNotifier {
     final homework = _homeworks.firstWhereOrNull((hw) => hw.id == homeworkID);
     if (homework != null) {
       return _mutateState(
-        mutateLocalState: () => homework.dueDate = dueDate,
+        updateFields: () => homework.dueDate = dueDate,
         mutateRemoteState: () async =>
             await _firestoreHomeworks.saveHomework(homework),
         logAnalytics: () =>
@@ -291,7 +219,6 @@ class HomeworksProvider extends ChangeNotifier {
     if (homework.dueDate != null &&
         homework.dueDate!.isBefore(DateTime.now())) {
       return _mutateState(
-        mutateLocalState: () => _homeworks.remove(homework),
         mutateRemoteState: () async =>
             await _firestoreHomeworks.deleteHomework(homework.documentId),
         logAnalytics: () => _analyticsService.completeAndDeleteHomework(
@@ -301,7 +228,7 @@ class HomeworksProvider extends ChangeNotifier {
       );
     } else {
       return _mutateState(
-        mutateLocalState: () => homework.isCompleted = true,
+        updateFields: () => homework.isCompleted = true,
         mutateRemoteState: () async =>
             await _firestoreHomeworks.saveHomework(homework),
         logAnalytics: () => _analyticsService.completeHomework(
@@ -316,7 +243,7 @@ class HomeworksProvider extends ChangeNotifier {
 
   Future<void> _uncompleteHomework(Homework homework) async {
     return _mutateState(
-      mutateLocalState: () => homework.isCompleted = false,
+      updateFields: () => homework.isCompleted = false,
       mutateRemoteState: () async =>
           await _firestoreHomeworks.saveHomework(homework),
       logAnalytics: () => _analyticsService.uncompleteHomework(
@@ -327,11 +254,11 @@ class HomeworksProvider extends ChangeNotifier {
   }
 
   Future<void> _mutateState({
-    required VoidCallback mutateLocalState,
+    VoidCallback? updateFields,
     required Future<void> Function() mutateRemoteState,
     required VoidCallback logAnalytics,
   }) async {
-    mutateLocalState();
+    updateFields?.call();
     await mutateRemoteState();
     notifyListeners();
     logAnalytics();

@@ -15,8 +15,8 @@ load_dotenv()
 SQUASH_MERGE_DATE = datetime(2025, 11, 12, tzinfo=timezone(timedelta(hours=1)))
 GITHUB_REPO = 'scriptor1000/homeworks'
 
-MAIN_COMMITS_HEADLINE = 'Commit History of Main'
-PULL_REQUESTS_HEADLINE = 'Commit History of Pull Requests'
+MAIN_COMMITS_HEADLINE = 'Änderungsverlauf von Main (Hauptzweig)'
+PULL_REQUESTS_HEADLINE = 'Änderungsverlauf von Pull Requests (PR)'
 
 PULL_REQUEST_SECTION: Callable[[PullRequest], str] = lambda pr: f'PR #{pr.number}: {pr.title}'
 
@@ -71,7 +71,7 @@ class HistoryAnalyzer:
         self.g = Github(auth=auth)
         self.origin_repo = self.g.get_repo(GITHUB_REPO)
 
-        self.pull_requests: list[PullRequest] = [self.origin_repo.get_pull(13)]
+        self.pull_requests: list[PullRequest] = []
 
     def _add_commit_to_table(self, table: LongTable, commit: Commit, pr_number: int | None = None):
         if commit.sha == 'c9f6eedeaed033611a0473788eff135e894c8128':

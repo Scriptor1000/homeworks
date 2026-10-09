@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_performance/firebase_performance.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:homeworks/database/homeworks.dart';
@@ -5,6 +7,8 @@ import 'package:homeworks/database/models/homework.dart';
 import 'package:homeworks/database/models/subject.dart';
 import 'package:homeworks/provider/homeworks_provider.dart';
 import 'package:homeworks/provider/untis_provider.dart';
+import 'package:homeworks/provider/subject_provider.dart';
+import 'package:homeworks/provider/sync_provider.dart';
 import 'package:homeworks/utilities/analytics_service.dart';
 import 'package:homeworks/utilities/constants.dart';
 import 'package:homeworks/utilities/enums.dart';
@@ -17,6 +21,7 @@ import 'homeworks_provider_test.mocks.dart';
   MockSpec<FirestoreHomeworks>(),
   MockSpec<AnalyticsService>(),
   MockSpec<UntisProvider>(),
+  MockSpec<SubjectProvider>(),
   MockSpec<Trace>(),
 ])
 void main() {
@@ -24,10 +29,11 @@ void main() {
     late MockFirestoreHomeworks mockFirestoreHomeworks;
     late MockAnalyticsService mockAnalyticsService;
     late HomeworksProvider homeworksProvider;
+    late StreamController<List<Homework>> homeworksStream;
+    late List<Homework> firestoreHomeworks;
 
     final now = DateTime.now();
     const scanRange = Duration(days: 2);
-    final afterRange = now.add(Duration(days: 3));
     final inRange = now.add(Duration(days: 1));
     final yesterday = now.subtract(Duration(days: 1));
 
@@ -37,13 +43,50 @@ void main() {
     setUp(() {
       mockFirestoreHomeworks = MockFirestoreHomeworks();
       mockAnalyticsService = MockAnalyticsService();
+      homeworksStream = StreamController<List<Homework>>();
+      firestoreHomeworks = [];
+      addTearDown(() {
+        homeworksStream.close();
+      });
+      when(mockFirestoreHomeworks.streamAllHomeworks())
+          .thenAnswer((_) => homeworksStream.stream);
+      when(mockFirestoreHomeworks.saveHomework(any)).thenAnswer((i) async {
+        final homework = i.positionalArguments[0] as Homework;
+        if (!firestoreHomeworks.contains(homework)) {
+          firestoreHomeworks.add(homework);
+        }
+        homeworksStream.add(List.of(firestoreHomeworks));
+      });
+      when(mockFirestoreHomeworks.deleteHomework(any)).thenAnswer((i) async {
+        firestoreHomeworks.removeWhere(
+          (homework) => homework.documentId == i.positionalArguments[0],
+        );
+        Timer.run(() => homeworksStream.add(List.of(firestoreHomeworks)));
+      });
       homeworksProvider = HomeworksProvider(
         firestoreHomeworks: mockFirestoreHomeworks,
         analyticsService: mockAnalyticsService,
       );
 
+      addTearDown(homeworksProvider.dispose);
       when(mockAnalyticsService.startCustomTrace(any)).thenReturn(MockTrace());
     });
+
+    void updateProviders(UntisProvider untisProvider) {
+      final subjectProvider = MockSubjectProvider();
+      final syncProvider = SyncProvider(
+        homeworksProvider: homeworksProvider,
+        untisProvider: untisProvider,
+        subjectProvider: subjectProvider,
+        analyticsService: mockAnalyticsService,
+      );
+      addTearDown(syncProvider.dispose);
+      syncProvider.providerUpdate(
+        homeworksProvider: homeworksProvider,
+        untisProvider: untisProvider,
+        subjectProvider: subjectProvider,
+      );
+    }
 
     final toDeleteHomeworks = [
       Homework(
@@ -105,176 +148,183 @@ void main() {
 
     test('should load and delete old Homeworks on initialisation', () async {
       // setup
-      when(
-        mockFirestoreHomeworks.loadAllHomeworks(),
-      ).thenAnswer((_) async => toDeleteHomeworks);
+      firestoreHomeworks = List.of(toDeleteHomeworks);
+      homeworksStream.add(List.of(firestoreHomeworks));
       // test
-      await homeworksProvider.initialize();
+      await pumpEventQueue();
+      updateProviders(MockUntisProvider());
+      await pumpEventQueue();
       // verify
       expect(homeworksProvider.homeworks.length, equals(3));
       expect(homeworksProvider.homeworksLoaded, isTrue);
       verify(mockFirestoreHomeworks.deleteHomework('4')).called(1);
       verify(mockFirestoreHomeworks.deleteHomework('5')).called(1);
-      verify(mockFirestoreHomeworks.loadAllHomeworks()).called(1);
+      verify(mockFirestoreHomeworks.streamAllHomeworks()).called(1);
       verifyNoMoreInteractions(mockFirestoreHomeworks);
     });
 
-    test(
-      'should update due dates only when toNextLesson, not fromUntis, after now and in range',
-      () async {
-        // setup
-        when(mockFirestoreHomeworks.loadAllHomeworks()).thenAnswer((_) {
-          final afterRange = now.add(const Duration(days: 1)).add(scanRange);
-          final inRange = now.add(Duration(hours: scanRange.inHours ~/ 2));
-          final yesterday = now.subtract(const Duration(days: 1));
+    List<HomeworkData> createHomeworkDataList(
+      DateTime afterRange,
+      DateTime inRange,
+      DateTime yesterday,
+    ) {
+      return [
+        HomeworkData(
+          dueDate: yesterday,
+          toNextLesson: true,
+          fromUntis: false,
+        ), // 0 not to update (because before now)
+        HomeworkData(
+          dueDate: inRange,
+          toNextLesson: true,
+          fromUntis: true,
+        ), // 1 not to update (because fromUntis)
+        HomeworkData(
+          dueDate: inRange,
+          toNextLesson: false,
+          fromUntis: false,
+        ), // 2 not to update (because not toNextLesson)
+        HomeworkData(
+          dueDate: afterRange,
+          toNextLesson: true,
+          fromUntis: false,
+        ), // 3 not to update (because after range and not found)
+        HomeworkData(
+          dueDate: afterRange,
+          toNextLesson: true,
+          fromUntis: false,
+        ), // 4 to update (because found in range)
+        HomeworkData(
+          dueDate: inRange,
+          toNextLesson: true,
+          fromUntis: false,
+        ), // 5 to update (reset because not found)
+        HomeworkData(
+          dueDate: inRange,
+          toNextLesson: true,
+          fromUntis: false,
+        ), // 6 to update (because found)
+      ];
+    }
 
-          final data = [
-            HomeworkData(
-              dueDate: yesterday,
-              toNextLesson: true,
-              fromUntis: false,
-            ), // 0 not to update (because before now)
-            HomeworkData(
-              dueDate: inRange,
-              toNextLesson: true,
-              fromUntis: true,
-            ), // 1 not to update (because fromUntis)
-            HomeworkData(
-              dueDate: inRange,
-              toNextLesson: false,
-              fromUntis: false,
-            ), // 2 not to update (because not toNextLesson)
-            HomeworkData(
-              dueDate: afterRange,
-              toNextLesson: true,
-              fromUntis: false,
-            ), // 3 not to update (because after range and not found)
-            HomeworkData(
-              dueDate: afterRange,
-              toNextLesson: true,
-              fromUntis: false,
-            ), // 4 to update (because found in range)
-            HomeworkData(
-              dueDate: inRange,
-              toNextLesson: true,
-              fromUntis: false,
-            ), // 5 to update (reset because not found)
-            HomeworkData(
-              dueDate: inRange,
-              toNextLesson: true,
-              fromUntis: false,
-            ), // 6 to update (because found)
-          ];
+    test('should update due dates only when toNextLesson, not fromUntis, after now and in range', () async {
+      final afterRange = now.add(const Duration(days: 1)).add(scanRange);
+      final inRange = now.add(Duration(hours: scanRange.inHours ~/ 2));
+      final yesterday = now.subtract(const Duration(days: 1));
+      // setup
+      final data = createHomeworkDataList(afterRange, inRange, yesterday);
 
-          List<Homework> homeworks = [];
-          for (var i = 0; i < data.length; i++) {
-            homeworks.add(
-              Homework(
-                id: '$i',
-                title: 'title',
-                description: 'des',
-                subjectDocId: 'untis_$i',
-                toNextLesson: data[i].toNextLesson,
-                isCompleted: false,
-                dueDate: data[i].dueDate,
-                fromUntis: data[i].fromUntis,
-                emoji: HomeworkEmoji.crying,
-              ),
-            );
-          }
-          return Future.value(homeworks);
-        });
-        final mockUntisProvider = MockUntisProvider();
-        when(mockUntisProvider.untisSubjectsLoaded).thenReturn(true);
-        when(mockUntisProvider.endDate).thenReturn(now.add(scanRange));
-        when(mockUntisProvider.getNextLessonDates()).thenReturn({
-          'untis_0': yesterdayNew,
-          'untis_1': inRangeNew,
-          'untis_2': inRangeNew,
-          'untis_4': inRangeNew,
-          'untis_6': inRangeNew,
-        });
+      firestoreHomeworks = [];
+      for (var i = 0; i < data.length; i++) {
+        firestoreHomeworks.add(
+          Homework(
+            id: '$i',
+            title: 'title',
+            description: 'des',
+            subjectDocId: 'untis_$i',
+            toNextLesson: data[i].toNextLesson,
+            isCompleted: false,
+            dueDate: data[i].dueDate,
+            fromUntis: data[i].fromUntis,
+            emoji: HomeworkEmoji.crying,
+          ),
+        );
+      }
+      homeworksStream.add(List.of(firestoreHomeworks));
+      final mockUntisProvider = MockUntisProvider();
+      when(mockUntisProvider.untisSubjectsLoaded).thenReturn(true);
+      when(mockUntisProvider.endDate).thenReturn(now.add(scanRange));
+      when(mockUntisProvider.getNextLessonDates()).thenReturn({
+        'untis_0': yesterdayNew,
+        'untis_1': inRangeNew,
+        'untis_2': inRangeNew,
+        'untis_4': inRangeNew,
+        'untis_6': inRangeNew,
+      });
 
-        await homeworksProvider.initialize();
-        // verify setup
-        expect(homeworksProvider.homeworks.length, equals(7));
-        expect(homeworksProvider.homeworksLoaded, isTrue);
-        verify(mockFirestoreHomeworks.loadAllHomeworks()).called(1);
-        // test
-        await homeworksProvider.updateDueDates(mockUntisProvider);
-        // verify
-        final homeworks = homeworksProvider.homeworks;
-        expect(
-          homeworks[0].dueDate,
-          equals(yesterday),
-          reason: 'A homework wich is from the past should not be updated',
-        ); // not to update
-        expect(
-          homeworks[1].dueDate,
-          equals(inRange),
-          reason: 'A homework wich is imported from untis should be ignored',
-        ); // not to update
-        expect(
-          homeworks[2].dueDate,
-          equals(inRange),
-          reason:
-              'Only Homeworks wich are marked to next lesson should be updated',
-        ); // not to update
-        expect(
-          homeworks[3].dueDate,
-          equals(afterRange),
-          reason:
-              'A Homework wich due date lies not in scan range and no earlier lesson is found should not be updated',
-        ); // not to update
-        expect(
-          homeworks[4].dueDate,
-          equals(inRangeNew),
-          reason:
-              'A due date should be updated if an earlier lesson is found, even if the original due date lies int in scan range',
-        ); // to update
-        expect(
-          homeworks[5].dueDate,
-          isNull,
-          reason:
-              'A due date should be set to null if no lesson was found in the scan range and no other due date is known',
-        ); // to update (reset)
-        expect(
-          homeworks[6].dueDate,
-          equals(inRangeNew),
-          reason:
-              'A due date should be updated when a new due date is found and it is marked as to next lesson',
-        ); // to update
-        verify(mockFirestoreHomeworks.saveHomework(homeworks[4])).called(1);
-        verify(mockFirestoreHomeworks.saveHomework(homeworks[5])).called(1);
-        verify(mockFirestoreHomeworks.saveHomework(homeworks[6])).called(1);
-        verify(mockAnalyticsService.updateDueDates(3)).called(1);
-        verify(mockUntisProvider.untisSubjectsLoaded).called(1);
-        verify(mockUntisProvider.getNextLessonDates()).called(1);
-        verifyNoMoreInteractions(mockFirestoreHomeworks);
-      },
-    );
+      await pumpEventQueue();
+      // verify setup
+      expect(homeworksProvider.homeworks.length, equals(7));
+      expect(homeworksProvider.homeworksLoaded, isTrue);
+      verify(mockFirestoreHomeworks.streamAllHomeworks()).called(1);
+      // test
+      updateProviders(mockUntisProvider);
+      await pumpEventQueue();
+      // verify
+      final homeworks = homeworksProvider.homeworks;
+      expect(
+        homeworks[0].dueDate,
+        equals(yesterday),
+        reason: 'A homework wich is from the past should not be updated',
+      ); // not to update
+      expect(
+        homeworks[1].dueDate,
+        equals(inRange),
+        reason: 'A homework wich is imported from untis should be ignored',
+      ); // not to update
+      expect(
+        homeworks[2].dueDate,
+        equals(inRange),
+        reason:
+            'Only Homeworks wich are marked to next lesson should be updated',
+      ); // not to update
+      expect(
+        homeworks[3].dueDate,
+        equals(afterRange),
+        reason: 'A Homework wich due date lies not in scan range and no earlier lesson is found should not be updated',
+      ); // not to update
+      expect(
+        homeworks[4].dueDate,
+        equals(inRangeNew),
+        reason: 'A due date should be updated if an earlier lesson is found, even if the original due date lies int in scan range',
+      ); // to update
+      expect(
+        homeworks[5].dueDate,
+        isNull,
+        reason: 'A due date should be set to null if no lesson was found in the scan range and no other due date is known',
+      ); // to update (reset)
+      expect(
+        homeworks[6].dueDate,
+        equals(inRangeNew),
+        reason: 'A due date should be updated when a new due date is found and it is marked as to next lesson',
+      ); // to update
+      verify(mockFirestoreHomeworks.saveHomework(homeworks[4])).called(1);
+      verify(mockFirestoreHomeworks.saveHomework(homeworks[5])).called(1);
+      verify(mockFirestoreHomeworks.saveHomework(homeworks[6])).called(1);
+      verify(mockAnalyticsService.updateDueDates(3)).called(1);
+      verify(mockUntisProvider.untisSubjectsLoaded)
+          .called(greaterThanOrEqualTo(1));
+      verify(mockUntisProvider.getNextLessonDates())
+          .called(greaterThanOrEqualTo(1));
+      verifyNoMoreInteractions(mockFirestoreHomeworks);
+    });
 
     test(
       'should not update due dates if subject loading is not completed',
       () async {
         // setup
-        when(
-          mockFirestoreHomeworks.loadAllHomeworks(),
-        ).thenAnswer((_) async => toDeleteHomeworks);
+        firestoreHomeworks = List.of(toDeleteHomeworks);
+        homeworksStream.add(List.of(firestoreHomeworks));
         final mockUntisProvider = MockUntisProvider();
         when(mockUntisProvider.untisSubjectsLoaded).thenReturn(false);
 
-        await homeworksProvider.initialize();
+        await pumpEventQueue();
+        updateProviders(mockUntisProvider);
+        await pumpEventQueue();
+        clearInteractions(mockUntisProvider);
         // verify setup
         expect(homeworksProvider.homeworks.length, equals(3));
         expect(homeworksProvider.homeworksLoaded, isTrue);
-        verify(mockFirestoreHomeworks.loadAllHomeworks()).called(1);
+        verify(mockFirestoreHomeworks.streamAllHomeworks()).called(1);
         // test
-        await homeworksProvider.updateDueDates(mockUntisProvider);
+        updateProviders(mockUntisProvider);
+        await pumpEventQueue();
         // verify
-        verify(mockUntisProvider.untisSubjectsLoaded).called(1);
+        verify(mockUntisProvider.untisSubjectsLoaded)
+            .called(greaterThanOrEqualTo(1));
         verifyNever(mockUntisProvider.getNextLessonDates());
-        verifyNoMoreInteractions(mockUntisProvider);
+        verify(mockFirestoreHomeworks.deleteHomework('4')).called(1);
+        verify(mockFirestoreHomeworks.deleteHomework('5')).called(1);
         verifyNoMoreInteractions(mockFirestoreHomeworks);
       },
     );
@@ -294,14 +344,13 @@ void main() {
         fromUntis: false,
         emoji: HomeworkEmoji.crying,
       );
-      when(
-        mockFirestoreHomeworks.loadAllHomeworks(),
-      ).thenAnswer((_) async => [homework]);
-      await homeworksProvider.initialize();
+      firestoreHomeworks = [homework];
+      homeworksStream.add(List.of(firestoreHomeworks));
+      await pumpEventQueue();
       // verify setup
       expect(homeworksProvider.homeworks.length, equals(1));
       expect(homeworksProvider.homeworksLoaded, isTrue);
-      verify(mockFirestoreHomeworks.loadAllHomeworks()).called(1);
+      verify(mockFirestoreHomeworks.streamAllHomeworks()).called(1);
 
       return homework;
     }
@@ -317,9 +366,8 @@ void main() {
       // the original homework was given as reference and is updated too
       expect(homework.dueDate, equals(dueDate));
       verify(mockFirestoreHomeworks.saveHomework(homework)).called(1);
-      verify(
-        mockAnalyticsService.reviveHomework(type: homework.type),
-      ).called(1);
+      verify(mockAnalyticsService.reviveHomework(type: homework.type))
+          .called(1);
     });
 
     test(
@@ -438,6 +486,7 @@ void main() {
       final homework = await oneHomeworkTestSetup();
       // test
       await homeworksProvider.toggleHomeworkCompletion(homework.id);
+      await pumpEventQueue();
       // verify
       expect(homeworksProvider.homeworks.length, equals(1));
       expect(homeworksProvider.homeworks[0].isCompleted, isTrue);
@@ -457,11 +506,11 @@ void main() {
       );
       // test
       await homeworksProvider.toggleHomeworkCompletion(homework.id);
+      await pumpEventQueue();
       // verify
       expect(homeworksProvider.homeworks.length, equals(0));
-      verify(
-        mockFirestoreHomeworks.deleteHomework(homework.documentId),
-      ).called(1);
+      verify(mockFirestoreHomeworks.deleteHomework(homework.documentId))
+          .called(1);
       verify(
         mockAnalyticsService.completeAndDeleteHomework(
           type: homework.type,
@@ -479,7 +528,8 @@ void main() {
           completes,
         );
         // verify
-        verifyZeroInteractions(mockFirestoreHomeworks);
+        verify(mockFirestoreHomeworks.streamAllHomeworks()).called(1);
+        verifyNoMoreInteractions(mockFirestoreHomeworks);
         verify(mockAnalyticsService.logMessage(any)).called(1);
         verifyNoMoreInteractions(mockAnalyticsService);
       },
@@ -490,6 +540,7 @@ void main() {
       final homework = await oneHomeworkTestSetup(completed: true);
       // test
       await homeworksProvider.toggleHomeworkCompletion(homework.id);
+      await pumpEventQueue();
       // verify
       expect(homeworksProvider.homeworks.length, equals(1));
       expect(homeworksProvider.homeworks[0].isCompleted, isFalse);
@@ -515,21 +566,20 @@ void main() {
         fromUntis: false,
         emoji: HomeworkEmoji.crying,
       );
-      when(
-        mockFirestoreHomeworks.loadAllHomeworks(),
-      ).thenAnswer((_) async => [homework]);
-      await homeworksProvider.initialize();
+      firestoreHomeworks = [homework];
+      homeworksStream.add(List.of(firestoreHomeworks));
+      await pumpEventQueue();
       // verify setup
       expect(homeworksProvider.homeworks.length, equals(1));
       expect(homeworksProvider.homeworksLoaded, isTrue);
-      verify(mockFirestoreHomeworks.loadAllHomeworks()).called(1);
+      verify(mockFirestoreHomeworks.streamAllHomeworks()).called(1);
       // test
       await homeworksProvider.deleteHomework(homework.id);
+      await pumpEventQueue();
       // verify
       expect(homeworksProvider.homeworks.length, equals(0));
-      verify(
-        mockFirestoreHomeworks.deleteHomework(homework.documentId),
-      ).called(1);
+      verify(mockFirestoreHomeworks.deleteHomework(homework.documentId))
+          .called(1);
       verify(
         mockAnalyticsService.deleteHomework(
           type: homework.type,
@@ -574,11 +624,10 @@ void main() {
         emoji: HomeworkEmoji.crying,
       );
 
-      when(
-        mockFirestoreHomeworks.loadAllHomeworks(),
-      ).thenAnswer((_) async => [homework]);
+      firestoreHomeworks = [homework];
+      homeworksStream.add(List.of(firestoreHomeworks));
 
-      await homeworksProvider.initialize();
+      await pumpEventQueue();
 
       // test
       final result = homeworksProvider.getById(homework.documentId);
@@ -600,10 +649,9 @@ void main() {
         fromUntis: true,
         emoji: HomeworkEmoji.crying,
       );
-      when(
-        mockFirestoreHomeworks.loadAllHomeworks(),
-      ).thenAnswer((_) async => [homework]);
-      await homeworksProvider.initialize();
+      firestoreHomeworks = [homework];
+      homeworksStream.add(List.of(firestoreHomeworks));
+      await pumpEventQueue();
       // test
       final result = homeworksProvider.getById(homework.documentId);
       // verify
@@ -612,11 +660,9 @@ void main() {
     });
     test('should return null when id does not exist', () async {
       // setup
-      when(
-        mockFirestoreHomeworks.loadAllHomeworks(),
-      ).thenAnswer((_) async => []);
+      homeworksStream.add([]);
 
-      await homeworksProvider.initialize();
+      await pumpEventQueue();
 
       // test
       final result = homeworksProvider.getById('non_existing_id');
