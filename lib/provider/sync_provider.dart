@@ -39,7 +39,7 @@ class SyncProvider extends ChangeNotifier {
     _homeworksProvider = homeworksProvider;
     _untisProvider = untisProvider;
     _subjectProvider = subjectProvider;
-    if (_isSyncing) return;
+    if (_isSyncing || _isDisposed) return;
     _isSyncing = true;
     notifyListeners();
 
@@ -80,7 +80,7 @@ class SyncProvider extends ChangeNotifier {
     final todaySubjects = _untisProvider.todaySubjects;
     final now = DateTime.now();
     int count = 0;
-
+    // FIXME: Homework without DueDate and from Subject of today is not updated to next lesson date
     bool isPastDue(DateTime? dueDate) =>
         dueDate != null && dueDate.isBefore(now);
     bool happensToday(Homework homework) =>
