@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/widgets.dart';
 
 import '../database/models/homework.dart';
@@ -8,6 +9,7 @@ import 'untis_provider.dart';
 
 class SyncProvider extends ChangeNotifier {
   bool _isSyncing = false;
+  bool _isDisposed = false;
   bool get isSyncing => _isSyncing;
 
   HomeworksProvider _homeworksProvider;
@@ -23,6 +25,12 @@ class SyncProvider extends ChangeNotifier {
     required this._analyticsService,
   });
 
+  @override
+  void dispose() {
+    _isDisposed = true;
+    super.dispose();
+  }
+
   void providerUpdate({
     required HomeworksProvider homeworksProvider,
     required UntisProvider untisProvider,
@@ -31,8 +39,15 @@ class SyncProvider extends ChangeNotifier {
     _homeworksProvider = homeworksProvider;
     _untisProvider = untisProvider;
     _subjectProvider = subjectProvider;
+    if (_isSyncing) return;
     _isSyncing = true;
     notifyListeners();
+
+    Future.microtask(() => _sync());
+  }
+
+  void _sync() {
+    if (_isDisposed) return;
     _deleteOldCompletedHomeworks();
     _updateUntisSubjects();
     _updateNextLessons();
@@ -97,7 +112,6 @@ class SyncProvider extends ChangeNotifier {
         count++;
       }
     }
-    notifyListeners();
 
     _analyticsService.updateDueDates(count);
   }
@@ -107,12 +121,27 @@ class SyncProvider extends ChangeNotifier {
       return;
     }
     final nextLessonDates = _untisProvider.getNextLessonDates();
-    for (var entry in nextLessonDates.entries) {
-      _subjectProvider.updateNextLessonForSubject(entry.key, entry.value);
+    for (var subject in _subjectProvider.subjects) {
+      if (subject.nextLesson == nextLessonDates[subject.documentId]) {
+        continue;
+      }
+      if (nextLessonDates.containsKey(subject.documentId)) {
+        _subjectProvider.updateNextLessonForSubject(
+          subject.documentId,
+          nextLessonDates[subject.documentId],
+        );
+      } else {
+        _subjectProvider.updateNextLessonForSubject(subject.documentId, null);
+      }
     }
   }
 
   void _updateUntisSubjects() {
+    if (_untisProvider.untisSubjectStatus ==
+            _subjectProvider.untisSubjectStatus &&
+        _untisProvider.untisSubjects.equals(_subjectProvider.untisSubjects)) {
+      return;
+    }
     _subjectProvider.setUntisSubjects(
       _untisProvider.untisSubjects,
       _untisProvider.untisSubjectStatus,

@@ -69,10 +69,10 @@ class SubjectProvider extends ChangeNotifier {
   }
 
   void setUntisSubjects(
-    List<Subject>? untisSubjects,
+    List<Subject> untisSubjects,
     UntisSubjectStatus status,
   ) {
-    _untisSubjects = untisSubjects ?? [];
+    _untisSubjects = untisSubjects;
     _untisSubjectStatus = status;
     notifyListeners();
   }

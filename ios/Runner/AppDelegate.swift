@@ -8,7 +8,7 @@ import GoogleSignIn
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
-    GIDSignIn.sharedInstance.configure()
+    GIDSignIn.sharedInstance.configure(completion: nil)
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 

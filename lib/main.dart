@@ -109,6 +109,7 @@ class MainApp extends StatelessWidget {
         scaffoldMessengerKey: scaffoldMessengerKey,
         localizationsDelegates: [
           GlobalMaterialLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
           GlobalWidgetsLocalizations.delegate,
         ],
         theme: _buildTheme(lightScheme, Brightness.light),
